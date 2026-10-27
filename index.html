@@ -1,0 +1,520 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RandomChat - Live Video Chat</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #0b0e14;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  padding: 18px 5%;
+  border-bottom: 1px solid #303746;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo { font-size: 25px; font-weight: bold; }
+.logo span { color: #ff713b; }
+.online { color: #45d69a; font-size: 13px; }
+
+.container {
+  max-width: 1400px;
+  margin: 25px auto;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 20px;
+}
+
+.videos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.video-box {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #19202d;
+  border: 1px solid #343d4e;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#localVideo { transform: scaleX(-1); }
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #aab4c7;
+  pointer-events: none;
+  padding: 20px;
+}
+
+.placeholder .emoji { font-size: 48px; }
+.placeholder p { font-size: 13px; }
+
+.label {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: #000a;
+  padding: 7px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+button {
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 9px;
+  color: white;
+  background: #344052;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled { opacity: .4; cursor: not-allowed; }
+button:hover:not(:disabled) { filter: brightness(1.15); }
+
+.start { background: #159e68; }
+.next { background: #3276f6; }
+.stop { background: #d34545; }
+
+#status {
+  margin-top: 18px;
+  color: #bac4d5;
+  line-height: 1.6;
+}
+
+.ad {
+  background: linear-gradient(145deg, #26334f, #161b29);
+  border: 1px solid #38465e;
+  border-radius: 15px;
+  padding: 35px 20px;
+  text-align: center;
+  min-height: 250px;
+}
+
+.ad h3 { color: #ffb36a; }
+.ad p { color: #b5bed0; font-size: 14px; }
+
+.safety {
+  background: #19202d;
+  padding: 18px;
+  border-radius: 12px;
+  margin-top: 15px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #b5bed0;
+}
+
+footer {
+  padding: 30px;
+  text-align: center;
+  color: #77849a;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .videos { grid-template-columns: 1fr; }
+  .controls button { flex: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">Random<span>Chat</span></div>
+  <div class="online">● Local testing</div>
+</header>
+
+<main class="container">
+
+<section>
+  <div class="videos">
+
+    <div class="video-box">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <div class="placeholder" id="remotePlaceholder">
+        <div class="emoji">👤</div>
+        <h3>Waiting for a stranger</h3>
+        <p>Click Start to begin</p>
+      </div>
+      <div class="label">Stranger</div>
+    </div>
+
+    <div class="video-box">
+      <video id="localVideo" autoplay muted playsinline></video>
+      <div class="placeholder" id="localPlaceholder">
+        <div class="emoji">📷</div>
+        <h3>Your Camera</h3>
+        <p>Camera is off</p>
+      </div>
+      <div class="label">You</div>
+    </div>
+
+  </div>
+
+  <div class="controls">
+    <button class="start" id="startBtn">▶ Start Chat</button>
+    <button class="next" id="nextBtn" disabled>⏭ Next</button>
+    <button id="muteBtn" disabled>🎤 Mute</button>
+    <button class="stop" id="stopBtn" disabled>■ Stop</button>
+    <button id="reportBtn" disabled>⚑ Report</button>
+  </div>
+
+  <div id="status">Ready to start your first video chat.</div>
+</section>
+
+<aside>
+  <div class="ad">
+    <h3>YOUR BUSINESS HERE</h3>
+    <p>Advertise your business on RandomChat.</p>
+    <p>Sponsored advertisement</p>
+  </div>
+
+  <div class="safety">
+    <strong>Safety Notice</strong>
+    <p>
+      Private testing only. Do not invite strangers yet.
+      Reporting and moderation are not implemented.
+    </p>
+  </div>
+</aside>
+
+</main>
+
+<footer>RandomChat © 2026 | WebRTC Prototype</footer>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+const localVideo = document.getElementById("localVideo");
+const remoteVideo = document.getElementById("remoteVideo");
+const localPlaceholder = document.getElementById("localPlaceholder");
+const remotePlaceholder = document.getElementById("remotePlaceholder");
+
+const startBtn = document.getElementById("startBtn");
+const nextBtn = document.getElementById("nextBtn");
+const muteBtn = document.getElementById("muteBtn");
+const stopBtn = document.getElementById("stopBtn");
+const reportBtn = document.getElementById("reportBtn");
+const statusBox = document.getElementById("status");
+
+let localStream = null;
+let peer = null;
+let partnerId = null;
+let isMuted = false;
+let generation = 0;
+let pendingCandidates = [];
+
+function status(message) {
+  statusBox.textContent = message;
+}
+
+function remoteMessage(title, description) {
+  remotePlaceholder.style.display = "flex";
+  remotePlaceholder.querySelector("h3").textContent = title;
+  remotePlaceholder.querySelector("p").textContent = description;
+}
+
+function closePeer() {
+  generation++;
+  pendingCandidates = [];
+
+  if (peer) {
+    peer.onicecandidate = null;
+    peer.ontrack = null;
+    peer.close();
+    peer = null;
+  }
+
+  partnerId = null;
+  remoteVideo.srcObject = null;
+  remoteMessage("Waiting for a stranger", "Searching...");
+}
+
+async function startChat() {
+  if (localStream) return;
+
+  startBtn.disabled = true;
+  status("Requesting camera and microphone...");
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true
+    });
+
+    localVideo.srcObject = localStream;
+    localPlaceholder.style.display = "none";
+
+    nextBtn.disabled = false;
+    muteBtn.disabled = false;
+    stopBtn.disabled = false;
+
+    status("Searching for another user...");
+    socket.emit("find-partner");
+
+  } catch (error) {
+    status("Camera error: " + error.message);
+    startBtn.disabled = false;
+  }
+}
+
+function stopChat() {
+  socket.emit("stop");
+  closePeer();
+
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+
+  localVideo.srcObject = null;
+  localPlaceholder.style.display = "flex";
+
+  startBtn.disabled = false;
+  nextBtn.disabled = true;
+  muteBtn.disabled = true;
+  stopBtn.disabled = true;
+
+  isMuted = false;
+  muteBtn.textContent = "🎤 Mute";
+  remoteMessage("Waiting for a stranger", "Click Start to begin");
+  status("Chat stopped.");
+}
+
+function nextChat() {
+  if (!localStream) return;
+
+  closePeer();
+  status("Finding another person...");
+  socket.emit("next");
+}
+
+function toggleMute() {
+  if (!localStream) return;
+
+  isMuted = !isMuted;
+
+  localStream.getAudioTracks().forEach(track => {
+    track.enabled = !isMuted;
+  });
+
+  muteBtn.textContent = isMuted ? "🔇 Unmute" : "🎤 Mute";
+}
+
+async function createPeer(id) {
+  closePeer();
+  partnerId = id;
+
+  const currentGeneration = generation;
+
+  peer = new RTCPeerConnection({
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" }
+    ]
+  });
+
+  const pc = peer;
+
+  localStream.getTracks().forEach(track => {
+    pc.addTrack(track, localStream);
+  });
+
+  pc.ontrack = event => {
+    if (generation !== currentGeneration) return;
+
+    if (event.streams && event.streams[0]) {
+      remoteVideo.srcObject = event.streams[0];
+    } else {
+      const stream = remoteVideo.srcObject || new MediaStream();
+      stream.addTrack(event.track);
+      remoteVideo.srcObject = stream;
+    }
+
+    remotePlaceholder.style.display = "none";
+    remoteVideo.play().catch(() => {
+      status("Click the video to allow playback.");
+    });
+  };
+
+  pc.onicecandidate = event => {
+    if (event.candidate && generation === currentGeneration) {
+      socket.emit("signal", {
+        to: id,
+        data: {
+          type: "candidate",
+          candidate: event.candidate
+        }
+      });
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (generation !== currentGeneration) return;
+
+    if (pc.connectionState === "connected") {
+      status("Connected! You can now talk.");
+    } else if (pc.connectionState === "failed") {
+      status("Connection failed. Try Next.");
+    }
+  };
+
+  return pc;
+}
+
+socket.on("matched", async ({ partnerId: id, initiator }) => {
+  if (!localStream) return;
+
+  try {
+    const pc = await createPeer(id);
+    status("Partner found! Connecting...");
+
+    if (initiator) {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      if (peer !== pc) return;
+
+      socket.emit("signal", {
+        to: id,
+        data: {
+          type: "offer",
+          description: pc.localDescription
+        }
+      });
+    }
+  } catch (error) {
+    status("Connection setup error: " + error.message);
+  }
+});
+
+socket.on("signal", async ({ from, data }) => {
+  if (!peer || from !== partnerId || !localStream) return;
+
+  const pc = peer;
+
+  try {
+    if (data.type === "offer") {
+      await pc.setRemoteDescription(data.description);
+      if (peer !== pc) return;
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      if (peer !== pc) return;
+
+      socket.emit("signal", {
+        to: from,
+        data: {
+          type: "answer",
+          description: pc.localDescription
+        }
+      });
+
+    } else if (data.type === "answer") {
+      await pc.setRemoteDescription(data.description);
+
+    } else if (data.type === "candidate") {
+      if (!pc.remoteDescription) {
+        pendingCandidates.push(data.candidate);
+      } else {
+        await pc.addIceCandidate(data.candidate);
+      }
+    }
+
+    if (pc.remoteDescription) {
+      const candidates = pendingCandidates.splice(0);
+
+      for (const candidate of candidates) {
+        if (peer !== pc) return;
+        await pc.addIceCandidate(candidate);
+      }
+    }
+  } catch (error) {
+    if (peer === pc) {
+      status("WebRTC error: " + error.message);
+    }
+  }
+});
+
+socket.on("waiting", () => {
+  if (localStream && !partnerId) {
+    status("Waiting for another user...");
+  }
+});
+
+socket.on("partner-left", () => {
+  closePeer();
+  if (localStream) {
+    status("Partner left. Searching again...");
+  }
+});
+
+socket.on("disconnect", () => {
+  closePeer();
+  if (localStream) {
+    status("Server disconnected. Waiting to reconnect...");
+  }
+});
+
+socket.on("connect", () => {
+  if (localStream) {
+    socket.emit("find-partner");
+  }
+});
+
+startBtn.addEventListener("click", startChat);
+nextBtn.addEventListener("click", nextChat);
+muteBtn.addEventListener("click", toggleMute);
+stopBtn.addEventListener("click", stopChat);
+
+remoteVideo.addEventListener("click", () => {
+  remoteVideo.play().catch(() => {});
+});
+
+window.addEventListener("pagehide", () => {
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+  }
+});
+</script>
+</body>
+</html>

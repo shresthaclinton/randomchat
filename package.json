@@ -1,0 +1,14 @@
+
+{
+  "name": "randomchat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Random video chat prototype",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  }
+}
