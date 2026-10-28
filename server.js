@@ -156,10 +156,14 @@ io.on("connection", (socket) => {
   });
 });
 
-// Start server
-server.listen(8000, "127.0.0.1", () => {
+
+ // Start server
+const PORT = process.env.PORT || 8000;
+
+server.listen(PORT, "0.0.0.0", () => {
   console.log("----------------------------------");
   console.log("RandomChat server is running!");
-  console.log("http://127.0.0.1:8000");
+  console.log(`Port: ${PORT}`);
   console.log("----------------------------------");
 });
+
