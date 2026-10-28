@@ -39,6 +39,29 @@ const waiting = [];
 
 // Store connected partners
 const partners = new Map();
+// Beta moderation state: kept in memory until the server restarts.
+const reports = [];
+const reportTimes = new Map();
+const skipTimes = new Map();
+const recentPartners = new Map();
+const blockedPairs = new Set();
+const allowedReasons = new Set(["nudity", "harassment", "hate", "spam", "underage", "other"]);
+const idPattern = /^[a-f0-9-]{36}$/i;
+const pairKey = (a, b) => [a, b].sort().join(":");
+function rateLimited(map, id, limit, windowMs) {
+  const now = Date.now();
+  const history = (map.get(id) || []).filter(t => now - t < windowMs);
+  if (history.length >= limit) { map.set(id, history); return true; }
+  history.push(now); map.set(id, history); return false;
+}
+function eligible(a, b) {
+  if (!a.data.clientId || !b.data.clientId) return false;
+  const key = pairKey(a.data.clientId, b.data.clientId);
+  return !blockedPairs.has(key) &&
+    !(a.data.blocked || []).includes(b.data.clientId) &&
+    !(b.data.blocked || []).includes(a.data.clientId);
+}
+
 
 function removeWaiting(id) {
   let index = waiting.indexOf(id);
@@ -56,6 +79,7 @@ function findPartner(socket) {
 
   removeWaiting(socket.id);
 
+  const deferred = [];
   while (waiting.length > 0) {
     const otherId = waiting.shift();
     const other = io.sockets.sockets.get(otherId);
@@ -69,6 +93,8 @@ function findPartner(socket) {
       continue;
     }
 
+    if (!eligible(socket, other)) { deferred.push(otherId); continue; }
+    waiting.push(...deferred);
     partners.set(socket.id, otherId);
     partners.set(otherId, socket.id);
 
@@ -82,10 +108,13 @@ function findPartner(socket) {
       initiator: false
     });
 
+    recentPartners.set(socket.id, { id: otherId, at: Date.now() });
+    recentPartners.set(otherId, { id: socket.id, at: Date.now() });
     console.log("Matched:", socket.id, otherId);
     return;
   }
 
+  waiting.push(...deferred);
   waiting.push(socket.id);
   socket.emit("waiting");
 }
@@ -116,6 +145,46 @@ io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
   socket.data.ready = false;
+  socket.data.clientId = null;
+  socket.data.blocked = [];
+  socket.on("identify", ({ clientId, blocked } = {}) => {
+    if (typeof clientId !== "string" || !idPattern.test(clientId)) return;
+    socket.data.clientId = clientId;
+    socket.data.blocked = Array.isArray(blocked)
+      ? blocked.filter(x => typeof x === "string" && idPattern.test(x)).slice(0, 300)
+      : [];
+  });
+
+  socket.on("report-user", ({ reason } = {}, ack) => {
+    const reply = typeof ack === "function" ? ack : () => {};
+    const recent = recentPartners.get(socket.id);
+    if (!recent || Date.now() - recent.at > 120000 || !allowedReasons.has(reason)) {
+      return reply({ ok: false, error: "No recent partner or invalid reason." });
+    }
+    if (rateLimited(reportTimes, socket.id, 3, 3600000)) {
+      return reply({ ok: false, error: "Report limit reached. Please try later." });
+    }
+    const report = { time: new Date().toISOString(), reason, reporter: socket.id, reported: recent.id };
+    reports.push(report);
+    if (reports.length > 500) reports.shift();
+    console.log("MODERATION_REPORT", JSON.stringify(report));
+    reply({ ok: true });
+  });
+
+  socket.on("block-user", ({ targetId } = {}, ack) => {
+    const reply = typeof ack === "function" ? ack : () => {};
+    const recent = recentPartners.get(socket.id);
+    if (!recent || recent.id !== targetId || Date.now() - recent.at > 120000) {
+      return reply({ ok: false });
+    }
+    const other = io.sockets.sockets.get(targetId);
+    if (!other || !socket.data.clientId || !other.data.clientId) return reply({ ok: false });
+    blockedPairs.add(pairKey(socket.data.clientId, other.data.clientId));
+    socket.data.blocked.push(other.data.clientId);
+    reply({ ok: true, blockedId: other.data.clientId });
+    leavePartner(socket);
+    if (socket.data.ready) findPartner(socket);
+  });
 
   socket.on("find-partner", () => {
     socket.data.ready = true;
@@ -123,6 +192,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("next", () => {
+    if (rateLimited(skipTimes, socket.id, 25, 60000)) {
+      socket.emit("moderation-warning", "Too many skips. Please wait a minute.");
+      return;
+    }
     leavePartner(socket);
     socket.data.ready = true;
     findPartner(socket);
@@ -151,6 +224,9 @@ io.on("connection", (socket) => {
     socket.data.ready = false;
     leavePartner(socket);
     removeWaiting(socket.id);
+    recentPartners.delete(socket.id);
+    reportTimes.delete(socket.id);
+    skipTimes.delete(socket.id);
 
     console.log("User disconnected:", socket.id);
   });
