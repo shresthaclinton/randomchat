@@ -530,7 +530,9 @@ reportBtn.addEventListener("click", () => {
   if (!["nudity", "harassment", "hate", "spam", "underage", "other"].includes(normalized)) {
     status("Choose a valid report reason."); return;
   }
-  socket.timeout(5000).emit("report-user", { reason: normalized }, (err, response) => {
+  const description = prompt("Optional: Briefly explain what happened (max 500 characters). Leave blank to skip.");
+  if (description === null) return;
+  socket.timeout(5000).emit("report-user", { reason: normalized, description: description.slice(0, 500) }, (err, response) => {
     status(!err && response?.ok ? "Report submitted. Thank you." : "Could not submit report. Try again.");
   });
 });

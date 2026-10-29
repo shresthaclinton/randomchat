@@ -18,17 +18,20 @@ async function initializeDatabase() {
     id BIGSERIAL PRIMARY KEY, time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     reason TEXT NOT NULL, reporter TEXT NOT NULL, reported TEXT NOT NULL,
     reported_client_id TEXT)`);
+  await pool.query(`ALTER TABLE moderation_reports ADD COLUMN IF NOT EXISTS reporter_client_id TEXT`);
+  await pool.query(`ALTER TABLE moderation_reports ADD COLUMN IF NOT EXISTS description TEXT`);
+  await pool.query(`ALTER TABLE moderation_reports ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending'`);
   await pool.query(`CREATE TABLE IF NOT EXISTS moderation_bans (
     client_id TEXT PRIMARY KEY, until_at TIMESTAMPTZ NOT NULL)`);
   await pool.query(`CREATE TABLE IF NOT EXISTS moderation_blocks (
     pair_key TEXT PRIMARY KEY)`);
   const [savedReports, savedBans, savedBlocks] = await Promise.all([
-    pool.query(`SELECT time, reason, reporter, reported, reported_client_id FROM moderation_reports ORDER BY id DESC LIMIT 500`),
+    pool.query(`SELECT id, time, reason, reporter, reported, reported_client_id, reporter_client_id, description, status FROM moderation_reports ORDER BY id DESC LIMIT 500`),
     pool.query(`SELECT client_id, until_at FROM moderation_bans WHERE until_at > NOW()`),
     pool.query(`SELECT pair_key FROM moderation_blocks`)
   ]);
   reports.push(...savedReports.rows.reverse().map(r => ({
-    time: r.time.toISOString(), reason: r.reason, reporter: r.reporter,
+    id: String(r.id), time: r.time.toISOString(), reason: r.reason, reporter: r.reporter, reporterClientId: r.reporter_client_id, description: r.description || "", status: r.status,
     reported: r.reported, reportedClientId: r.reported_client_id
   })));
   for (const r of savedBans.rows) bannedIds.set(r.client_id, new Date(r.until_at).getTime());
@@ -92,9 +95,28 @@ const server = http.createServer((req, res) => {
     if (url.pathname === "/api/admin/overview" && req.method === "GET") {
       const now = Date.now();
       for (const [id, until] of bannedIds) if (until <= now) bannedIds.delete(id);
-      const payload = { ok: true, online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse(), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
+      const payload = { ok: true, online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse().map(r => ({...r, uniqueReporters: new Set(reports.filter(x => x.reportedClientId && x.reportedClientId === r.reportedClientId && x.reporterClientId).map(x => x.reporterClientId)).size || (r.reporterClientId ? 1 : null)})), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
       res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
       res.end(JSON.stringify(payload));
+      return;
+    }
+    if (url.pathname === "/api/admin/report-status" && req.method === "POST") {
+      let body = "";
+      req.on("data", chunk => { body += chunk; if (body.length > 2048) req.destroy(); });
+      req.on("end", async () => {
+        let input;
+        try { input = JSON.parse(body); } catch { input = {}; }
+        if (!/^[0-9]+$/.test(String(input.id || "")) || !["pending", "dismissed", "confirmed"].includes(input.status)) {
+          res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ ok: false, error: "Invalid report or status" })); return;
+        }
+        try {
+          const result = await pool.query("UPDATE moderation_reports SET status = $1 WHERE id = $2 RETURNING id", [input.status, input.id]);
+          if (!result.rowCount) { res.writeHead(404); res.end("Report not found"); return; }
+          for (const r of reports) if (r.id === String(input.id)) r.status = input.status;
+          console.log("ADMIN_REPORT_REVIEW", JSON.stringify({ id: input.id, status: input.status }));
+          res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" }); res.end(JSON.stringify({ ok: true }));
+        } catch (error) { console.error("REPORT_REVIEW_DB_ERROR", error); res.writeHead(503); res.end("Database unavailable"); }
+      });
       return;
     }
     if (url.pathname === "/api/admin/ban" && req.method === "POST") {
@@ -271,7 +293,7 @@ io.on("connection", (socket) => {
       : [];
   });
 
-  socket.on("report-user", ({ reason } = {}, ack) => {
+  socket.on("report-user", ({ reason, description } = {}, ack) => {
     const reply = typeof ack === "function" ? ack : () => {};
     const recent = recentPartners.get(socket.id);
     if (!recent || Date.now() - recent.at > 120000 || !allowedReasons.has(reason)) {
@@ -281,11 +303,13 @@ io.on("connection", (socket) => {
       return reply({ ok: false, error: "Report limit reached. Please try later." });
     }
     const target = io.sockets.sockets.get(recent.id);
-    const report = { time: new Date().toISOString(), reason, reporter: socket.id, reported: recent.id, reportedClientId: target?.data.clientId || null };
-    pool.query(`INSERT INTO moderation_reports (time, reason, reporter, reported, reported_client_id)
-      VALUES ($1, $2, $3, $4, $5)`,
-      [report.time, report.reason, report.reporter, report.reported, report.reportedClientId])
-      .then(() => {
+    const cleanDescription = typeof description === "string" ? description.trim().slice(0, 500) : "";
+    const report = { time: new Date().toISOString(), reason, reporter: socket.id, reporterClientId: socket.data.clientId, reported: recent.id, reportedClientId: target?.data.clientId || null, description: cleanDescription, status: "pending" };
+    pool.query(`INSERT INTO moderation_reports (time, reason, reporter, reported, reported_client_id, reporter_client_id, description, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [report.time, report.reason, report.reporter, report.reported, report.reportedClientId, report.reporterClientId, report.description, report.status])
+      .then(result => {
+        report.id = String(result.rows[0].id);
         reports.push(report);
         if (reports.length > 500) reports.shift();
         console.log("MODERATION_REPORT", JSON.stringify(report));
