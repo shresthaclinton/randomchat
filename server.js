@@ -1,5 +1,6 @@
 
 const http = require("node:http");
+const https = require("node:https");
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
@@ -41,12 +42,65 @@ async function initializeDatabase() {
 }
 
 
+// Fetch credential-scoped ICE settings on the server, never commit the Metered API key.
+const fallbackIceServers = [{ urls: "stun:stun.l.google.com:19302" }];
+let iceCache = null;
+let iceCacheUntil = 0;
+function fetchMeteredIce() {
+  return new Promise((resolve, reject) => {
+    const key = process.env.METERED_API_KEY;
+    if (!key) return reject(new Error("METERED_API_KEY missing"));
+    const endpoint = new URL("https://randomchat-nepal.metered.live/api/v1/turn/credentials");
+    endpoint.searchParams.set("apiKey", key);
+    const request = https.get(endpoint, { timeout: 4500 }, response => {
+      let body = "";
+      response.on("data", chunk => {
+        body += chunk;
+        if (body.length > 32768) response.destroy(new Error("ICE response too large"));
+      });
+      response.on("end", () => {
+        if (response.statusCode !== 200) return reject(new Error("Metered HTTP " + response.statusCode));
+        try {
+          const data = JSON.parse(body);
+          if (!Array.isArray(data) || data.length > 16 || !data.every(item =>
+            item && (typeof item.urls === "string" || Array.isArray(item.urls)) &&
+            [item.urls].flat().every(u => typeof u === "string" && /^(stun|stuns|turn|turns):/.test(u)) &&
+            (!item.username || typeof item.username === "string") &&
+            (!item.credential || typeof item.credential === "string")
+          )) throw new Error("Invalid ICE response");
+          resolve(data);
+        } catch (error) { reject(error); }
+      });
+    });
+    request.on("timeout", () => request.destroy(new Error("Metered timeout")));
+    request.on("error", reject);
+  });
+}
+
 // Create the website server
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
 
   // Socket.IO requests are handled automatically
   // by the Socket.IO server attached below.
+
+  if (url.pathname === "/api/ice-servers" && req.method === "GET") {
+    const respond = (iceServers, enabled) => {
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+      res.end(JSON.stringify({ iceServers, turnAvailable: enabled }));
+    };
+    if (!process.env.METERED_API_KEY) { respond(fallbackIceServers, false); return; }
+    if (iceCache && Date.now() < iceCacheUntil) { respond(iceCache, true); return; }
+    fetchMeteredIce().then(ice => {
+      iceCache = ice;
+      iceCacheUntil = Date.now() + 60_000;
+      respond(ice, true);
+    }).catch(error => {
+      console.warn("TURN_ICE_FETCH_FAILED", error.message);
+      respond(fallbackIceServers, false);
+    });
+    return;
+  }
 
   // Private developer reset. The secret is stored only in Render environment variables.
   if (url.pathname === "/developer-reset" && req.method === "GET") {

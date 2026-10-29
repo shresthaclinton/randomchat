@@ -288,6 +288,23 @@ function closePeer() {
   remoteMessage("Waiting for a stranger", "Searching...");
 }
 
+// Load TURN settings before entering matchmaking so the answering peer is ready.
+let currentIceServers = [{ urls: "stun:stun.l.google.com:19302" }];
+async function loadIceServers() {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5500);
+    try {
+      const response = await fetch("/api/ice-servers", { cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error("ICE settings unavailable");
+      const data = await response.json();
+      if (Array.isArray(data.iceServers) && data.iceServers.length) currentIceServers = data.iceServers;
+    } finally { clearTimeout(timer); }
+  } catch (error) {
+    console.warn("TURN unavailable; using STUN only", error);
+  }
+}
+
 async function startChat() {
   if (localStream) return;
 
@@ -307,6 +324,8 @@ async function startChat() {
     muteBtn.disabled = false;
     stopBtn.disabled = false;
 
+    status("Preparing connection...");
+    await loadIceServers();
     status("Searching for another user...");
     socket.emit("find-partner");
 
@@ -367,11 +386,7 @@ async function createPeer(id) {
 
   const currentGeneration = generation;
 
-  peer = new RTCPeerConnection({
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" }
-    ]
-  });
+  peer = new RTCPeerConnection({ iceServers: currentIceServers });
 
   const pc = peer;
 
