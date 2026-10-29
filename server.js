@@ -35,6 +35,52 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ ok: true }));
     return;
   }
+  // Private beta admin panel: separate secret from developer reset.
+  if (url.pathname === "/admin" && req.method === "GET") {
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'" });
+    fs.createReadStream(path.join(__dirname, "admin.html")).pipe(res);
+    return;
+  }
+  if (url.pathname.startsWith("/api/admin/")) {
+    const configured = process.env.ADMIN_DASHBOARD_TOKEN || "";
+    const provided = req.headers["x-admin-token"];
+    const a = Buffer.from(configured);
+    const b = Buffer.from(typeof provided === "string" ? provided : "");
+    if (a.length < 24 || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      res.writeHead(401, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      res.end(JSON.stringify({ ok: false, error: "Invalid admin token or not configured" }));
+      return;
+    }
+    if (url.pathname === "/api/admin/overview" && req.method === "GET") {
+      const now = Date.now();
+      for (const [id, until] of bannedIds) if (until <= now) bannedIds.delete(id);
+      const payload = { ok: true, online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse(), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      res.end(JSON.stringify(payload));
+      return;
+    }
+    if (url.pathname === "/api/admin/ban" && req.method === "POST") {
+      let body = "";
+      req.on("data", chunk => { body += chunk; if (body.length > 2048) req.destroy(); });
+      req.on("end", () => {
+        let input;
+        try { input = JSON.parse(body); } catch { input = {}; }
+        const clientId = input.clientId;
+        const hours = Number(input.hours);
+        if (typeof clientId !== "string" || !idPattern.test(clientId) || ![1,24,168].includes(hours)) {
+          res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ ok: false, error: "Invalid user ID or duration" })); return;
+        }
+        bannedIds.set(clientId, Date.now() + hours * 3600000);
+        for (const sock of io.sockets.sockets.values()) {
+          if (sock.data.clientId === clientId) { sock.emit("moderation-warning", "Access temporarily restricted."); sock.disconnect(true); }
+        }
+        console.log("ADMIN_BAN", JSON.stringify({ clientId, hours, time: new Date().toISOString() }));
+        res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" }); res.end(JSON.stringify({ ok: true }));
+      });
+      return;
+    }
+    res.writeHead(404); res.end("Not found"); return;
+  }
   if (url.pathname !== "/" && url.pathname !== "/index.html") {
     res.writeHead(404);
     res.end("Page not found");
@@ -65,6 +111,7 @@ const waiting = [];
 const partners = new Map();
 // Beta moderation state: kept in memory until the server restarts.
 const reports = [];
+const bannedIds = new Map(); // Temporary bans: in-memory beta version.
 const reportTimes = new Map();
 const skipTimes = new Map();
 const recentPartners = new Map();
@@ -80,6 +127,7 @@ function rateLimited(map, id, limit, windowMs) {
 }
 function eligible(a, b) {
   if (!a.data.clientId || !b.data.clientId) return false;
+  if ((bannedIds.get(a.data.clientId) || 0) > Date.now() || (bannedIds.get(b.data.clientId) || 0) > Date.now()) return false;
   const key = pairKey(a.data.clientId, b.data.clientId);
   return !blockedPairs.has(key) &&
     !(a.data.blocked || []).includes(b.data.clientId) &&
@@ -173,6 +221,7 @@ io.on("connection", (socket) => {
   socket.data.blocked = [];
   socket.on("identify", ({ clientId, blocked } = {}) => {
     if (typeof clientId !== "string" || !idPattern.test(clientId)) return;
+    if ((bannedIds.get(clientId) || 0) > Date.now()) { socket.emit("moderation-warning", "Access temporarily restricted."); socket.disconnect(true); return; }
     socket.data.clientId = clientId;
     socket.data.blocked = Array.isArray(blocked)
       ? blocked.filter(x => typeof x === "string" && idPattern.test(x)).slice(0, 300)
@@ -188,7 +237,8 @@ io.on("connection", (socket) => {
     if (rateLimited(reportTimes, socket.id, 3, 3600000)) {
       return reply({ ok: false, error: "Report limit reached. Please try later." });
     }
-    const report = { time: new Date().toISOString(), reason, reporter: socket.id, reported: recent.id };
+    const target = io.sockets.sockets.get(recent.id);
+    const report = { time: new Date().toISOString(), reason, reporter: socket.id, reported: recent.id, reportedClientId: target?.data.clientId || null };
     reports.push(report);
     if (reports.length > 500) reports.shift();
     console.log("MODERATION_REPORT", JSON.stringify(report));
@@ -211,6 +261,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("find-partner", () => {
+    if (!socket.data.clientId || (bannedIds.get(socket.data.clientId) || 0) > Date.now()) return;
     socket.data.ready = true;
     findPartner(socket);
   });
