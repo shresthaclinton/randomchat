@@ -4,6 +4,39 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const { Server } = require("socket.io");
+const { Pool } = require("pg");
+
+// Database is required: do not silently lose moderation records.
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL is missing. Configure a PostgreSQL database in Render.");
+  process.exit(1);
+}
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5,
+  ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: true } : undefined });
+async function initializeDatabase() {
+  await pool.query(`CREATE TABLE IF NOT EXISTS moderation_reports (
+    id BIGSERIAL PRIMARY KEY, time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    reason TEXT NOT NULL, reporter TEXT NOT NULL, reported TEXT NOT NULL,
+    reported_client_id TEXT)`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS moderation_bans (
+    client_id TEXT PRIMARY KEY, until_at TIMESTAMPTZ NOT NULL)`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS moderation_blocks (
+    pair_key TEXT PRIMARY KEY)`);
+  const [savedReports, savedBans, savedBlocks] = await Promise.all([
+    pool.query(`SELECT time, reason, reporter, reported, reported_client_id FROM moderation_reports ORDER BY id DESC LIMIT 500`),
+    pool.query(`SELECT client_id, until_at FROM moderation_bans WHERE until_at > NOW()`),
+    pool.query(`SELECT pair_key FROM moderation_blocks`)
+  ]);
+  reports.push(...savedReports.rows.reverse().map(r => ({
+    time: r.time.toISOString(), reason: r.reason, reporter: r.reporter,
+    reported: r.reported, reportedClientId: r.reported_client_id
+  })));
+  for (const r of savedBans.rows) bannedIds.set(r.client_id, new Date(r.until_at).getTime());
+  for (const r of savedBlocks.rows) blockedPairs.add(r.pair_key);
+  await pool.query(`DELETE FROM moderation_bans WHERE until_at <= NOW()`);
+  console.log("PostgreSQL moderation data loaded");
+}
+
 
 // Create the website server
 const server = http.createServer((req, res) => {
@@ -28,11 +61,16 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify({ ok: false }));
       return;
     }
-    blockedPairs.clear();
-    for (const client of io.sockets.sockets.values()) client.data.blocked = [];
-    console.log("DEVELOPER_TEST_BLOCK_RESET", new Date().toISOString());
-    res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
-    res.end(JSON.stringify({ ok: true }));
+    pool.query("DELETE FROM moderation_blocks").then(() => {
+      blockedPairs.clear();
+      for (const client of io.sockets.sockets.values()) client.data.blocked = [];
+      console.log("DEVELOPER_TEST_BLOCK_RESET", new Date().toISOString());
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      res.end(JSON.stringify({ ok: true }));
+    }).catch(error => {
+      console.error("RESET_DB_ERROR", error);
+      res.writeHead(503); res.end("Database unavailable");
+    });
     return;
   }
   // Private beta admin panel: separate secret from developer reset.
@@ -70,12 +108,17 @@ const server = http.createServer((req, res) => {
         if (typeof clientId !== "string" || !idPattern.test(clientId) || ![1,24,168].includes(hours)) {
           res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ ok: false, error: "Invalid user ID or duration" })); return;
         }
-        bannedIds.set(clientId, Date.now() + hours * 3600000);
-        for (const sock of io.sockets.sockets.values()) {
-          if (sock.data.clientId === clientId) { sock.emit("moderation-warning", "Access temporarily restricted."); sock.disconnect(true); }
-        }
-        console.log("ADMIN_BAN", JSON.stringify({ clientId, hours, time: new Date().toISOString() }));
-        res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" }); res.end(JSON.stringify({ ok: true }));
+        const until = Date.now() + hours * 3600000;
+        pool.query(`INSERT INTO moderation_bans (client_id, until_at) VALUES ($1, $2)
+          ON CONFLICT (client_id) DO UPDATE SET until_at = EXCLUDED.until_at`,
+          [clientId, new Date(until)]).then(() => {
+          bannedIds.set(clientId, until);
+          for (const sock of io.sockets.sockets.values()) {
+            if (sock.data.clientId === clientId) { sock.emit("moderation-warning", "Access temporarily restricted."); sock.disconnect(true); }
+          }
+          console.log("ADMIN_BAN", JSON.stringify({ clientId, hours, time: new Date().toISOString() }));
+          res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" }); res.end(JSON.stringify({ ok: true }));
+        }).catch(error => { console.error("BAN_DB_ERROR", error); res.writeHead(503); res.end(JSON.stringify({ ok: false, error: "Database unavailable" })); });
       });
       return;
     }
@@ -239,10 +282,15 @@ io.on("connection", (socket) => {
     }
     const target = io.sockets.sockets.get(recent.id);
     const report = { time: new Date().toISOString(), reason, reporter: socket.id, reported: recent.id, reportedClientId: target?.data.clientId || null };
-    reports.push(report);
-    if (reports.length > 500) reports.shift();
-    console.log("MODERATION_REPORT", JSON.stringify(report));
-    reply({ ok: true });
+    pool.query(`INSERT INTO moderation_reports (time, reason, reporter, reported, reported_client_id)
+      VALUES ($1, $2, $3, $4, $5)`,
+      [report.time, report.reason, report.reporter, report.reported, report.reportedClientId])
+      .then(() => {
+        reports.push(report);
+        if (reports.length > 500) reports.shift();
+        console.log("MODERATION_REPORT", JSON.stringify(report));
+        reply({ ok: true });
+      }).catch(error => { console.error("REPORT_DB_ERROR", error); reply({ ok: false, error: "Could not save report. Try again." }); });
   });
 
   socket.on("block-user", ({ targetId } = {}, ack) => {
@@ -253,11 +301,15 @@ io.on("connection", (socket) => {
     }
     const other = io.sockets.sockets.get(targetId);
     if (!other || !socket.data.clientId || !other.data.clientId) return reply({ ok: false });
-    blockedPairs.add(pairKey(socket.data.clientId, other.data.clientId));
-    socket.data.blocked.push(other.data.clientId);
-    reply({ ok: true, blockedId: other.data.clientId });
-    leavePartner(socket);
-    if (socket.data.ready) findPartner(socket);
+    const key = pairKey(socket.data.clientId, other.data.clientId);
+    pool.query(`INSERT INTO moderation_blocks (pair_key) VALUES ($1) ON CONFLICT DO NOTHING`, [key])
+      .then(() => {
+        blockedPairs.add(key);
+        socket.data.blocked.push(other.data.clientId);
+        reply({ ok: true, blockedId: other.data.clientId });
+        leavePartner(socket);
+        if (socket.data.ready) findPartner(socket);
+      }).catch(error => { console.error("BLOCK_DB_ERROR", error); reply({ ok: false }); });
   });
 
   socket.on("find-partner", () => {
@@ -311,10 +363,12 @@ io.on("connection", (socket) => {
  // Start server
 const PORT = process.env.PORT || 8000;
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log("----------------------------------");
-  console.log("RandomChat server is running!");
-  console.log(`Port: ${PORT}`);
-  console.log("----------------------------------");
+initializeDatabase().then(() => {
+  server.listen(PORT, "0.0.0.0", () => {
+    console.log("RandomChat server running with PostgreSQL on port", PORT);
+  });
+}).catch(error => {
+  console.error("DATABASE_STARTUP_ERROR", error);
+  process.exit(1);
 });
 
