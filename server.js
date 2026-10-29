@@ -1,4 +1,3 @@
-
 const http = require("node:http");
 const https = require("node:https");
 const fs = require("node:fs");
@@ -284,7 +283,17 @@ function findPartner(socket) {
       continue;
     }
 
-    if (!eligible(socket, other)) { deferred.push(otherId); continue; }
+    if (!eligible(socket, other)) {
+      // Diagnose blocked matches without logging persistent browser IDs.
+      const a = socket.data.clientId, b = other.data.clientId;
+      const reason = !a || !b ? "missing-identity" :
+        ((bannedIds.get(a) || 0) > Date.now() || (bannedIds.get(b) || 0) > Date.now()) ? "banned" :
+        blockedPairs.has(pairKey(a, b)) ? "persistent-block" :
+        (socket.data.blocked || []).includes(b) || (other.data.blocked || []).includes(a) ? "browser-block" : "other";
+      console.info("MATCH_INELIGIBLE", { reason, socket: socket.id, other: otherId });
+      deferred.push(otherId);
+      continue;
+    }
     waiting.push(...deferred);
     partners.set(socket.id, otherId);
     partners.set(otherId, socket.id);
@@ -307,6 +316,7 @@ function findPartner(socket) {
 
   waiting.push(...deferred);
   waiting.push(socket.id);
+  console.info("MATCH_WAITING", { socket: socket.id, waitingCount: waiting.length, identified: !!socket.data.clientId });
   socket.emit("waiting");
 }
 
@@ -345,6 +355,8 @@ io.on("connection", (socket) => {
     socket.data.blocked = Array.isArray(blocked)
       ? blocked.filter(x => typeof x === "string" && idPattern.test(x)).slice(0, 300)
       : [];
+    // If a request arrived before identification, retry matchmaking now.
+    if (socket.data.ready && !partners.has(socket.id)) findPartner(socket);
   });
 
   socket.on("report-user", ({ reason, description } = {}, ack) => {
@@ -391,7 +403,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("find-partner", () => {
-    if (!socket.data.clientId || (bannedIds.get(socket.data.clientId) || 0) > Date.now()) return;
+    if (!socket.data.clientId) {
+      console.warn("MATCH_WAITING_FOR_IDENTIFY", { socket: socket.id });
+      socket.data.ready = true;
+      return;
+    }
+    if ((bannedIds.get(socket.data.clientId) || 0) > Date.now()) {
+      socket.emit("moderation-warning", "Access temporarily restricted.");
+      return;
+    }
     socket.data.ready = true;
     findPartner(socket);
   });
@@ -449,4 +469,3 @@ initializeDatabase().then(() => {
   console.error("DATABASE_STARTUP_ERROR", error);
   process.exit(1);
 });
-

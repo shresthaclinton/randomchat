@@ -249,7 +249,15 @@ if (!clientId || !/^[a-f0-9-]{36}$/i.test(clientId)) {
 let blockedIds = [];
 try { blockedIds = JSON.parse(localStorage.getItem(blockedKey) || "[]"); } catch (_) {}
 if (!Array.isArray(blockedIds)) blockedIds = [];
-function identify() { socket.emit("identify", { clientId, blocked: blockedIds.slice(-300) }); }
+function identify() { if (socket.connected) socket.emit("identify", { clientId, blocked: blockedIds.slice(-300) }); }
+function requestMatch() {
+  if (!socket.connected) {
+    status("Waiting for server connection...");
+    return;
+  }
+  identify();
+  socket.emit("find-partner");
+}
 
 const statusBox = document.getElementById("status");
 
@@ -326,8 +334,9 @@ async function startChat() {
 
     status("Preparing connection...");
     await loadIceServers();
+    if (!localStream) return; // Stop was clicked while ICE settings loaded.
     status("Searching for another user...");
-    socket.emit("find-partner");
+    requestMatch();
 
   } catch (error) {
     status("Camera error: " + error.message);
@@ -423,6 +432,9 @@ async function createPeer(id) {
     }
   };
 
+  pc.oniceconnectionstatechange = () => {
+    if (generation === currentGeneration) console.info("RandomChat ICE state:", pc.iceConnectionState);
+  };
   pc.onconnectionstatechange = () => {
     if (generation !== currentGeneration) return;
 
@@ -532,9 +544,7 @@ socket.on("disconnect", () => {
 
 socket.on("connect", () => {
   identify();
-  if (localStream) {
-    socket.emit("find-partner");
-  }
+  if (localStream) requestMatch();
 });
 
 reportBtn.addEventListener("click", () => {
