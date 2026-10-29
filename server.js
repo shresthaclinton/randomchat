@@ -2,6 +2,7 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
 const { Server } = require("socket.io");
 
 // Create the website server
@@ -11,6 +12,29 @@ const server = http.createServer((req, res) => {
   // Socket.IO requests are handled automatically
   // by the Socket.IO server attached below.
 
+  // Private developer reset. The secret is stored only in Render environment variables.
+  if (url.pathname === "/developer-reset" && req.method === "GET") {
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+    res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>RandomChat developer reset</title><style>body{font:16px system-ui;background:#10131b;color:white;max-width:480px;margin:8vh auto;padding:20px}input,button{font:inherit;padding:14px;border-radius:8px;width:100%;box-sizing:border-box;margin-top:12px}button{background:#18a86b;color:white;border:0;cursor:pointer}</style></head><body><h2>Developer testing reset</h2><p>Private testing only. This clears temporary server blocks and the blocked list on <strong>this browser</strong>. Repeat on each test device.</p><form id="form"><input id="secret" type="password" autocomplete="off" placeholder="Developer reset secret" required><button>Reset testing blocks</button></form><p id="result" role="status"></p><script>document.getElementById('form').onsubmit=async(e)=>{e.preventDefault();const result=document.getElementById('result');result.textContent='Resetting…';try{const response=await fetch('/api/developer/reset-blocks',{method:'POST',headers:{'Content-Type':'application/json','X-Developer-Reset-Token':document.getElementById('secret').value},body:'{}'});if(!response.ok)throw Error(response.status===401?'Incorrect password or reset not configured':'Reset failed');localStorage.removeItem('randomchat-blocked-ids');result.textContent='Reset complete on this browser. Refresh RandomChat. Repeat on your other test devices.';document.getElementById('secret').value='';}catch(err){result.textContent=err.message;}};</script></body></html>`);
+    return;
+  }
+  if (url.pathname === "/api/developer/reset-blocks" && req.method === "POST") {
+    const configured = process.env.DEVELOPER_RESET_TOKEN || "";
+    const provided = req.headers["x-developer-reset-token"] || "";
+    const a = Buffer.from(configured);
+    const b = Buffer.from(typeof provided === "string" ? provided : "");
+    if (a.length < 24 || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      res.writeHead(401, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      res.end(JSON.stringify({ ok: false }));
+      return;
+    }
+    blockedPairs.clear();
+    for (const client of io.sockets.sockets.values()) client.data.blocked = [];
+    console.log("DEVELOPER_TEST_BLOCK_RESET", new Date().toISOString());
+    res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
   if (url.pathname !== "/" && url.pathname !== "/index.html") {
     res.writeHead(404);
     res.end("Page not found");
