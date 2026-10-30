@@ -160,6 +160,12 @@ footer {
   .videos { grid-template-columns: 1fr; }
   .controls button { flex: 1; }
 }
+
+.beta-consent { margin: 16px 0 8px; padding: 13px 15px; border: 2px solid #171717; border-radius: 12px; background: #fff6ba; line-height: 1.5; }
+.beta-consent label { display:flex; align-items:flex-start; gap:10px; font-size:14px; cursor:pointer; }
+.beta-consent input { width:19px; height:19px; margin-top:2px; flex:none; accent-color:#168a3a; }
+.beta-consent a, footer a { color:inherit; text-decoration:underline; }
+footer { line-height:1.8; }
 </style>
 </head>
 
@@ -206,6 +212,11 @@ footer {
 
   </div>
 
+  <div class="beta-consent">
+    <label><input id="adultConsent" type="checkbox" autocomplete="off" />
+      <span>I confirm that I am <strong>18 or older</strong> and agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a>, <a href="/privacy" target="_blank" rel="noopener">Privacy Notice</a> and <a href="/guidelines" target="_blank" rel="noopener">Community Guidelines</a>. I understand that I may be connected to an unknown adult.</span>
+    </label>
+  </div>
   <div class="controls">
     <button class="start" id="startBtn">▶ गल्लीमा छिरौँ</button>
     <button class="next" id="nextBtn" disabled>⏭ अर्को मोड</button>
@@ -238,7 +249,7 @@ footer {
 
 </main>
 
-<footer>Online Galli © 2026 | 18+ beta · Be respectful. Stay safe.</footer>
+<footer>Online Galli © 2026 · 18+ beta · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/guidelines">Community Guidelines</a> · Be respectful. Stay safe.</footer>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -350,6 +361,11 @@ async function loadIceServers() {
 
 async function startChat() {
   if (localStream) return;
+  if (!document.getElementById("adultConsent").checked) {
+    status("Please confirm you are 18+ and accept the beta policies before entering.");
+    document.getElementById("adultConsent").focus();
+    return;
+  }
 
   startBtn.disabled = true;
   status("Requesting camera and microphone...");

@@ -148,7 +148,8 @@ const server = http.createServer((req, res) => {
     if (url.pathname === "/api/admin/overview" && req.method === "GET") {
       const now = Date.now();
       for (const [id, until] of bannedIds) if (until <= now) bannedIds.delete(id);
-      const payload = { ok: true, online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse().map(r => ({...r, uniqueReporters: new Set(reports.filter(x => x.reportedClientId && x.reportedClientId === r.reportedClientId && x.reporterClientId).map(x => x.reporterClientId)).size || (r.reporterClientId ? 1 : null)})), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
+      const activeChatSeconds = [...chatStarts.values()].reduce((sum, start) => sum + Math.max(0, Math.round((now - start) / 1000)), 0);
+      const payload = { ok: true, monitor: { ...monitor, activeChatSeconds, totalChatSeconds: monitor.completedChatSeconds + activeChatSeconds, estimatedAverageChatSeconds: monitor.matches ? Math.round((monitor.completedChatSeconds + activeChatSeconds) / monitor.matches) : 0, scope: "Current server process only; resets on restart", turnBytes: null }, online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse().map(r => ({...r, uniqueReporters: new Set(reports.filter(x => x.reportedClientId && x.reportedClientId === r.reportedClientId && x.reporterClientId).map(x => x.reporterClientId)).size || (r.reporterClientId ? 1 : null)})), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
       res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
       res.end(JSON.stringify(payload));
       return;
@@ -199,6 +200,12 @@ const server = http.createServer((req, res) => {
     }
     res.writeHead(404); res.end("Not found"); return;
   }
+  const policyPages = { "/privacy": "privacy.html", "/terms": "terms.html", "/guidelines": "guidelines.html" };
+  if (req.method === "GET" && policyPages[url.pathname]) {
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
+    fs.createReadStream(path.join(__dirname, policyPages[url.pathname])).pipe(res);
+    return;
+  }
   if (url.pathname !== "/" && url.pathname !== "/index.html") {
     res.writeHead(404);
     res.end("Page not found");
@@ -227,6 +234,19 @@ const waiting = [];
 
 // Store connected partners
 const partners = new Map();
+// Lightweight process-lifetime metrics. Reset whenever Render restarts.
+const monitor = { startedAt: new Date().toISOString(), connections: 0, matches: 0, completedChatSeconds: 0, longestChatSeconds: 0 };
+const chatStarts = new Map();
+function closeChatTimer(a, b) {
+  const key = pairKey(a, b);
+  const started = chatStarts.get(key);
+  if (started === undefined) return;
+  const seconds = Math.max(0, Math.round((Date.now() - started) / 1000));
+  monitor.completedChatSeconds += seconds;
+  monitor.longestChatSeconds = Math.max(monitor.longestChatSeconds, seconds);
+  chatStarts.delete(key);
+}
+
 // Beta moderation state: kept in memory until the server restarts.
 const reports = [];
 const bannedIds = new Map(); // Temporary bans: in-memory beta version.
@@ -297,6 +317,8 @@ function findPartner(socket) {
     waiting.push(...deferred);
     partners.set(socket.id, otherId);
     partners.set(otherId, socket.id);
+    monitor.matches++;
+    chatStarts.set(pairKey(socket.id, otherId), Date.now());
 
     socket.emit("matched", {
       partnerId: otherId,
@@ -327,6 +349,7 @@ function leavePartner(socket) {
 
   if (!otherId) return;
 
+  closeChatTimer(socket.id, otherId);
   partners.delete(socket.id);
   partners.delete(otherId);
 
@@ -343,6 +366,7 @@ function leavePartner(socket) {
 
 // Handle user connections
 io.on("connection", (socket) => {
+  monitor.connections++;
   console.log("User connected:", socket.id);
 
   socket.data.ready = false;
