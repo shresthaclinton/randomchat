@@ -234,6 +234,21 @@ const waiting = [];
 
 // Store connected partners
 const partners = new Map();
+
+// V4: transient game state, scoped to the currently matched pair.
+const games = new Map();
+const reactionTimes = new Map();
+const positiveReactions = new Set(["❤️","😂","👏","🎉","🙌","👍","✨"]);
+const winningLines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8]];
+function gamePair(socket) {
+  const other = partners.get(socket.id);
+  return other ? {other,key:pairKey(socket.id,other)} : null;
+}
+function clearGame(socket) {
+  const pair=gamePair(socket);
+  if(pair) {games.delete(pair.key);io.to(pair.other).emit("galli-game-ended");}
+}
+
 // Lightweight process-lifetime metrics. Reset whenever Render restarts.
 const monitor = { startedAt: new Date().toISOString(), connections: 0, matches: 0, completedChatSeconds: 0, longestChatSeconds: 0 };
 const chatStarts = new Map();
@@ -350,6 +365,7 @@ function leavePartner(socket) {
   if (!otherId) return;
 
   closeChatTimer(socket.id, otherId);
+  clearGame(socket);
   partners.delete(socket.id);
   partners.delete(otherId);
 
@@ -455,6 +471,49 @@ io.on("connection", (socket) => {
     leavePartner(socket);
   });
 
+
+  socket.on("galli-game-invite", () => {
+    const p=gamePair(socket);
+    if(!p) return;
+    const old=games.get(p.key);
+    if(old) return;
+    games.set(p.key,{status:"pending",inviter:socket.id,invitee:p.other});
+    io.to(p.other).emit("galli-game-invite");
+    socket.emit("galli-game-pending");
+  });
+  socket.on("galli-game-response", ({accept}={}) => {
+    const p=gamePair(socket);if(!p)return;
+    const g=games.get(p.key);
+    if(!g||g.status!=="pending"||g.invitee!==socket.id)return;
+    if(accept!==true) {
+      games.delete(p.key);
+      io.to(g.inviter).emit("galli-game-declined");
+      return;
+    }
+    g.status="playing";g.board=Array(9).fill(null);g.turn="X";g.players={[g.inviter]:"X",[g.invitee]:"O"};g.winner=null;g.draw=false;
+    io.to(g.inviter).emit("galli-game-state",{board:g.board,turn:g.turn,you:"X",winner:null,draw:false});
+    socket.emit("galli-game-state",{board:g.board,turn:g.turn,you:"O",winner:null,draw:false});
+  });
+  socket.on("galli-game-move", ({index}={}) => {
+    const p=gamePair(socket);if(!p)return;
+    const g=games.get(p.key);
+    if(!g||g.status!=="playing"||!Number.isInteger(index)||index<0||index>8||g.board[index]||g.winner||g.draw||g.players[socket.id]!==g.turn)return;
+    g.board[index]=g.turn;
+    if(winningLines.some(line=>line.every(i=>g.board[i]===g.turn)))g.winner=g.turn;
+    else if(g.board.every(Boolean))g.draw=true;
+    else g.turn=g.turn==="X"?"O":"X";
+    for(const id of [socket.id,p.other])io.to(id).emit("galli-game-state",{board:g.board,turn:g.turn,you:g.players[id],winner:g.winner,draw:g.draw});
+  });
+  socket.on("galli-game-close", () => {
+    const p=gamePair(socket);if(!p)return;
+    games.delete(p.key);io.to(p.other).emit("galli-game-ended");
+  });
+  socket.on("galli-reaction", ({emoji}={}) => {
+    const p=gamePair(socket);
+    if(!p||!positiveReactions.has(emoji)||rateLimited(reactionTimes,socket.id,6,10000))return;
+    io.to(p.other).emit("galli-reaction",{emoji});
+  });
+
   // Forward WebRTC messages between matched users
   socket.on("signal", (message) => {
     if (!message || typeof message !== "object") return;
@@ -476,6 +535,7 @@ io.on("connection", (socket) => {
     recentPartners.delete(socket.id);
     reportTimes.delete(socket.id);
     skipTimes.delete(socket.id);
+    reactionTimes.delete(socket.id);
 
     console.log("User disconnected:", socket.id);
   });

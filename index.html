@@ -180,6 +180,17 @@ footer { line-height:1.8; }
 #confirmEntryBtn:disabled{background:#77847a;cursor:not-allowed}
 .gate-footnote{font-size:12px;text-align:center;margin-top:12px}
 
+
+.v4-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.v4-tools button,.v4-panel button{padding:10px 14px;border-radius:9px;cursor:pointer}
+.v4-panel{margin-top:12px;padding:16px;background:#222;color:white;border:2px solid #ffe247;border-radius:14px}
+.v4-panel[hidden]{display:none!important}
+.v4-board{display:grid;grid-template-columns:repeat(3,minmax(60px,88px));gap:6px;margin:14px 0}
+.v4-board button{aspect-ratio:1;font-size:32px;font-weight:800;background:#ffe247;color:#111;border:0}
+.v4-board button:disabled{opacity:.8;cursor:default}
+.v4-reactions{display:flex;flex-wrap:wrap;gap:6px}
+.v4-reactions button{font-size:22px;background:#333;border:1px solid #777;color:white}
+.v4-toast{min-height:30px;font-size:26px;margin-top:6px}
 </style>
 </head>
 
@@ -256,6 +267,27 @@ footer { line-height:1.8; }
     <button class="stop" id="stopBtn" disabled>■ Stop</button>
     <button id="reportBtn" disabled>⚑ Report</button>
   </div>
+
+
+<div class="v4-tools">
+ <button id="gamesBtn" disabled>🎮 Tic-Tac-Toe</button>
+ <button id="reactionsBtn" disabled>❤️ Reactions</button>
+ <button id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
+</div>
+<div class="v4-panel" id="gamePanel" hidden>
+ <strong>🎮 Tic-Tac-Toe</strong>
+ <p id="gameMessage" aria-live="polite">Invite your stranger to play.</p>
+ <div id="gameBoard" class="v4-board" role="group" aria-label="Tic-Tac-Toe board"></div>
+ <button id="inviteGameBtn">Invite to Play</button>
+ <button id="acceptGameBtn" hidden>Accept</button>
+ <button id="declineGameBtn" hidden>Decline</button>
+ <button id="closeGameBtn">Close Game</button>
+</div>
+<div class="v4-panel" id="reactionPanel" hidden>
+ <strong>Send a positive reaction</strong>
+ <div class="v4-reactions" id="reactionChoices"></div>
+</div>
+<div class="v4-toast" id="reactionToast" aria-live="polite"></div>
 
   <div id="status">Ready to enter Online Galli. Camera and microphone access will be requested when you start.</div>
   <div id="moderationControls" style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
@@ -381,6 +413,7 @@ function closePeer() {
   }
 
   partnerId = null;
+  resetV4();
   reportBtn.disabled = true;
   blockBtn.disabled = true;
   remoteVideo.srcObject = null;
@@ -487,6 +520,7 @@ function toggleMute() {
 async function createPeer(id) {
   closePeer();
   partnerId = id;
+  resetV4();
   reportBtn.disabled = false;
   blockBtn.disabled = false;
 
@@ -679,6 +713,75 @@ blockBtn.addEventListener("click", () => {
   });
 });
 socket.on("moderation-warning", message => status(message));
+
+// V4 game and positive reaction controls. No additional video processing.
+const gamesBtn=document.getElementById("gamesBtn");
+const reactionsBtn=document.getElementById("reactionsBtn");
+const muteReactionsBtn=document.getElementById("muteReactionsBtn");
+const gamePanel=document.getElementById("gamePanel");
+const reactionPanel=document.getElementById("reactionPanel");
+const gameMessage=document.getElementById("gameMessage");
+const gameBoard=document.getElementById("gameBoard");
+const inviteGameBtn=document.getElementById("inviteGameBtn");
+const acceptGameBtn=document.getElementById("acceptGameBtn");
+const declineGameBtn=document.getElementById("declineGameBtn");
+const closeGameBtn=document.getElementById("closeGameBtn");
+const reactionToast=document.getElementById("reactionToast");
+let gameState=null, reactionsMuted=false, toastTimeout=null;
+function resetV4() {
+  gameState=null;gamePanel.hidden=true;reactionPanel.hidden=true;
+  gameBoard.replaceChildren();gameMessage.textContent="Invite your stranger to play.";
+  inviteGameBtn.hidden=false;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+  gamesBtn.disabled=!partnerId;reactionsBtn.disabled=!partnerId;
+}
+gamesBtn.onclick=()=>{gamePanel.hidden=!gamePanel.hidden;reactionPanel.hidden=true;};
+reactionsBtn.onclick=()=>{reactionPanel.hidden=!reactionPanel.hidden;gamePanel.hidden=true;};
+inviteGameBtn.onclick=()=>{if(!partnerId)return;socket.emit("galli-game-invite");gameMessage.textContent="Waiting for your partner to accept...";inviteGameBtn.hidden=true;};
+acceptGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:true});acceptGameBtn.hidden=true;declineGameBtn.hidden=true;};
+declineGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:false});resetV4();};
+closeGameBtn.onclick=()=>{socket.emit("galli-game-close");resetV4();};
+socket.on("galli-game-invite",()=>{
+ if(!partnerId)return;
+ gamePanel.hidden=false;reactionPanel.hidden=true;inviteGameBtn.hidden=true;
+ acceptGameBtn.hidden=false;declineGameBtn.hidden=false;
+ gameMessage.textContent="Your partner invited you to play Tic-Tac-Toe.";
+});
+socket.on("galli-game-pending",()=>{gameMessage.textContent="Waiting for your partner to accept...";});
+socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;gameMessage.textContent="Your partner declined. You can invite again.";});
+socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;gameMessage.textContent="Game ended.";});
+socket.on("galli-game-state",state=>{
+ if(!partnerId)return;
+ gameState=state;gamePanel.hidden=false;inviteGameBtn.hidden=true;
+ acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ gameMessage.textContent=state.winner?`${state.winner===state.you?"You win!":"Your partner wins!"}`:state.draw?"It's a draw!":state.turn===state.you?"Your turn":"Partner's turn";
+ gameBoard.replaceChildren();
+ state.board.forEach((value,index)=>{
+  const b=document.createElement("button");
+  b.textContent=value||"·";
+  b.disabled=!!value||!!state.winner||state.draw||state.turn!==state.you;
+  b.setAttribute("aria-label",`Cell ${index+1}: ${value||"empty"}`);
+  b.onclick=()=>socket.emit("galli-game-move",{index});
+  gameBoard.appendChild(b);
+ });
+});
+const approvedReactions=["❤️","😂","👏","🎉","🙌","👍","✨"];
+approvedReactions.forEach(emoji=>{
+ const b=document.createElement("button");b.textContent=emoji;
+ b.setAttribute("aria-label","Send "+emoji+" reaction");
+ b.onclick=()=>{if(partnerId)socket.emit("galli-reaction",{emoji});};
+ document.getElementById("reactionChoices").appendChild(b);
+});
+muteReactionsBtn.onclick=()=>{
+ reactionsMuted=!reactionsMuted;
+ muteReactionsBtn.textContent=reactionsMuted?"🔕 Reactions Muted":"🔔 Reactions On";
+ muteReactionsBtn.setAttribute("aria-pressed",String(reactionsMuted));
+};
+socket.on("galli-reaction",({emoji}={})=>{
+ if(reactionsMuted||!approvedReactions.includes(emoji)||!partnerId)return;
+ reactionToast.textContent=emoji;
+ clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>reactionToast.textContent="",1800);
+});
+
 startBtn.addEventListener("click", startChat);
 nextBtn.addEventListener("click", nextChat);
 muteBtn.addEventListener("click", toggleMute);
