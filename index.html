@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Online Galli | हरेक मोडमा नयाँ भेट</title>
-<meta name="description" content="Online Galli is an 18+ place for spontaneous one-to-one video conversations. हरेक मोडमा नयाँ भेट।">
+<title>Online Galli | A new encounter around every corner</title>
+<meta name="description" content="Online Galli is an 18+ place for spontaneous one-to-one video conversations. A new encounter around every corner।">
 <meta name="theme-color" content="#ffe247">
 
 <style>
@@ -166,10 +166,48 @@ footer {
 .beta-consent input { width:19px; height:19px; margin-top:2px; flex:none; accent-color:#168a3a; }
 .beta-consent a, footer a { color:inherit; text-decoration:underline; }
 footer { line-height:1.8; }
+
+.entry-gate{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto}
+.entry-gate[hidden]{display:none!important}
+.entry-panel{width:min(100%,580px);max-height:calc(100dvh - 36px);overflow:auto;background:#ffe247;color:#171717;border-radius:22px;padding:clamp(20px,5vw,38px);box-shadow:0 20px 70px #0008}
+.entry-panel h2{font-size:clamp(24px,5vw,35px);margin:12px 0}
+.entry-panel p,.entry-panel li{line-height:1.55}
+.entry-panel ul{padding-left:22px;margin:15px 0}
+.entry-panel .gate-check{display:flex;gap:12px;align-items:flex-start;background:#fff5bf;border:2px solid #171717;border-radius:12px;padding:14px;margin:18px 0;cursor:pointer;line-height:1.5}
+.entry-panel .gate-check input{width:23px;height:23px;flex:none;margin-top:2px;accent-color:#168a3a}
+.entry-panel a{color:#171717;text-decoration:underline;font-weight:700}
+#confirmEntryBtn{width:100%;padding:16px;font-size:17px;border:0;border-radius:12px;font-weight:800;background:#168a3a;color:#fff;cursor:pointer}
+#confirmEntryBtn:disabled{background:#77847a;cursor:not-allowed}
+.gate-footnote{font-size:12px;text-align:center;margin-top:12px}
+
 </style>
 </head>
 
 <body>
+
+
+<div id="entryGate" class="entry-gate" role="dialog" aria-modal="true" aria-labelledby="entryTitle">
+ <div class="entry-panel">
+  <div style="font-weight:800">🛣 ONLINE GALLI · 18+ BETA</div>
+  <h2 id="entryTitle">Welcome to Online Galli!</h2>
+  <p>Meet new people through spontaneous one-on-one video chats. Please read these rules before entering.</p>
+  <ul>
+   <li>You must be <strong>18 years or older</strong>.</li>
+   <li>No sexual misconduct, harassment, threats, or hateful behavior.</li>
+   <li>Never share your address, phone number, or other private information.</li>
+   <li>Do not record or share another person’s video without their permission.</li>
+   <li>Use Report or Block if someone makes you uncomfortable or breaks the rules.</li>
+  </ul>
+  <label class="gate-check"><input id="adultConsent" type="checkbox" autocomplete="off">
+   <span>I confirm that I am <strong>18 or older</strong>, understand I may meet unknown adults, and agree to the
+   <a href="/terms" target="_blank" rel="noopener">Terms</a>,
+   <a href="/privacy" target="_blank" rel="noopener">Privacy Notice</a> and
+   <a href="/guidelines" target="_blank" rel="noopener">Community Guidelines</a>.</span>
+  </label>
+  <button id="confirmEntryBtn" type="button" disabled>✓ I Agree — Enter Online Galli</button>
+  <p class="gate-footnote">Camera and microphone access is requested only after clicking “Enter the Galli”.</p>
+ </div>
+</div>
 
 <header>
   <div class="logo" aria-label="Online Galli">
@@ -186,16 +224,16 @@ footer { line-height:1.8; }
 <main class="container">
 
 <section>
-  <h1 class="tagline">हरेक मोडमा नयाँ भेट।</h1>
-  <p class="subtitle">इन्टरनेटको गल्लीमा नयाँ मान्छेसँग गफ गरौँ। · Meet someone unexpected.</p>
+  <h1 class="tagline">A new encounter around every corner।</h1>
+  <p class="subtitle">Explore a virtual street and meet someone new. · Meet someone unexpected.</p>
   <div class="videos">
 
     <div class="video-box">
       <video id="remoteVideo" autoplay playsinline></video>
       <div class="placeholder" id="remotePlaceholder">
         <div class="emoji">👤</div>
-        <h3>गल्लीमा कोही आउँदैछ...</h3>
-        <p>Start Chat थिचेर सुरु गर्नुहोस्</p>
+        <h3>Someone new is around the corner...</h3>
+        <p>Click Enter the Galli to begin</p>
       </div>
       <div class="label">Stranger</div>
     </div>
@@ -211,15 +249,9 @@ footer { line-height:1.8; }
     </div>
 
   </div>
-
-  <div class="beta-consent">
-    <label><input id="adultConsent" type="checkbox" autocomplete="off" />
-      <span>I confirm that I am <strong>18 or older</strong> and agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a>, <a href="/privacy" target="_blank" rel="noopener">Privacy Notice</a> and <a href="/guidelines" target="_blank" rel="noopener">Community Guidelines</a>. I understand that I may be connected to an unknown adult.</span>
-    </label>
-  </div>
-  <div class="controls">
-    <button class="start" id="startBtn">▶ गल्लीमा छिरौँ</button>
-    <button class="next" id="nextBtn" disabled>⏭ अर्को मोड</button>
+<div class="controls">
+    <button class="start" id="startBtn">▶ Enter the Galli</button>
+    <button class="next" id="nextBtn" disabled>⏭ Next Corner</button>
     <button id="muteBtn" disabled>🎤 Mute</button>
     <button class="stop" id="stopBtn" disabled>■ Stop</button>
     <button id="reportBtn" disabled>⚑ Report</button>
@@ -254,6 +286,19 @@ footer { line-height:1.8; }
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
+const entryGate = document.getElementById("entryGate");
+const adultConsent = document.getElementById("adultConsent");
+const confirmEntryBtn = document.getElementById("confirmEntryBtn");
+let entryConfirmed = false;
+adultConsent.addEventListener("change", () => {
+  confirmEntryBtn.disabled = !adultConsent.checked;
+});
+confirmEntryBtn.addEventListener("click", () => {
+  if (!adultConsent.checked) return;
+  entryConfirmed = true;
+  entryGate.hidden = true;
+  startBtn.focus();
+});
 
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
@@ -361,9 +406,10 @@ async function loadIceServers() {
 
 async function startChat() {
   if (localStream) return;
-  if (!document.getElementById("adultConsent").checked) {
+  if (!entryConfirmed || !adultConsent.checked) {
     status("Please confirm you are 18+ and accept the beta policies before entering.");
-    document.getElementById("adultConsent").focus();
+    entryGate.hidden = false;
+    adultConsent.focus();
     return;
   }
 
@@ -414,7 +460,7 @@ function stopChat() {
 
   isMuted = false;
   muteBtn.textContent = "🎤 Mute";
-  remoteMessage("Waiting for a stranger", "Start Chat थिचेर सुरु गर्नुहोस्");
+  remoteMessage("Waiting for a stranger", "Click Enter the Galli to begin");
   status("Chat stopped.");
 }
 
