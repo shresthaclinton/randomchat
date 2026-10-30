@@ -26,7 +26,9 @@ header {
   align-items: center;
 }
 
-.logo { font-size: 27px; font-weight: 900; letter-spacing: -1px; }
+/* Brand: road icon + clearly separated words */
+.logo { display: inline-flex; align-items: center; gap: 10px; font-size: clamp(21px, 3vw, 27px); font-weight: 900; letter-spacing: -.7px; white-space: nowrap; }
+.logo svg { width: 35px; height: 35px; flex: none; }
 .logo span { color: #171717; }
 .online { color: #171717; font-size: 13px; font-weight: 700; }
 .tagline { margin: 0 0 18px; font-size: clamp(22px, 4vw, 38px); font-weight: 900; letter-spacing: -1px; }
@@ -110,7 +112,8 @@ button {
 button:disabled { opacity: .4; cursor: not-allowed; }
 button:hover:not(:disabled) { filter: brightness(1.15); }
 
-.start { background: #171717; color: #ffe247; }
+.start { background: #168a3a; color: #ffffff; border: 2px solid #0b6428; }
+.start:hover:not(:disabled) { background: #10702f; filter: none; }
 .next { background: #ffffff; color: #171717; border: 2px solid #171717; }
 .stop { background: #a92828; }
 
@@ -163,7 +166,14 @@ footer {
 <body>
 
 <header>
-  <div class="logo">online<span>galli.</span></div>
+  <div class="logo" aria-label="Online Galli">
+    <svg viewBox="0 0 40 40" role="img" aria-label="Road logo" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="10" fill="#171717"/>
+      <path d="M12 37 L18 4 H22 L28 37 Z" fill="#FFE247"/>
+      <path d="M20 8 V13 M20 18 V23 M20 28 V33" stroke="#171717" stroke-width="2.3" stroke-linecap="round"/>
+    </svg>
+    <span>Online Galli</span>
+  </div>
   <div class="online">● 18+ beta</div>
 </header>
 
