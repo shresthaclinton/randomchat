@@ -267,6 +267,24 @@ let partnerId = null;
 let isMuted = false;
 let generation = 0;
 let pendingCandidates = [];
+let connectionTimer = null;
+let disconnectTimer = null;
+function clearConnectionTimers() {
+  clearTimeout(connectionTimer);
+  clearTimeout(disconnectTimer);
+  connectionTimer = null;
+  disconnectTimer = null;
+}
+function recoverFailedCall(expectedGeneration) {
+  if (generation !== expectedGeneration || !localStream || !partnerId) return;
+  console.warn("RandomChat: video connection timed out or failed; finding another partner");
+  nextChat();
+}
+function startConnectionTimer(expectedGeneration) {
+  clearTimeout(connectionTimer);
+  connectionTimer = setTimeout(() => recoverFailedCall(expectedGeneration), 20000);
+}
+
 
 function status(message) {
   statusBox.textContent = message;
@@ -279,6 +297,7 @@ function remoteMessage(title, description) {
 }
 
 function closePeer() {
+  clearConnectionTimers();
   generation++;
   pendingCandidates = [];
 
@@ -394,6 +413,7 @@ async function createPeer(id) {
   blockBtn.disabled = false;
 
   const currentGeneration = generation;
+  startConnectionTimer(currentGeneration);
 
   peer = new RTCPeerConnection({ iceServers: currentIceServers });
 
@@ -439,9 +459,15 @@ async function createPeer(id) {
     if (generation !== currentGeneration) return;
 
     if (pc.connectionState === "connected") {
+      clearConnectionTimers();
       status("Connected! You can now talk.");
-    } else if (pc.connectionState === "failed") {
-      status("Connection failed. Try Next.");
+    } else if (pc.connectionState === "disconnected") {
+      status("Connection interrupted. Reconnecting...");
+      clearTimeout(disconnectTimer);
+      disconnectTimer = setTimeout(() => recoverFailedCall(currentGeneration), 8000);
+    } else if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+      status("Connection failed. Finding another person...");
+      recoverFailedCall(currentGeneration);
     }
   };
 
@@ -471,6 +497,7 @@ socket.on("matched", async ({ partnerId: id, initiator }) => {
     }
   } catch (error) {
     status("Connection setup error: " + error.message);
+    if (localStream && partnerId === id) nextChat();
   }
 });
 
