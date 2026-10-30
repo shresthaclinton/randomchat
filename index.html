@@ -4,29 +4,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RandomChat - Live Video Chat</title>
+<title>Online Galli | हरेक मोडमा नयाँ भेट</title>
+<meta name="description" content="Online Galli is an 18+ place for spontaneous one-to-one video conversations. हरेक मोडमा नयाँ भेट।">
+<meta name="theme-color" content="#ffe247">
 
 <style>
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  background: #0b0e14;
-  color: white;
+  background: #ffe247;
+  color: #171717;
   font-family: Arial, sans-serif;
 }
 
 header {
   padding: 18px 5%;
-  border-bottom: 1px solid #303746;
+  border-bottom: 2px solid #171717;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.logo { font-size: 25px; font-weight: bold; }
-.logo span { color: #ff713b; }
-.online { color: #45d69a; font-size: 13px; }
+.logo { font-size: 27px; font-weight: 900; letter-spacing: -1px; }
+.logo span { color: #171717; }
+.online { color: #171717; font-size: 13px; font-weight: 700; }
+.tagline { margin: 0 0 18px; font-size: clamp(22px, 4vw, 38px); font-weight: 900; letter-spacing: -1px; }
+.subtitle { margin: -9px 0 20px; color: #39331a; }
 
 .container {
   max-width: 1400px;
@@ -46,8 +50,8 @@ header {
 .video-box {
   position: relative;
   aspect-ratio: 4 / 3;
-  background: #19202d;
-  border: 1px solid #343d4e;
+  background: #171717;
+  border: 2px solid #171717;
   border-radius: 15px;
   overflow: hidden;
 }
@@ -98,7 +102,7 @@ button {
   border: 0;
   border-radius: 9px;
   color: white;
-  background: #344052;
+  background: #171717;
   font-weight: bold;
   cursor: pointer;
 }
@@ -106,42 +110,42 @@ button {
 button:disabled { opacity: .4; cursor: not-allowed; }
 button:hover:not(:disabled) { filter: brightness(1.15); }
 
-.start { background: #159e68; }
-.next { background: #3276f6; }
-.stop { background: #d34545; }
+.start { background: #171717; color: #ffe247; }
+.next { background: #ffffff; color: #171717; border: 2px solid #171717; }
+.stop { background: #a92828; }
 
 #status {
   margin-top: 18px;
-  color: #bac4d5;
+  color: #312b17;
   line-height: 1.6;
 }
 
 .ad {
-  background: linear-gradient(145deg, #26334f, #161b29);
-  border: 1px solid #38465e;
+  background: #171717;
+  border: 1px solid #171717;
   border-radius: 15px;
   padding: 35px 20px;
   text-align: center;
   min-height: 250px;
 }
 
-.ad h3 { color: #ffb36a; }
+.ad h3 { color: #ffe247; }
 .ad p { color: #b5bed0; font-size: 14px; }
 
 .safety {
-  background: #19202d;
+  background: #fff6c7;
   padding: 18px;
   border-radius: 12px;
   margin-top: 15px;
   font-size: 13px;
   line-height: 1.7;
-  color: #b5bed0;
+  color: #39331a;
 }
 
 footer {
   padding: 30px;
   text-align: center;
-  color: #77849a;
+  color: #514821;
   font-size: 12px;
 }
 
@@ -159,21 +163,23 @@ footer {
 <body>
 
 <header>
-  <div class="logo">Random<span>Chat</span></div>
-  <div class="online">● Local testing</div>
+  <div class="logo">online<span>galli.</span></div>
+  <div class="online">● 18+ beta</div>
 </header>
 
 <main class="container">
 
 <section>
+  <h1 class="tagline">हरेक मोडमा नयाँ भेट।</h1>
+  <p class="subtitle">इन्टरनेटको गल्लीमा नयाँ मान्छेसँग गफ गरौँ। · Meet someone unexpected.</p>
   <div class="videos">
 
     <div class="video-box">
       <video id="remoteVideo" autoplay playsinline></video>
       <div class="placeholder" id="remotePlaceholder">
         <div class="emoji">👤</div>
-        <h3>Waiting for a stranger</h3>
-        <p>Click Start to begin</p>
+        <h3>गल्लीमा कोही आउँदैछ...</h3>
+        <p>Start Chat थिचेर सुरु गर्नुहोस्</p>
       </div>
       <div class="label">Stranger</div>
     </div>
@@ -191,14 +197,14 @@ footer {
   </div>
 
   <div class="controls">
-    <button class="start" id="startBtn">▶ Start Chat</button>
-    <button class="next" id="nextBtn" disabled>⏭ Next</button>
+    <button class="start" id="startBtn">▶ गल्लीमा छिरौँ</button>
+    <button class="next" id="nextBtn" disabled>⏭ अर्को मोड</button>
     <button id="muteBtn" disabled>🎤 Mute</button>
     <button class="stop" id="stopBtn" disabled>■ Stop</button>
     <button id="reportBtn" disabled>⚑ Report</button>
   </div>
 
-  <div id="status">Ready to start your first video chat.</div>
+  <div id="status">Ready to enter Online Galli. Camera and microphone access will be requested when you start.</div>
   <div id="moderationControls" style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
     <button id="blockBtn" disabled>🚫 Block User</button>
   </div>
@@ -207,7 +213,7 @@ footer {
 <aside>
   <div class="ad">
     <h3>YOUR BUSINESS HERE</h3>
-    <p>Advertise your business on RandomChat.</p>
+    <p>Advertise your business on Online Galli.</p>
     <p>Sponsored advertisement</p>
   </div>
 
@@ -222,7 +228,7 @@ footer {
 
 </main>
 
-<footer>RandomChat © 2026 | WebRTC Prototype</footer>
+<footer>Online Galli © 2026 | 18+ beta · Be respectful. Stay safe.</footer>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -277,7 +283,7 @@ function clearConnectionTimers() {
 }
 function recoverFailedCall(expectedGeneration) {
   if (generation !== expectedGeneration || !localStream || !partnerId) return;
-  console.warn("RandomChat: video connection timed out or failed; finding another partner");
+  console.warn("Online Galli: video connection timed out or failed; finding another partner");
   nextChat();
 }
 function startConnectionTimer(expectedGeneration) {
@@ -382,7 +388,7 @@ function stopChat() {
 
   isMuted = false;
   muteBtn.textContent = "🎤 Mute";
-  remoteMessage("Waiting for a stranger", "Click Start to begin");
+  remoteMessage("Waiting for a stranger", "Start Chat थिचेर सुरु गर्नुहोस्");
   status("Chat stopped.");
 }
 
@@ -453,7 +459,7 @@ async function createPeer(id) {
   };
 
   pc.oniceconnectionstatechange = () => {
-    if (generation === currentGeneration) console.info("RandomChat ICE state:", pc.iceConnectionState);
+    if (generation === currentGeneration) console.info("Online Galli ICE state:", pc.iceConnectionState);
   };
   pc.onconnectionstatechange = () => {
     if (generation !== currentGeneration) return;
