@@ -1019,7 +1019,7 @@ function resetV4() {
   gameState=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;
   gameBoard.replaceChildren();gameMessage.textContent="Invite your stranger to play.";
   inviteGameBtn.hidden=false;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
-  gamesBtn.disabled=!partnerId;reactionsBtn.disabled=!partnerId;
+  gamesBtn.disabled=!partnerId;
 }
 gamesBtn.onclick=()=>{gamePanel.hidden=!gamePanel.hidden;requestAnimationFrame(positionGameAtVideoSeam);reactionPanel.hidden=true;if(!gameState)gameBoard.hidden=true;};
 
