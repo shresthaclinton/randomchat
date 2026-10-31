@@ -425,6 +425,16 @@ footer { line-height:1.8; }
 .galli-inline-reactions .galli-badge-select-label{white-space:nowrap;font-size:13px}
 .galli-inline-reactions #teamBadgeSelect{max-width:180px;min-height:39px;padding:7px}
 @media(max-width:600px){.galli-inline-reactions{gap:6px!important}.galli-inline-reactions .v4-reactions button{min-width:34px;min-height:35px;font-size:21px}.galli-inline-reactions #teamBadgeSelect{max-width:150px}}
+
+/* NPL logo-only circular badges: preserve video and chat layout. */
+.galli-badge{width:clamp(46px,6vw,72px)!important;height:clamp(46px,6vw,72px)!important;
+ max-width:none!important;aspect-ratio:1!important;border-radius:50%!important;
+ background:rgba(255,255,255,.94)!important;border:2px solid rgba(255,255,255,.95)!important;
+ padding:5px!important;display:flex!important;align-items:center;justify-content:center;
+ overflow:hidden!important;box-sizing:border-box!important;}
+.galli-badge[hidden]{display:none!important}
+.galli-badge img{width:100%;height:100%;object-fit:contain;display:block}
+@media(max-width:600px){.galli-badge{width:48px!important;height:48px!important;right:8px!important;bottom:8px!important;padding:4px!important}}
 </style>
 </head>
 
@@ -1093,9 +1103,30 @@ const myBadge=document.getElementById("myBadge");
 const peerBadge=document.getElementById("peerBadge");
 const badgeTeams=new Set(Array.from(teamBadgeSelect.options).map(o=>o.value));
 let selectedBadge="";
+const nplLogoFiles={
+ "Biratnagar Kings":"biratnagar-kings.png",
+ "Chitwan Rhinos":"chitwan-rhinos.png",
+ "Janakpur Bolts":"janakpur-bolts.png",
+ "Karnali Yaks":"karnali-yaks.png",
+ "Kathmandu Gurkhas":"kathmandu-gorkhas.png",
+ "Kathmandu Gorkhas":"kathmandu-gorkhas.png",
+ "Lumbini Lions":"lumbini-lions.png",
+ "Pokhara Avengers":"pokhara-avengers.png",
+ "Sudurpaschim Royals":"sudurpaschim-royals.png"
+};
 function showBadge(el,team){
- el.textContent=team?"🏏 "+team:"";
- el.hidden=!team;
+ el.replaceChildren();
+ const file=nplLogoFiles[team];
+ el.hidden=!file;
+ if(!file)return;
+ const img=document.createElement("img");
+ img.alt=team+" logo";
+ img.src="assets/npl/"+file;
+ img.loading="eager";
+ img.onerror=()=>{img.onerror=null;img.src="assets/npl/fallback.png";};
+ el.title=team;
+ el.setAttribute("aria-label",team+" supporter badge");
+ el.appendChild(img);
 }
 function resetSocial(){
  myVideoChat.replaceChildren();peerVideoChat.replaceChildren();textChatInput.value="";textChatNotice.textContent="";
