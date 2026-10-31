@@ -498,14 +498,18 @@ footer { line-height:1.8; }
 #faceStickerPreview{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;transform:scaleX(-1);object-fit:fill}
 @media(max-width:600px){.galli-face-effects{gap:5px;font-size:12px}.galli-face-effects select{max-width:155px}}
 
-/* Walking through the Galli: desktop pointer only; respects reduced motion. */
-@media (hover:hover) and (pointer:fine) {
-  .galli-shoeprint{position:fixed;width:18px;height:32px;pointer-events:none;z-index:2147483640;opacity:.72;transform-origin:center;animation:galli-step-fade 1s ease-out forwards;will-change:opacity,transform}
-  .galli-shoeprint svg{display:block;width:100%;height:100%;filter:drop-shadow(0 1px 0 rgba(255,255,255,.12))}
-  @keyframes galli-step-fade{0%{opacity:.72;scale:.88}20%{opacity:.72;scale:1}100%{opacity:0;scale:1.05}}
-  .galli-shoeprint.galli-stomp{width:23px;height:40px;animation-duration:.75s}
+/* Shoe cursor and wide treaded footsteps. Desktop mouse only. */
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
+  html, body, body * { cursor:none !important; }
+  .galli-shoe-cursor {position:fixed;left:0;top:0;width:34px;height:46px;z-index:2147483646;pointer-events:none;transform:translate(-50%,-55%) rotate(-28deg);filter:drop-shadow(0 2px 2px #0006);will-change:left,top;}
+  .galli-shoe-cursor svg {width:100%;height:100%;display:block}
+  .galli-shoe-cursor.stomp {animation:galli-cursor-stomp .23s ease-out}
+  @keyframes galli-cursor-stomp {50%{scale:.78}100%{scale:1}}
+  .galli-shoeprint {position:fixed;width:40px;height:62px;pointer-events:none;z-index:2147483640;opacity:.82;transform-origin:center;animation:galli-step-fade 1.15s ease-out forwards;will-change:opacity,transform}
+  .galli-shoeprint svg {display:block;width:100%;height:100%}
+  @keyframes galli-step-fade {0%{opacity:.83}25%{opacity:.75}100%{opacity:0}}
 }
-@media (prefers-reduced-motion:reduce){.galli-shoeprint{display:none!important}}
+@media (prefers-reduced-motion:reduce){.galli-shoeprint,.galli-shoe-cursor{display:none!important}}
 </style>
 </head>
 
@@ -1469,48 +1473,58 @@ stickerSelect.addEventListener("change",()=>{
 });
 
 
-// Alternating human shoe-sole impressions on the page background.
-// No footprints on videos, dialogs or interactive controls; never intercepts clicks.
+// v5.4.8 — realistic shoe sole prints with alternating wide gait and a shoe cursor.
 (()=>{
- const enabled=window.matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)');
- let last=null,step=0;const prints=[];
- const sole=`<svg viewBox="0 0 20 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#17140d" d="M10 1C4 1 2.4 5.5 2.5 10.8c.1 4.1 2.2 6.5 2.4 10.5.2 2.5-.7 4.2-1.5 6.5C2.1 31.7 4.5 37 10 37s7.9-5.3 6.6-9.2c-.8-2.3-1.7-4-1.5-6.5.2-4 2.3-6.4 2.4-10.5C17.6 5.5 16 1 10 1Z"/><path fill="#e0b927" opacity=".68" d="M5 10h10v1.7H5zm.4 4.4h9.2v1.7H5.4zm.8 4.3h7.6v1.7H6.2zm-.6 9.5h8.8v1.5H5.6zm1.2 3.2h6.4v1.4H6.8z"/></svg>`;
- function allowed(x,y){
-  const el=document.elementFromPoint(x,y);
-  if(!el)return false;
-  return !el.closest('#videoStage,.video-box,video,button,a,input,select,textarea,[role="dialog"],.modal,.game-popup,.game-modal');
+ const mq=matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)');
+ const shoeSVG=`<svg viewBox="0 0 48 65" xmlns="http://www.w3.org/2000/svg"><path d="M8 6Q24 -2 39 8L43 28L40 51Q37 62 24 63Q10 61 7 51L4 26Z" fill="#111" stroke="#f6f6f6" stroke-width="2"/><path d="M9 26L40 26M9 33L40 33M11 40L39 40M14 47L36 47" stroke="#fff" stroke-width="2"/><path d="M12 12L35 12M12 18L35 18" stroke="#fff" stroke-width="2.8"/><path d="M18 5L18 23M25 5L25 23M32 7L32 23" stroke="#fff" stroke-width="1.5"/></svg>`;
+ // Independent sole outlines and tread marks, inspired by conventional sneaker outsole patterns.
+ const soleSVG=`<svg viewBox="0 0 54 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+ <path d="M12 5Q27 -2 42 6Q52 15 49 32L44 54Q29 62 10 54L5 33Q2 15 12 5Z" fill="#111"/>
+ <path d="M12 63Q27 59 42 63L43 71Q40 83 27 83Q13 83 10 72Z" fill="#111"/>
+ <g stroke="#ffe54b" fill="none" stroke-width="2.4" stroke-linecap="round">
+ <path d="M10 13L22 5M17 20L35 6M25 24L44 11M31 31L48 20M32 40L47 31M29 49L43 43"/>
+ <path d="M8 24L20 29M7 34L20 38M10 44L23 48"/>
+ <path d="M24 12L23 48M30 13L29 50" stroke-width="1.4"/>
+ <path d="M13 67L23 72M25 65L36 74M12 74L22 79M31 77L40 70"/>
+ </g>
+ </svg>`;
+ let shoe=null,last=null,step=0;const nodes=[];
+ const excluded='video,.video-box,#videoStage,button,a,input,select,textarea,[role="dialog"],.modal,.game-popup,.game-modal';
+ function allowed(x,y){const el=document.elementFromPoint(x,y);return el&&!el.closest(excluded);}
+ function cursor(){
+  if(shoe)return shoe;
+  shoe=document.createElement('div');shoe.className='galli-shoe-cursor';shoe.innerHTML=shoeSVG;
+  document.body.append(shoe);return shoe;
  }
- function printAt(x,y,angle,stomp=false){
-  if(!enabled.matches||!allowed(x,y))return;
-  const side=step++%2===0?-1:1;
-  const rad=angle*Math.PI/180;
-  const offset=side*11;
-  const node=document.createElement('span');node.className='galli-shoeprint'+(stomp?' galli-stomp':'');
-  node.setAttribute('aria-hidden','true');node.innerHTML=sole;
-  node.style.left=(x+Math.cos(rad)*offset-9)+'px';
-  node.style.top=(y+Math.sin(rad)*offset-16)+'px';
-  node.style.transform=`rotate(${angle-90+side*8}deg) scaleX(${side})`;
-  document.body.appendChild(node);prints.push(node);
-  if(prints.length>10)prints.shift()?.remove();
-  node.addEventListener('animationend',()=>{node.remove();const i=prints.indexOf(node);if(i>=0)prints.splice(i,1)},{once:true});
+ function footprint(x,y,angle){
+  if(!allowed(x,y))return;
+  const side=(step++%2===0?-1:1);
+  const r=angle*Math.PI/180;
+  const gap=25; // distinctly separate left and right feet
+  const xx=x-Math.sin(r)*side*gap,yy=y+Math.cos(r)*side*gap;
+  const el=document.createElement('div');el.className='galli-shoeprint';el.innerHTML=soleSVG;
+  el.style.left=xx+'px';el.style.top=yy+'px';
+  el.style.transform=`translate(-50%,-50%) rotate(${angle+90+side*8}deg) scaleX(${side})`;
+  document.body.append(el);nodes.push(el);
+  if(nodes.length>8)nodes.shift().remove();
+  el.addEventListener('animationend',()=>{el.remove();const i=nodes.indexOf(el);if(i>=0)nodes.splice(i,1)},{once:true});
  }
  document.addEventListener('pointermove',e=>{
-  if(!enabled.matches||e.pointerType!=='mouse')return;
-  const now={x:e.clientX,y:e.clientY};
-  if(!last){last=now;return;}
-  const dx=now.x-last.x,dy=now.y-last.y,dist=Math.hypot(dx,dy);
-  if(dist<32)return;
-  const angle=Math.atan2(dy,dx)*180/Math.PI;
-  // Avoid a huge burst if the pointer jumps across the screen.
-  printAt(now.x,now.y,angle);last=now;
+  if(!mq.matches||e.pointerType!=='mouse')return;
+  const s=cursor();s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';s.style.display='block';
+  const pt={x:e.clientX,y:e.clientY};
+  if(!last){last=pt;return;}
+  const dx=pt.x-last.x,dy=pt.y-last.y;
+  if(Math.hypot(dx,dy)<64)return;
+  footprint(pt.x,pt.y,Math.atan2(dy,dx)*180/Math.PI);last=pt;
  },{passive:true});
  document.addEventListener('pointerdown',e=>{
-  if(e.pointerType==='mouse'&&e.button===0&&enabled.matches&&allowed(e.clientX,e.clientY))
-   printAt(e.clientX,e.clientY,last?0:90,true);
+  if(!mq.matches||e.pointerType!=='mouse'||e.button!==0)return;
+  const s=cursor();s.classList.remove('stomp');void s.offsetWidth;s.classList.add('stomp');
  },{passive:true});
- window.addEventListener('blur',()=>{last=null;});
+ document.addEventListener('pointerout',e=>{if(!e.relatedTarget&&shoe)shoe.style.display='none';});
+ window.addEventListener('blur',()=>{last=null;if(shoe)shoe.style.display='none';});
 })();
-
 </script>
 </body>
 </html>
