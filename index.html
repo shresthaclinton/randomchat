@@ -437,6 +437,12 @@ footer { line-height:1.8; }
 @media(max-width:600px){.galli-badge{width:48px!important;height:48px!important;right:8px!important;bottom:8px!important;padding:4px!important}}
 #playAgainGameBtn:not([hidden]){background:#f9d74d;color:#171717;font-weight:800;border-radius:9px;margin-right:6px}
 #playAgainGameBtn[hidden]{display:none!important}
+
+/* V5.3.4: 1.5x larger transparent NPL logo badges, unchanged layout. */
+.galli-badge{width:clamp(69px,9vw,108px)!important;height:clamp(69px,9vw,108px)!important;box-sizing:border-box!important;overflow:hidden!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.galli-badge[hidden]{display:none!important}
+.galli-badge img{max-width:100%!important;max-height:100%!important;object-fit:contain!important;background:transparent!important}
+@media(max-width:600px){.galli-badge{width:72px!important;height:72px!important}}
 </style>
 </head>
 

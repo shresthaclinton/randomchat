@@ -262,7 +262,7 @@ const textTimes = new Map();
 // Original text-only supporter labels. No official team logos are distributed.
 const supporterTeams = new Set(["", "Biratnagar Kings", "Chitwan Rhinos", "Janakpur Bolts", "Kathmandu Gurkhas", "Karnali Yaks", "Lumbini Lions", "Pokhara Avengers", "Sudurpaschim Royals"]);
 const positiveReactions = new Set(["❤️","😂","👏","🎉","🙌","👍","✨"]);
-const winningLines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8]];
+const winningLines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 function gamePair(socket) {
   const other = partners.get(socket.id);
   return other ? {other,key:pairKey(socket.id,other)} : null;
