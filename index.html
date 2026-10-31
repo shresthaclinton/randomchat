@@ -1,0 +1,1516 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Galli | A new encounter around every corner</title>
+<meta name="description" content="Online Galli is an 18+ place for spontaneous one-to-one video conversations. A new encounter around every corner।">
+<meta name="theme-color" content="#ffe247">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #ffe247;
+  color: #171717;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  padding: 18px 5%;
+  border-bottom: 2px solid #171717;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Brand: road icon + clearly separated words */
+.logo { display: inline-flex; align-items: center; gap: 10px; font-size: clamp(21px, 3vw, 27px); font-weight: 900; letter-spacing: -.7px; white-space: nowrap; }
+.logo svg { width: 35px; height: 35px; flex: none; }
+.logo span { color: #171717; }
+.online { color: #171717; font-size: 13px; font-weight: 700; }
+.tagline { margin: 0 0 18px; font-size: clamp(22px, 4vw, 38px); font-weight: 900; letter-spacing: -1px; }
+.subtitle { margin: -9px 0 20px; color: #39331a; }
+
+.container {
+  max-width: 1400px;
+  margin: 25px auto;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 20px;
+}
+
+.videos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.video-box {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #171717;
+  border: 2px solid #171717;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#localVideo { transform: scaleX(-1); }
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #aab4c7;
+  pointer-events: none;
+  padding: 20px;
+}
+
+.placeholder .emoji { font-size: 48px; }
+.placeholder p { font-size: 13px; }
+
+.label {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: #000a;
+  padding: 7px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+button {
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 9px;
+  color: white;
+  background: #171717;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled { opacity: .4; cursor: not-allowed; }
+button:hover:not(:disabled) { filter: brightness(1.15); }
+
+.start { background: #168a3a; color: #ffffff; border: 2px solid #0b6428; }
+.start:hover:not(:disabled) { background: #10702f; filter: none; }
+.next { background: #ffffff; color: #171717; border: 2px solid #171717; }
+.stop { background: #a92828; }
+
+#status {
+  margin-top: 18px;
+  color: #312b17;
+  line-height: 1.6;
+}
+
+.ad {
+  background: #171717;
+  border: 1px solid #171717;
+  border-radius: 15px;
+  padding: 35px 20px;
+  text-align: center;
+  min-height: 250px;
+}
+
+.ad h3 { color: #ffe247; }
+.ad p { color: #b5bed0; font-size: 14px; }
+
+.safety {
+  background: #fff6c7;
+  padding: 18px;
+  border-radius: 12px;
+  margin-top: 15px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #39331a;
+}
+
+footer {
+  padding: 30px;
+  text-align: center;
+  color: #514821;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .videos { grid-template-columns: 1fr; }
+  .controls button { flex: 1; }
+}
+
+.beta-consent { margin: 16px 0 8px; padding: 13px 15px; border: 2px solid #171717; border-radius: 12px; background: #fff6ba; line-height: 1.5; }
+.beta-consent label { display:flex; align-items:flex-start; gap:10px; font-size:14px; cursor:pointer; }
+.beta-consent input { width:19px; height:19px; margin-top:2px; flex:none; accent-color:#168a3a; }
+.beta-consent a, footer a { color:inherit; text-decoration:underline; }
+footer { line-height:1.8; }
+
+.entry-gate{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto}
+.entry-gate[hidden]{display:none!important}
+.entry-panel{width:min(100%,580px);max-height:calc(100dvh - 36px);overflow:auto;background:#ffe247;color:#171717;border-radius:22px;padding:clamp(20px,5vw,38px);box-shadow:0 20px 70px #0008}
+.entry-panel h2{font-size:clamp(24px,5vw,35px);margin:12px 0}
+.entry-panel p,.entry-panel li{line-height:1.55}
+.entry-panel ul{padding-left:22px;margin:15px 0}
+.entry-panel .gate-check{display:flex;gap:12px;align-items:flex-start;background:#fff5bf;border:2px solid #171717;border-radius:12px;padding:14px;margin:18px 0;cursor:pointer;line-height:1.5}
+.entry-panel .gate-check input{width:23px;height:23px;flex:none;margin-top:2px;accent-color:#168a3a}
+.entry-panel a{color:#171717;text-decoration:underline;font-weight:700}
+#confirmEntryBtn{width:100%;padding:16px;font-size:17px;border:0;border-radius:12px;font-weight:800;background:#168a3a;color:#fff;cursor:pointer}
+#confirmEntryBtn:disabled{background:#77847a;cursor:not-allowed}
+.gate-footnote{font-size:12px;text-align:center;margin-top:12px}
+
+
+.v4-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.v4-tools button,.v4-panel button{padding:10px 14px;border-radius:9px;cursor:pointer}
+.v4-panel{margin-top:12px;padding:16px;background:#222;color:white;border:2px solid #ffe247;border-radius:14px}
+.v4-panel[hidden]{display:none!important}
+.v4-board{display:grid;grid-template-columns:repeat(3,minmax(60px,88px));gap:6px;margin:14px 0}
+.v4-board button{aspect-ratio:1;font-size:32px;font-weight:800;background:#ffe247;color:#111;border:0}
+.v4-board button:disabled{opacity:.8;cursor:default}
+.v4-reactions{display:flex;flex-wrap:wrap;gap:6px}
+.v4-reactions button{font-size:22px;background:#333;border:1px solid #777;color:white}
+.v4-toast{min-height:30px;font-size:26px;margin-top:6px}
+
+#videoStage{position:relative;isolation:isolate}
+#gamePanel.v4-panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:15;width:min(330px,calc(100% - 24px));max-height:calc(100% - 16px);overflow:auto;box-shadow:0 14px 45px #000c;text-align:center;background:#1d1d1d;border:3px solid #ffe247;border-radius:16px;padding:14px}
+#gamePanel .v4-board{grid-template-columns:repeat(3,minmax(0,1fr));max-width:230px;margin:10px auto}
+#gamePanel .v4-board button{min-height:50px;font-size:28px}
+#gamePanel p{margin:8px 0;font-size:13px}
+#gamePanel button{margin:3px}
+#acceptGameBtn{background:#168a3a;color:white;border:0}
+#declineGameBtn,#closeGameBtn{background:#444;color:white;border:1px solid #777}
+#reactionPanel.v4-panel{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:12;width:max-content;max-width:calc(100% - 18px);padding:9px;border:2px solid #ffe247;border-radius:16px;background:#171717ef;text-align:center;box-shadow:0 8px 25px #0008}
+#reactionPanel strong{display:block;font-size:12px;margin-bottom:5px}
+#reactionPanel .v4-reactions{justify-content:center;gap:5px}
+#reactionPanel .v4-reactions button{font-size:clamp(22px,3vw,30px);padding:7px;min-width:39px;border-radius:12px}
+#reactionToast.v4-toast{position:absolute;left:25%;top:48%;transform:translate(-50%,-50%);z-index:14;pointer-events:none;font-size:clamp(60px,12vw,110px);filter:drop-shadow(0 5px 15px #0009);text-align:center;line-height:1.1}
+#reactionToast:not(:empty){animation:galliPop .7s ease-out both}
+@keyframes galliPop{0%{opacity:0;transform:translate(-50%,-30%) scale(.35)}35%{opacity:1;transform:translate(-50%,-65%) scale(1.25)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.v4-tools{justify-content:center}.v4-tools button{font-weight:700}
+@media(max-width:650px){#gamePanel.v4-panel{width:min(270px,calc(100% - 12px));padding:9px;max-height:calc(100% - 8px)}#gamePanel .v4-board{max-width:155px;gap:4px}#gamePanel .v4-board button{min-height:38px;font-size:21px;padding:4px}#gamePanel button{padding:6px 8px;font-size:12px}#reactionPanel.v4-panel{bottom:5px;padding:6px}#reactionPanel .v4-reactions button{min-width:32px;padding:4px;font-size:22px}}
+
+/* V4.2: precisely centered floating game window across both video feeds. */
+#videoStage { position:relative; isolation:isolate; }
+#gamePanel.v4-panel {
+ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+ z-index:30; box-sizing:border-box; width:min(270px,calc(100% - 20px));
+ max-height:min(94%,440px); overflow-y:auto; background:rgba(22,22,22,.97);
+ border:2px solid #ffe247; border-radius:15px; padding:12px;
+ box-shadow:0 12px 40px rgba(0,0,0,.8); color:white; text-align:center;
+}
+#gamePanel.v4-panel[hidden],#reactionPanel.v4-panel[hidden] { display:none!important; }
+#gamePanel .v4-board { display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:min(192px,100%);margin:9px auto; }
+#gamePanel .v4-board button { aspect-ratio:1; min-height:0; padding:0; font-size:29px; border-radius:7px; }
+#gamePanel strong { font-size:15px; }
+#gamePanel p { margin:7px 0; line-height:1.35; font-size:13px; }
+#gamePanel button { margin:3px 2px; padding:8px 10px; }
+#gamePanel #acceptGameBtn { background:#168a3a; color:white; border:0; }
+#gamePanel #declineGameBtn { background:#444; color:white; border:1px solid #888; }
+#reactionPanel.v4-panel { z-index:25; bottom:9px; }
+#reactionToast.v4-toast {
+ left:50%; top:42%; transform:translate(-50%,-50%);
+ z-index:35; font-size:clamp(76px,13vw,145px); line-height:1;
+ text-shadow:0 7px 18px rgba(0,0,0,.55); pointer-events:none;
+}
+@keyframes galliPop {
+ 0% {opacity:0;transform:translate(-50%,-20%) scale(.3)}
+ 35% {opacity:1;transform:translate(-50%,-55%) scale(1.2)}
+ 100% {opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@media(max-width:600px) {
+ #gamePanel.v4-panel { width:min(260px,calc(100% - 20px));max-height:45%;padding:9px; }
+ #gamePanel .v4-board { width:min(145px,100%);gap:3px; }
+ #gamePanel .v4-board button { font-size:22px; }
+ #gamePanel button { font-size:12px;padding:6px 8px; }
+ #reactionToast.v4-toast { font-size:clamp(74px,22vw,115px); }
+}
+
+#videoStage { position:relative; isolation:isolate; overflow:visible; }
+#gamePanel.v4-panel {
+ position:absolute!important; left:50%!important; top:50%!important;
+ bottom:auto!important; right:auto!important;
+ transform:translate(-50%,-50%)!important;
+ margin:0!important; z-index:80!important;
+ width:min(270px,calc(100% - 18px))!important;
+ max-height:min(390px,95%)!important;
+ overflow:auto; box-sizing:border-box;
+}
+#gamePanel.game-finished #gameMessage {
+ background:#168a3a;color:#fff;font-size:20px;font-weight:900;
+ padding:12px 7px;border-radius:10px;letter-spacing:.02em;
+}
+.reaction-in-video {
+ position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);
+ z-index:12;pointer-events:none;font-size:clamp(66px,11vw,120px);
+ line-height:1;text-shadow:0 6px 16px #0009;
+}
+.reaction-in-video:not(:empty){animation:galliInBox .8s ease-out both}
+@keyframes galliInBox {
+ 0%{opacity:0;transform:translate(-50%,-25%) scale(.3)}
+ 35%{opacity:1;transform:translate(-50%,-55%) scale(1.18)}
+ 100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@media(max-width:600px){
+ #videoStage {display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+ #videoStage>.video-box{min-width:0}
+ #gamePanel.v4-panel {max-height:min(330px,82%)!important;width:min(240px,calc(100% - 24px))!important}
+ #gamePanel .v4-board{width:min(150px,100%)}
+ #gamePanel .v4-board button{font-size:23px}
+ .reaction-in-video{font-size:clamp(70px,23vw,110px)}
+}
+
+/* V4.4: Position the invitation/game at the real seam of the two video boxes. */
+#videoStage{position:relative!important}
+#gamePanel.v4-panel{
+ left:var(--galli-popup-x,50%)!important;
+ top:var(--galli-popup-y,50%)!important;
+ transform:translate(-50%,-50%)!important;
+ z-index:100!important;
+}
+#gamePanel.game-finished #gameMessage{
+ display:block!important;background:#168a3a!important;color:#fff!important;
+ font-size:clamp(18px,4vw,24px)!important;font-weight:900!important;
+ padding:12px 8px!important;border-radius:10px!important;text-align:center!important;
+}
+@media(max-width:600px){
+ #gamePanel.v4-panel{width:min(245px,calc(100vw - 30px))!important;max-height:300px!important}
+}
+
+ /* V4.5: Mobile overlays are portaled to body; use viewport coordinates. */
+ #gamePanel.v4-panel{
+  position:fixed!important;left:var(--galli-popup-x,50vw)!important;
+  top:var(--galli-popup-y,50dvh)!important;
+  transform:translate(-50%,-50%)!important;
+  z-index:10020!important;max-height:min(360px,75dvh)!important;
+  width:min(265px,calc(100vw - 24px))!important;
+  overflow:auto!important;
+ }
+ #reactionPanel.v4-panel{
+  position:fixed!important;left:50%!important;bottom:max(14px,env(safe-area-inset-bottom))!important;
+  top:auto!important;transform:translateX(-50%)!important;
+  z-index:10021!important;width:min(440px,calc(100vw - 20px))!important;
+  box-sizing:border-box;
+ }
+ #reactionPanel .v4-reactions{display:flex;justify-content:center;flex-wrap:wrap}
+ #reactionPanel .v4-reactions button{font-size:clamp(24px,7vw,34px)!important;min-width:38px!important}
+ #videoStage .video-box{position:relative!important;isolation:isolate!important}
+ #videoStage .reaction-in-video{
+  display:flex!important;align-items:center;justify-content:center;
+  position:absolute!important;inset:0!important;
+  width:100%!important;height:100%!important;
+  z-index:999!important;pointer-events:none!important;
+  transform:none!important;font-size:clamp(80px,20vw,140px)!important;
+  text-shadow:0 6px 20px #000b;
+ }
+ #videoStage .reaction-in-video:empty{display:none!important}
+ #videoStage .reaction-in-video:not(:empty){animation:galliReactionV45 .9s ease-out both}
+ @keyframes galliReactionV45{
+  0%{opacity:0;scale:.3}35%{opacity:1;scale:1.2}100%{opacity:1;scale:1}
+ }
+ @media(max-width:600px){
+  #gamePanel.v4-panel{width:min(245px,calc(100vw - 22px))!important;max-height:min(290px,70dvh)!important}
+  #gamePanel .v4-board{width:min(145px,100%)!important}
+ }
+
+#gamePanel[hidden],#reactionPanel[hidden]{display:none!important}
+#gamePanel.v4-panel{
+ position:fixed!important;left:var(--galli-popup-x,50vw)!important;
+ top:var(--galli-popup-y,50dvh)!important;
+ transform:translate(-50%,-50%)!important;
+ z-index:10020!important;max-height:min(320px,78dvh)!important;
+ width:min(255px,calc(100vw - 24px))!important;
+ box-sizing:border-box!important;overflow-y:auto!important;
+}
+#gamePanel .v4-board{width:min(160px,100%)!important;margin:8px auto!important}
+#gamePanel .v4-board button{min-height:38px!important;font-size:23px!important;padding:5px!important}
+#reactionPanel.v4-panel{
+ position:fixed!important;left:50%!important;bottom:max(14px,env(safe-area-inset-bottom))!important;
+ top:auto!important;transform:translateX(-50%)!important;
+ z-index:10021!important;width:min(440px,calc(100vw - 20px))!important;
+ box-sizing:border-box!important;
+}
+#videoStage .video-box{position:relative!important;isolation:isolate!important}
+#videoStage .reaction-in-video{
+ display:flex!important;align-items:center;justify-content:center;
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ z-index:999!important;pointer-events:none!important;
+ transform:none!important;font-size:clamp(76px,20vw,135px)!important;
+ text-shadow:0 6px 20px #000b;
+}
+#videoStage .reaction-in-video:empty{display:none!important}
+#videoStage .reaction-in-video:not(:empty){animation:galliReactionV46 .9s ease-out both}
+@keyframes galliReactionV46{0%{opacity:0;scale:.3}35%{opacity:1;scale:1.2}100%{opacity:1;scale:1}}
+
+/* V5: supporter badges stay in their own video boxes */
+.video-box{position:relative!important}
+.galli-badge{position:absolute;bottom:12px;right:12px;z-index:20;max-width:65%;
+ background:#ffe247;color:#161616;border:2px solid #161616;border-radius:10px;
+ font-size:clamp(11px,2vw,15px);font-weight:800;padding:7px 9px;
+ text-align:center;box-shadow:0 3px 10px #0009;pointer-events:none}
+.galli-badge[hidden]{display:none!important}
+.galli-social{margin-top:14px;background:#1e1e1e;border-radius:14px;padding:12px;color:#fff}
+.galli-social-tabs{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.galli-social-tabs button,.galli-chat-form button{background:#ffe247;color:#171717;border:0;border-radius:9px;padding:11px 14px;font-weight:800;cursor:pointer}
+.galli-social-tabs button:disabled,.galli-chat-form button:disabled{opacity:.45;cursor:not-allowed}
+.galli-badge-select-label{font-size:14px;font-weight:700}
+#teamBadgeSelect{background:#fff;color:#161616;border-radius:8px;padding:10px;max-width:100%;font-size:14px}
+.galli-chat{margin-top:12px;border:1px solid #555;border-radius:12px;overflow:hidden}
+.galli-chat[hidden]{display:none!important}
+.galli-chat-title{background:#303030;padding:12px;font-weight:800}
+.galli-chat-title span{display:block;color:#ccc;font-size:12px;font-weight:400;margin-top:3px}
+.galli-chat-messages{height:220px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#111}
+.galli-chat-msg{max-width:88%;padding:9px 12px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.4}
+.galli-chat-msg.mine{align-self:flex-end;background:#ffe247;color:#171717}
+.galli-chat-msg.theirs{align-self:flex-start;background:#383838;color:#fff}
+.galli-chat-form{display:flex;gap:8px;padding:10px;background:#262626}
+.galli-chat-form input{flex:1;min-width:0;border-radius:8px;padding:12px;border:1px solid #666;background:#fff;color:#111;font-size:16px}
+.galli-chat-notice{padding:0 10px 8px;font-size:12px;color:#ffe247}
+@media(max-width:600px){.galli-badge{bottom:9px;right:9px;max-width:62%;padding:5px 7px;font-size:12px}.galli-chat-messages{height:185px}}
+
+/* V5.2: mirrored Omegle-style chat captions in BOTH video frames */
+#videoStage .video-box{position:relative!important}
+.galli-video-chat{position:absolute;z-index:38;left:9px;right:9px;bottom:39px;
+ display:flex;flex-direction:column;align-items:flex-start;gap:4px;max-height:47%;
+ overflow-y:auto;scrollbar-width:none;pointer-events:none}
+.galli-video-chat::-webkit-scrollbar{display:none}
+.galli-video-chat-line{max-width:100%;width:fit-content;background:rgba(0,0,0,.74);
+ color:white;padding:6px 9px;border-radius:7px;line-height:1.4;
+ font-size:clamp(12px,2.5vw,15px);overflow-wrap:anywhere;white-space:pre-wrap;
+ text-shadow:0 1px 2px #000}
+.galli-video-chat-line strong{color:#fff;font-weight:800}
+.galli-chat-bar{display:flex;flex-direction:row;align-items:stretch;gap:8px;margin:0;padding:4px}
+.galli-chat-bar input{flex:1;min-width:0;min-height:48px;font-size:16px}
+.galli-chat-bar button{flex:none;min-height:48px;padding:8px 15px}
+.galli-inline-reactions{display:flex;flex-wrap:wrap;align-items:center;gap:7px;
+ padding:7px 3px;margin-top:6px}
+.galli-inline-reactions .v4-reactions{display:flex;flex-wrap:wrap;gap:5px;flex:1}
+.galli-inline-reactions .v4-reactions button{font-size:23px;min-width:39px;min-height:39px;
+ padding:5px;border-radius:9px;cursor:pointer}
+.galli-inline-reactions #muteReactionsBtn{margin-left:auto;white-space:nowrap;padding:9px}
+.galli-social-tabs{margin-top:8px}
+@media(max-width:600px){
+ .galli-video-chat{left:6px;right:6px;bottom:32px;gap:3px;max-height:40%}
+ .galli-video-chat-line{font-size:12px;padding:5px 7px}
+ .galli-chat-bar button{padding:7px 12px}
+ .galli-inline-reactions .v4-reactions button{font-size:21px;min-width:35px;min-height:35px}
+}
+
+/* V5.3: chat above main controls; My Support beside quick reactions. */
+.galli-social{margin:10px 0 12px!important}
+.galli-inline-reactions{display:flex!important;align-items:center!important;gap:7px!important;flex-wrap:wrap!important}
+.galli-inline-reactions .v4-reactions{flex:0 1 auto!important}
+.galli-inline-reactions #muteReactionsBtn{margin-left:0!important}
+.galli-inline-reactions .galli-social-tabs{display:flex!important;align-items:center!important;gap:7px!important;margin:0!important;flex-wrap:wrap!important}
+.galli-inline-reactions .galli-badge-select-label{white-space:nowrap;font-size:13px}
+.galli-inline-reactions #teamBadgeSelect{max-width:180px;min-height:39px;padding:7px}
+@media(max-width:600px){.galli-inline-reactions{gap:6px!important}.galli-inline-reactions .v4-reactions button{min-width:34px;min-height:35px;font-size:21px}.galli-inline-reactions #teamBadgeSelect{max-width:150px}}
+
+/* NPL logo-only circular badges: preserve video and chat layout. */
+.galli-badge{width:clamp(46px,6vw,72px)!important;height:clamp(46px,6vw,72px)!important;
+ max-width:none!important;aspect-ratio:1!important;border-radius:50%!important;
+ background:rgba(255,255,255,.94)!important;border:2px solid rgba(255,255,255,.95)!important;
+ padding:5px!important;display:flex!important;align-items:center;justify-content:center;
+ overflow:hidden!important;box-sizing:border-box!important;}
+.galli-badge[hidden]{display:none!important}
+.galli-badge img{width:100%;height:100%;object-fit:contain;display:block}
+@media(max-width:600px){.galli-badge{width:48px!important;height:48px!important;right:8px!important;bottom:8px!important;padding:4px!important}}
+#playAgainGameBtn:not([hidden]){background:#f9d74d;color:#171717;font-weight:800;border-radius:9px;margin-right:6px}
+#playAgainGameBtn[hidden]{display:none!important}
+
+/* V5.3.4: 1.5x larger transparent NPL logo badges, unchanged layout. */
+.galli-badge{width:clamp(69px,9vw,108px)!important;height:clamp(69px,9vw,108px)!important;box-sizing:border-box!important;overflow:hidden!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.galli-badge[hidden]{display:none!important}
+.galli-badge img{max-width:100%!important;max-height:100%!important;object-fit:contain!important;background:transparent!important}
+@media(max-width:600px){.galli-badge{width:72px!important;height:72px!important}}
+
+.galli-game-picker,.galli-game-choices{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin:8px 0}
+.galli-game-picker[hidden],.galli-game-choices[hidden]{display:none!important}
+.galli-game-picker button,.galli-game-choices button{background:#e2c441;color:#111;border:0;border-radius:9px;padding:8px 10px;font-weight:700;font-size:13px;cursor:pointer}
+.galli-game-choices button:disabled{opacity:.5;cursor:default}
+.galli-question{font-size:14px;font-weight:700;width:100%;color:white}
+#gamePanel{width:min(300px,calc(100vw - 24px))!important}
+
+/* V5.4.1: games action is orange; block action lives beside report. */
+#gamesBtn{background:#f58220!important;color:#151515!important;border:2px solid #c95d08!important;font-weight:800!important;box-shadow:0 2px 0 #a94c06!important;cursor:pointer}
+#gamesBtn:hover:not(:disabled){background:#ff9b3c!important}
+#gamesBtn:disabled{opacity:.55;cursor:not-allowed}
+.controls #blockBtn{background:#282828;color:#fff;border:1px solid #555}
+.controls #blockBtn:disabled{opacity:.55}
+
+/* V5.4.2: keep Games on the far right of the controls; status directly below Enter. */
+.controls{display:flex;align-items:flex-start;flex-wrap:wrap;gap:10px}
+.controls .galli-enter-wrap{display:flex;flex-direction:column;align-items:stretch;gap:5px;flex:0 0 auto;min-width:145px;max-width:210px}
+.controls .galli-enter-wrap #startBtn{width:100%;min-height:48px}
+.controls .galli-enter-wrap #status{margin:0!important;font-size:12px;line-height:1.35;color:#332d1b;max-width:210px;overflow-wrap:anywhere}
+.controls > button{min-height:48px}
+.controls #gamesBtn{background:#ff9b2f!important;color:#191919!important;border:2px solid #d46b0a!important;font-weight:800!important;margin-left:auto!important}
+.controls #gamesBtn:hover:not(:disabled){background:#ffb356!important}
+.controls #gamesBtn:disabled{opacity:.55}
+@media(max-width:700px){
+ .controls .galli-enter-wrap{flex:1 1 140px;min-width:125px}
+ .controls > button{flex:1 1 auto}
+ .controls #gamesBtn{margin-left:auto!important;flex:0 1 auto}
+}
+
+/* V5.4.3: taller advertisement and safety notice below it, in the indicated sidebar space. */
+@media (min-width:901px){
+ .container>aside .ad{min-height:470px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:48px}
+ .container>aside .safety{margin-top:28px}
+}
+@media (max-width:900px){
+ .container>aside .ad{min-height:290px}
+ .container>aside .safety{margin-top:15px}
+}
+
+/* Keep Face Stickers and My Support next to the reactions, on one responsive row. */
+.galli-inline-reactions{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.galli-inline-reactions .v4-reactions{flex:0 1 auto}
+.galli-inline-reactions .galli-face-effects{display:flex;align-items:center;flex-wrap:wrap;margin:0;gap:6px}
+.galli-inline-reactions .galli-social-tabs{display:flex;align-items:center;gap:6px;margin:0}
+.galli-inline-reactions #faceStickerSelect{max-width:145px;padding:8px}
+.galli-inline-reactions #teamBadgeSelect{max-width:170px;padding:8px}
+@media(max-width:650px){.galli-inline-reactions{gap:7px}.galli-inline-reactions .galli-face-effects,.galli-inline-reactions .galli-social-tabs{font-size:12px}}
+/* Optional local face stickers: original video is unchanged when Off. */
+.galli-face-effects{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:8px 0 6px;font-weight:700}
+.galli-face-effects select{background:#fff;color:#111;border-radius:8px;padding:8px;max-width:185px}
+#faceStickerStatus{font-size:12px;color:#f7d96b;font-weight:400}
+#faceStickerPreview{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;transform:scaleX(-1);object-fit:fill}
+@media(max-width:600px){.galli-face-effects{gap:5px;font-size:12px}.galli-face-effects select{max-width:155px}}
+
+/* Walking through the Galli: desktop pointer only; respects reduced motion. */
+@media (hover:hover) and (pointer:fine) {
+  .galli-shoeprint{position:fixed;width:18px;height:32px;pointer-events:none;z-index:2147483640;opacity:.72;transform-origin:center;animation:galli-step-fade 1s ease-out forwards;will-change:opacity,transform}
+  .galli-shoeprint svg{display:block;width:100%;height:100%;filter:drop-shadow(0 1px 0 rgba(255,255,255,.12))}
+  @keyframes galli-step-fade{0%{opacity:.72;scale:.88}20%{opacity:.72;scale:1}100%{opacity:0;scale:1.05}}
+  .galli-shoeprint.galli-stomp{width:23px;height:40px;animation-duration:.75s}
+}
+@media (prefers-reduced-motion:reduce){.galli-shoeprint{display:none!important}}
+</style>
+</head>
+
+<body>
+
+
+<div id="entryGate" class="entry-gate" role="dialog" aria-modal="true" aria-labelledby="entryTitle">
+ <div class="entry-panel">
+  <div style="font-weight:800">🛣 ONLINE GALLI · 18+ BETA</div>
+  <h2 id="entryTitle">Welcome to Online Galli!</h2>
+  <p>Meet new people through spontaneous one-on-one video chats. Please read these rules before entering.</p>
+  <ul>
+   <li>You must be <strong>18 years or older</strong>.</li>
+   <li>No sexual misconduct, harassment, threats, or hateful behavior.</li>
+   <li>Never share your address, phone number, or other private information.</li>
+   <li>Do not record or share another person’s video without their permission.</li>
+   <li>Use Report or Block if someone makes you uncomfortable or breaks the rules.</li>
+  </ul>
+  <label class="gate-check"><input id="adultConsent" type="checkbox" autocomplete="off">
+   <span>I confirm that I am <strong>18 or older</strong>, understand I may meet unknown adults, and agree to the
+   <a href="/terms" target="_blank" rel="noopener">Terms</a>,
+   <a href="/privacy" target="_blank" rel="noopener">Privacy Notice</a> and
+   <a href="/guidelines" target="_blank" rel="noopener">Community Guidelines</a>.</span>
+  </label>
+  <button id="confirmEntryBtn" type="button" disabled>✓ I Agree — Enter Online Galli</button>
+  <p class="gate-footnote">Camera and microphone access is requested only after clicking “Enter the Galli”.</p>
+ </div>
+</div>
+
+<header>
+  <div class="logo" aria-label="Online Galli">
+    <svg viewBox="0 0 40 40" role="img" aria-label="Road logo" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="10" fill="#171717"/>
+      <path d="M12 37 L18 4 H22 L28 37 Z" fill="#FFE247"/>
+      <path d="M20 8 V13 M20 18 V23 M20 28 V33" stroke="#171717" stroke-width="2.3" stroke-linecap="round"/>
+    </svg>
+    <span>Online Galli</span>
+  </div>
+  <div class="online">● 18+ beta</div>
+</header>
+
+<main class="container">
+
+<section>
+  <h1 class="tagline">A new encounter around every corner।</h1>
+  <p class="subtitle">Explore a virtual street and meet someone new. · Meet someone unexpected.</p>
+  <div class="videos" id="videoStage">
+
+    <div class="video-box">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <div class="reaction-in-video" id="remoteReaction" aria-live="polite"></div>
+      <div class="placeholder" id="remotePlaceholder">
+        <div class="emoji">👤</div>
+        <h3>Someone new is around the corner...</h3>
+        <p>Click Enter the Galli to begin</p>
+      </div>
+      <div class="label">Stranger</div>
+      <div class="galli-badge" id="peerBadge" hidden></div>
+<div class="galli-video-chat" id="peerVideoChat" role="log" aria-label="Conversation on stranger video"></div>
+    </div>
+
+    <div class="video-box">
+      <video id="localVideo" autoplay muted playsinline></video>
+      <canvas id="faceStickerPreview" aria-hidden="true"></canvas>
+      <div class="reaction-in-video" id="localReaction" aria-live="polite"></div>
+      <div class="placeholder" id="localPlaceholder">
+        <div class="emoji">📷</div>
+        <h3>Your Camera</h3>
+        <p>Camera is off</p>
+      </div>
+      <div class="label">You</div>
+      <div class="galli-badge" id="myBadge" hidden></div>
+<div class="galli-video-chat" id="myVideoChat" role="log" aria-label="Conversation on your video"></div>
+    </div>
+
+  <div class="v4-panel" id="gamePanel" hidden>
+ <strong id="activeGameTitle">🎮 Games</strong>
+ <div id="gameTypePicker" class="galli-game-picker"><button type="button" data-galli-game="ttt">❎ Tic-Tac-Toe</button><button type="button" data-galli-game="rps">✊ Rock Paper Scissors</button><button type="button" data-galli-game="wyr">🤔 Would You Rather?</button></div>
+ <p id="gameMessage" aria-live="polite">Invite your stranger to play.</p>
+ <div id="gameBoard" class="v4-board" role="group" aria-label="Tic-Tac-Toe board"></div>
+ <div id="extraGameChoices" class="galli-game-choices" hidden></div>
+ <button id="inviteGameBtn">Invite to Play</button>
+ <button id="acceptGameBtn" hidden>Accept</button>
+ <button id="declineGameBtn" hidden>Decline</button>
+ <button id="playAgainGameBtn" hidden>↻ Play Again</button>
+ <button id="closeGameBtn">Close Game</button>
+</div>
+<div class="v4-panel" id="reactionPanel" hidden></div>
+
+
+
+  </div>
+<section class="galli-social" aria-label="Chat and My Support">
+ <form id="textChatForm" class="galli-chat-form galli-chat-bar">
+  <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Say hello to your stranger" disabled>
+  <button type="submit" id="textChatSend" disabled>Send ➤</button>
+ </form>
+
+<div class="galli-inline-reactions" aria-label="Quick reactions">
+  <div id="reactionChoices" class="v4-reactions"></div>
+  <button type="button" id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
+ <div class="galli-face-effects" aria-label="Face stickers">
+ <label for="faceStickerSelect">🎭 Face Stickers</label>
+ <select id="faceStickerSelect" aria-label="Choose a face sticker">
+  <option value="none">Off</option><option value="moustache">🥸 Moustache</option>
+  <option value="thug">🕶️ Thug Life</option><option value="cowboy">🤠 Cowboy Hat</option>
+  <option value="party">😎 Party Shades</option><option value="crown">👑 Crown</option>
+ </select>
+ <span id="faceStickerStatus" role="status" aria-live="polite"></span>
+</div>
+ <div class="galli-social-tabs">
+  <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My Support</label>
+  <select id="teamBadgeSelect" aria-label="Choose My Support">
+   <option value="">No badge</option><option>Biratnagar Kings</option><option>Chitwan Rhinos</option>
+   <option>Janakpur Bolts</option><option>Kathmandu Gurkhas</option><option>Karnali Yaks</option>
+   <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
+  </select>
+ </div>
+ </div>
+ <div id="textChatNotice" class="galli-chat-notice" role="status"></div>
+</section>
+
+<div class="controls">
+    <div class="galli-enter-wrap">
+      <button class="start" id="startBtn">▶ Enter the Galli</button>
+      <div id="status" role="status" aria-live="polite">Ready to enter Online Galli.</div>
+    </div>
+    <button class="next" id="nextBtn" disabled>⏭ Next Corner</button>
+    <button id="muteBtn" disabled>🎤 Mute</button>
+    <button class="stop" id="stopBtn" disabled>■ Stop</button>
+    <button id="reportBtn" disabled>⚑ Report</button>
+    <button id="blockBtn" disabled>🚫 Block User</button>
+    <button id="gamesBtn" disabled aria-label="Play Games: choose from three games">🎮 Play Games ▸</button>
+  </div>
+
+</section>
+
+<aside>
+  <div class="ad">
+    <h3>YOUR BUSINESS HERE</h3>
+    <p>Advertise your business on Online Galli.</p>
+    <p>Sponsored advertisement</p>
+  </div>
+
+  <div class="safety">
+    <strong>Safety Notice</strong>
+    <p>
+      18+ beta testing only. Never share personal information. Do not record others without consent.
+      Use Report or Block if someone behaves inappropriately. Reports are reviewed manually.
+    </p>
+  </div>
+</aside>
+
+</main>
+
+<footer>Online Galli © 2026 · 18+ beta · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/guidelines">Community Guidelines</a> · Be respectful. Stay safe.</footer>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+const entryGate = document.getElementById("entryGate");
+const adultConsent = document.getElementById("adultConsent");
+const confirmEntryBtn = document.getElementById("confirmEntryBtn");
+let entryConfirmed = false;
+adultConsent.addEventListener("change", () => {
+  confirmEntryBtn.disabled = !adultConsent.checked;
+});
+confirmEntryBtn.addEventListener("click", () => {
+  if (!adultConsent.checked) return;
+  entryConfirmed = true;
+  entryGate.hidden = true;
+  startBtn.focus();
+});
+
+const localVideo = document.getElementById("localVideo");
+const remoteVideo = document.getElementById("remoteVideo");
+const localPlaceholder = document.getElementById("localPlaceholder");
+const remotePlaceholder = document.getElementById("remotePlaceholder");
+
+const startBtn = document.getElementById("startBtn");
+const nextBtn = document.getElementById("nextBtn");
+const muteBtn = document.getElementById("muteBtn");
+const stopBtn = document.getElementById("stopBtn");
+const reportBtn = document.getElementById("reportBtn");
+const blockBtn = document.getElementById("blockBtn");
+const clientIdKey = "randomchat-anonymous-id";
+const blockedKey = "randomchat-blocked-ids";
+let clientId = localStorage.getItem(clientIdKey);
+if (!clientId || !/^[a-f0-9-]{36}$/i.test(clientId)) {
+  clientId = crypto.randomUUID();
+  localStorage.setItem(clientIdKey, clientId);
+}
+let blockedIds = [];
+try { blockedIds = JSON.parse(localStorage.getItem(blockedKey) || "[]"); } catch (_) {}
+if (!Array.isArray(blockedIds)) blockedIds = [];
+function identify() { if (socket.connected) socket.emit("identify", { clientId, blocked: blockedIds.slice(-300) }); }
+function requestMatch() {
+  if (!socket.connected) {
+    status("Waiting for server connection...");
+    return;
+  }
+  identify();
+  socket.emit("find-partner");
+}
+
+const statusBox = document.getElementById("status");
+
+let localStream = null;
+let peer = null;
+let partnerId = null;
+let isMuted = false;
+let generation = 0;
+let pendingCandidates = [];
+let connectionTimer = null;
+let disconnectTimer = null;
+function clearConnectionTimers() {
+  clearTimeout(connectionTimer);
+  clearTimeout(disconnectTimer);
+  connectionTimer = null;
+  disconnectTimer = null;
+}
+function recoverFailedCall(expectedGeneration) {
+  if (generation !== expectedGeneration || !localStream || !partnerId) return;
+  console.warn("Online Galli: video connection timed out or failed; finding another partner");
+  nextChat();
+}
+function startConnectionTimer(expectedGeneration) {
+  clearTimeout(connectionTimer);
+  connectionTimer = setTimeout(() => recoverFailedCall(expectedGeneration), 20000);
+}
+
+
+function status(message) {
+  statusBox.textContent = message;
+}
+
+function remoteMessage(title, description) {
+  remotePlaceholder.style.display = "flex";
+  remotePlaceholder.querySelector("h3").textContent = title;
+  remotePlaceholder.querySelector("p").textContent = description;
+}
+
+function closePeer() {
+  clearConnectionTimers();
+  generation++;
+  pendingCandidates = [];
+
+  if (peer) {
+    peer.onicecandidate = null;
+    peer.ontrack = null;
+    peer.close();
+    peer = null;
+  }
+
+  partnerId = null;
+  resetV4();
+  resetSocial();
+  reportBtn.disabled = true;
+  blockBtn.disabled = true;
+  remoteVideo.srcObject = null;
+  remoteMessage("Waiting for a stranger", "Searching...");
+}
+
+// Load TURN settings before entering matchmaking so the answering peer is ready.
+let currentIceServers = [{ urls: "stun:stun.l.google.com:19302" }];
+async function loadIceServers() {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5500);
+    try {
+      const response = await fetch("/api/ice-servers", { cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error("ICE settings unavailable");
+      const data = await response.json();
+      if (Array.isArray(data.iceServers) && data.iceServers.length) currentIceServers = data.iceServers;
+    } finally { clearTimeout(timer); }
+  } catch (error) {
+    console.warn("TURN unavailable; using STUN only", error);
+  }
+}
+
+async function startChat() {
+  if (localStream) return;
+  if (!entryConfirmed || !adultConsent.checked) {
+    status("Please confirm you are 18+ and accept the beta policies before entering.");
+    entryGate.hidden = false;
+    adultConsent.focus();
+    return;
+  }
+
+  startBtn.disabled = true;
+  status("Requesting camera and microphone...");
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true
+    });
+
+    localVideo.srcObject = localStream;
+    startFaceEffects();
+    localPlaceholder.style.display = "none";
+
+    nextBtn.disabled = false;
+    muteBtn.disabled = false;
+    stopBtn.disabled = false;
+
+    status("Preparing connection...");
+    await loadIceServers();
+    if (!localStream) return; // Stop was clicked while ICE settings loaded.
+    status("Searching for another user...");
+    requestMatch();
+
+  } catch (error) {
+    status("Camera error: " + error.message);
+    startBtn.disabled = false;
+  }
+}
+
+function stopChat() {
+  socket.emit("stop");
+  closePeer();
+
+  stopFaceEffects();
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+
+  localVideo.srcObject = null;
+  localPlaceholder.style.display = "flex";
+
+  startBtn.disabled = false;
+  nextBtn.disabled = true;
+  muteBtn.disabled = true;
+  stopBtn.disabled = true;
+
+  isMuted = false;
+  muteBtn.textContent = "🎤 Mute";
+  remoteMessage("Waiting for a stranger", "Click Enter the Galli to begin");
+  status("Chat stopped.");
+}
+
+function nextChat() {
+  if (!localStream) return;
+
+  closePeer();
+  status("Finding another person...");
+  socket.emit("next");
+}
+
+function toggleMute() {
+  if (!localStream) return;
+
+  isMuted = !isMuted;
+
+  localStream.getAudioTracks().forEach(track => {
+    track.enabled = !isMuted;
+  });
+
+  muteBtn.textContent = isMuted ? "🔇 Unmute" : "🎤 Mute";
+}
+
+async function createPeer(id) {
+  closePeer();
+  partnerId = id;
+  resetV4();
+  resetSocial();
+  reportBtn.disabled = false;
+  blockBtn.disabled = false;
+
+  const currentGeneration = generation;
+  startConnectionTimer(currentGeneration);
+
+  peer = new RTCPeerConnection({ iceServers: currentIceServers });
+
+  const pc = peer;
+
+  localStream.getTracks().forEach(track => {
+    pc.addTrack(track.kind === "video" && stickerOutgoingTrack ? stickerOutgoingTrack : track, localStream);
+  });
+
+  pc.ontrack = event => {
+    if (generation !== currentGeneration) return;
+
+    if (event.streams && event.streams[0]) {
+      remoteVideo.srcObject = event.streams[0];
+    } else {
+      const stream = remoteVideo.srcObject || new MediaStream();
+      stream.addTrack(event.track);
+      remoteVideo.srcObject = stream;
+    }
+
+    remotePlaceholder.style.display = "none";
+    remoteVideo.play().catch(() => {
+      status("Click the video to allow playback.");
+    });
+  };
+
+  pc.onicecandidate = event => {
+    if (event.candidate && generation === currentGeneration) {
+      socket.emit("signal", {
+        to: id,
+        data: {
+          type: "candidate",
+          candidate: event.candidate
+        }
+      });
+    }
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    if (generation === currentGeneration) console.info("Online Galli ICE state:", pc.iceConnectionState);
+  };
+  pc.onconnectionstatechange = () => {
+    if (generation !== currentGeneration) return;
+
+    if (pc.connectionState === "connected") {
+      clearConnectionTimers();
+      status("Connected! You can now talk.");
+    } else if (pc.connectionState === "disconnected") {
+      status("Connection interrupted. Reconnecting...");
+      clearTimeout(disconnectTimer);
+      disconnectTimer = setTimeout(() => recoverFailedCall(currentGeneration), 8000);
+    } else if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+      status("Connection failed. Finding another person...");
+      recoverFailedCall(currentGeneration);
+    }
+  };
+
+  return pc;
+}
+
+socket.on("matched", async ({ partnerId: id, initiator }) => {
+  if (!localStream) return;
+
+  try {
+    const pc = await createPeer(id);
+    status("Partner found! Connecting...");
+
+    if (initiator) {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      if (peer !== pc) return;
+
+      socket.emit("signal", {
+        to: id,
+        data: {
+          type: "offer",
+          description: pc.localDescription
+        }
+      });
+    }
+  } catch (error) {
+    status("Connection setup error: " + error.message);
+    if (localStream && partnerId === id) nextChat();
+  }
+});
+
+socket.on("signal", async ({ from, data }) => {
+  if (!peer || from !== partnerId || !localStream) return;
+
+  const pc = peer;
+
+  try {
+    if (data.type === "offer") {
+      await pc.setRemoteDescription(data.description);
+      if (peer !== pc) return;
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      if (peer !== pc) return;
+
+      socket.emit("signal", {
+        to: from,
+        data: {
+          type: "answer",
+          description: pc.localDescription
+        }
+      });
+
+    } else if (data.type === "answer") {
+      await pc.setRemoteDescription(data.description);
+
+    } else if (data.type === "candidate") {
+      if (!pc.remoteDescription) {
+        pendingCandidates.push(data.candidate);
+      } else {
+        await pc.addIceCandidate(data.candidate);
+      }
+    }
+
+    if (pc.remoteDescription) {
+      const candidates = pendingCandidates.splice(0);
+
+      for (const candidate of candidates) {
+        if (peer !== pc) return;
+        await pc.addIceCandidate(candidate);
+      }
+    }
+  } catch (error) {
+    if (peer === pc) {
+      status("WebRTC error: " + error.message);
+    }
+  }
+});
+
+socket.on("waiting", () => {
+  if (localStream && !partnerId) {
+    status("Waiting for another user...");
+  }
+});
+
+socket.on("partner-left", () => {
+  closePeer();
+  if (localStream) {
+    status("Partner left. Searching again...");
+  }
+});
+
+socket.on("disconnect", () => {
+  closePeer();
+  if (localStream) {
+    status("Server disconnected. Waiting to reconnect...");
+  }
+});
+
+socket.on("connect", () => {
+  identify();
+  if (localStream) requestMatch();
+});
+
+reportBtn.addEventListener("click", () => {
+  if (!partnerId) return;
+  const reason = prompt("Report reason: nudity, harassment, hate, spam, underage, or other");
+  if (reason === null) return;
+  const normalized = reason.trim().toLowerCase();
+  if (!["nudity", "harassment", "hate", "spam", "underage", "other"].includes(normalized)) {
+    status("Choose a valid report reason."); return;
+  }
+  const description = prompt("Optional: Briefly explain what happened (max 500 characters). Leave blank to skip.");
+  if (description === null) return;
+  socket.timeout(5000).emit("report-user", { reason: normalized, description: description.slice(0, 500) }, (err, response) => {
+    status(!err && response?.ok ? "Report submitted. Thank you." : "Could not submit report. Try again.");
+  });
+});
+blockBtn.addEventListener("click", () => {
+  if (!partnerId || !confirm("Block this user and end the call?")) return;
+  const targetId = partnerId;
+  socket.timeout(5000).emit("block-user", { targetId }, (err, response) => {
+    if (err || !response?.ok) { status("Could not block user. Try again."); return; }
+    blockedIds = [...new Set([...blockedIds, response.blockedId])].slice(-300);
+    localStorage.setItem(blockedKey, JSON.stringify(blockedIds));
+    identify();
+    closePeer();
+    status("User blocked. Finding someone else...");
+  });
+});
+socket.on("moderation-warning", message => status(message));
+
+// V4 game and positive reaction controls. No additional video processing.
+const gamesBtn=document.getElementById("gamesBtn");
+
+const muteReactionsBtn=document.getElementById("muteReactionsBtn");
+const gamePanel=document.getElementById("gamePanel");
+const videoStage=document.getElementById("videoStage");
+function positionGameAtVideoSeam(){
+ const boxes=videoStage.querySelectorAll(".video-box");
+ if(boxes.length!==2)return;
+ const a=boxes[0].getBoundingClientRect(),b=boxes[1].getBoundingClientRect();
+ const stacked=b.top>=a.bottom-4;
+ const x=stacked?(a.left+a.right)/2:(a.right+b.left)/2;
+ const y=stacked?(a.bottom+b.top)/2:(Math.max(a.top,b.top)+Math.min(a.bottom,b.bottom))/2;
+ // Fixed viewport coordinates avoid mobile grid placement, clipping and scroll-offset errors.
+ gamePanel.style.setProperty("--galli-popup-x",`${x}px`);
+ gamePanel.style.setProperty("--galli-popup-y",`${y}px`);
+}
+window.addEventListener("scroll",positionGameAtVideoSeam,{passive:true});
+window.addEventListener("resize",positionGameAtVideoSeam);
+window.addEventListener("orientationchange",positionGameAtVideoSeam);
+if("ResizeObserver" in window){
+ const observer=new ResizeObserver(positionGameAtVideoSeam);
+ videoStage.querySelectorAll(".video-box").forEach(box=>observer.observe(box));
+}
+document.body.appendChild(gamePanel);
+const reactionPanel=document.getElementById("reactionPanel");
+document.body.appendChild(reactionPanel);
+requestAnimationFrame(positionGameAtVideoSeam);
+const gameMessage=document.getElementById("gameMessage");
+const activeGameTitle=document.getElementById("activeGameTitle");
+const gameTypePicker=document.getElementById("gameTypePicker");
+const extraGameChoices=document.getElementById("extraGameChoices");
+const gameTitles={ttt:"❎ Tic-Tac-Toe",rps:"✊ Rock Paper Scissors",wyr:"🤔 Would You Rather?"};
+let selectedGameType="ttt",activeExtraGame=null;
+function setGameType(type){
+ if(!gameTitles[type])return;
+ selectedGameType=type;activeGameTitle.textContent=gameTitles[type];
+ gameTypePicker.hidden=true;extraGameChoices.hidden=true;
+ gameBoard.hidden=true;inviteGameBtn.hidden=false;
+ gameMessage.textContent="Invite your stranger to play.";
+}
+function showGamePicker(){
+ activeExtraGame=null;gameTypePicker.hidden=false;extraGameChoices.hidden=true;
+ gameBoard.hidden=true;inviteGameBtn.hidden=true;
+ activeGameTitle.textContent="🎮 Choose a game";
+ gameMessage.textContent="Choose a game to invite your stranger.";
+}
+gameTypePicker.querySelectorAll("[data-galli-game]").forEach(b=>b.addEventListener("click",()=>setGameType(b.dataset.galliGame)));
+function renderExtraGame(state){
+ if(!partnerId)return;
+ activeExtraGame=state;selectedGameType=state.type;
+ activeGameTitle.textContent=gameTitles[state.type];
+ gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);
+ gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
+ inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ extraGameChoices.replaceChildren();
+ const finished=!!state.finished;
+ gamePanel.classList.toggle("game-finished",finished);
+ playAgainGameBtn.hidden=!finished;playAgainGameBtn.disabled=false;
+ if(state.type==="rps"){
+  gameMessage.textContent=finished?(state.result==="draw"?"IT'S A DRAW!":state.result===state.you?"YOU WIN! 🎉":"STRANGER WINS!"):(state.chosen?"Waiting for stranger's choice...":"Choose secretly. Choices reveal together.");
+  if(finished){
+   const line=document.createElement("p");line.textContent=`You: ${state.yourChoice} · Stranger: ${state.theirChoice}`;extraGameChoices.appendChild(line);
+  }else{
+   for(const [choice,label] of [["rock","✊ Rock"],["paper","✋ Paper"],["scissors","✌️ Scissors"]]){
+    const b=document.createElement("button");b.textContent=label;b.disabled=!!state.chosen;
+    b.onclick=()=>socket.emit("galli-extra-game-choice",{choice});extraGameChoices.appendChild(b);
+   }
+  }
+ }else{
+  const question=document.createElement("p");question.className="galli-question";question.textContent=state.question;extraGameChoices.appendChild(question);
+  gameMessage.textContent=finished?"Both answers revealed!":state.chosen?"Waiting for stranger's answer...":"Pick one. Both answers reveal together.";
+  if(finished){
+   const p=document.createElement("p");p.textContent=`You: ${state.yourChoice} · Stranger: ${state.theirChoice}`;extraGameChoices.appendChild(p);
+  }else{
+   state.options.forEach((label,i)=>{const b=document.createElement("button");b.textContent=label;b.disabled=!!state.chosen;b.onclick=()=>socket.emit("galli-extra-game-choice",{choice:i});extraGameChoices.appendChild(b);});
+  }
+ }
+}
+socket.on("galli-extra-game-state",renderExtraGame);
+
+const gameBoard=document.getElementById("gameBoard");
+const inviteGameBtn=document.getElementById("inviteGameBtn");
+const acceptGameBtn=document.getElementById("acceptGameBtn");
+const declineGameBtn=document.getElementById("declineGameBtn");
+const closeGameBtn=document.getElementById("closeGameBtn");
+const playAgainGameBtn=document.getElementById("playAgainGameBtn");
+const localReaction=document.getElementById("localReaction");
+const remoteReaction=document.getElementById("remoteReaction");
+let gameState=null, reactionsMuted=false, toastTimeout=null;
+gameBoard.hidden=true;
+function resetV4() {
+  gameBoard.hidden=true;
+  gameState=null;activeExtraGame=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;extraGameChoices.hidden=true;gameTypePicker.hidden=false;activeGameTitle.textContent="🎮 Choose a game";
+  playAgainGameBtn.hidden=true;
+  gameBoard.replaceChildren();gameMessage.textContent="Invite your stranger to play.";
+  inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+  gamesBtn.disabled=!partnerId;
+}
+gamesBtn.onclick=()=>{const opening=gamePanel.hidden;gamePanel.hidden=!opening;requestAnimationFrame(positionGameAtVideoSeam);reactionPanel.hidden=true;if(opening&&!gameState&&!activeExtraGame)showGamePicker();};
+
+inviteGameBtn.onclick=()=>{if(!partnerId)return;socket.emit("galli-game-invite",{type:selectedGameType});gameMessage.textContent="Waiting for your partner to accept...";inviteGameBtn.hidden=true;};
+acceptGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:true});acceptGameBtn.hidden=true;declineGameBtn.hidden=true;};
+declineGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:false});resetV4();};
+closeGameBtn.onclick=()=>{socket.emit("galli-game-close");resetV4();};
+playAgainGameBtn.onclick=()=>{if(partnerId&&((gameState&&(gameState.winner||gameState.draw))||(activeExtraGame&&activeExtraGame.finished))){playAgainGameBtn.disabled=true;socket.emit("galli-game-play-again");}};
+socket.on("galli-game-invite",({type="ttt"}={})=>{
+ selectedGameType=gameTitles[type]?type:"ttt";activeGameTitle.textContent=gameTitles[selectedGameType];gameTypePicker.hidden=true;extraGameChoices.hidden=true;
+ if(!partnerId)return;
+ gameBoard.hidden=true;
+ gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);reactionPanel.hidden=true;inviteGameBtn.hidden=true;
+ acceptGameBtn.hidden=false;declineGameBtn.hidden=false;
+ gameMessage.textContent=`Your partner invited you to play ${gameTitles[selectedGameType].replace(/^[^ ]+ /,"")}.`;
+});
+socket.on("galli-game-pending",()=>{gameMessage.textContent="Waiting for your partner to accept...";});
+socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);showGamePicker();gameMessage.textContent="Your partner declined. Choose a game to invite again.";});
+socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);showGamePicker();gameMessage.textContent="Game ended. Choose another game.";});
+socket.on("galli-game-state",state=>{
+ if(!partnerId)return;
+ gameBoard.hidden=false;extraGameChoices.hidden=true;gameTypePicker.hidden=true;activeGameTitle.textContent=gameTitles.ttt;activeExtraGame=null;
+ gameState=state;gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);inviteGameBtn.hidden=true;
+ acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ gameMessage.textContent=state.winner?(`${state.winner} WINS! 🎉`):state.draw?"IT'S A DRAW!":state.turn===state.you?"Your turn":"Partner's turn";
+ gamePanel.classList.toggle("game-finished",!!state.winner||!!state.draw);
+ playAgainGameBtn.hidden=!(state.winner||state.draw);playAgainGameBtn.disabled=false;
+ gameBoard.replaceChildren();
+ state.board.forEach((value,index)=>{
+  const b=document.createElement("button");
+  b.textContent=value||"·";
+  b.disabled=!!value||!!state.winner||state.draw||state.turn!==state.you;
+  b.setAttribute("aria-label",`Cell ${index+1}: ${value||"empty"}`);
+  b.onclick=()=>socket.emit("galli-game-move",{index});
+  gameBoard.appendChild(b);
+ });
+});
+const approvedReactions=["👍","👏","🎉","🙌","✨","😂"];
+approvedReactions.forEach(emoji=>{
+ const b=document.createElement("button");b.textContent=emoji;
+ b.setAttribute("aria-label","Send "+emoji+" reaction");
+ b.onclick=()=>{if(partnerId){socket.emit("galli-reaction",{emoji});showGalliReaction(emoji,"local");}};
+ document.getElementById("reactionChoices").appendChild(b);
+});
+muteReactionsBtn.onclick=()=>{
+ reactionsMuted=!reactionsMuted;
+ muteReactionsBtn.textContent=reactionsMuted?"🔕 Reactions Muted":"🔔 Reactions On";
+ muteReactionsBtn.setAttribute("aria-pressed",String(reactionsMuted));
+};
+const reactionTimers={local:null,remote:null};
+function showGalliReaction(emoji,side){
+ const target=side==="local"?localReaction:remoteReaction;
+ target.textContent="";
+ void target.offsetWidth;
+ target.textContent=emoji;
+ clearTimeout(reactionTimers[side]);
+ reactionTimers[side]=setTimeout(()=>target.textContent="",1800);
+}
+socket.on("galli-reaction",({emoji}={})=>{
+ if(reactionsMuted||!approvedReactions.includes(emoji)||!partnerId)return;
+ showGalliReaction(emoji,"remote");
+});
+
+
+// V5: transient partner-only text chat and optional text-based team badges.
+const myVideoChat=document.getElementById("myVideoChat");
+const peerVideoChat=document.getElementById("peerVideoChat");
+const textChatForm=document.getElementById("textChatForm");
+const textChatInput=document.getElementById("textChatInput");
+const textChatSend=document.getElementById("textChatSend");
+const textChatNotice=document.getElementById("textChatNotice");
+const teamBadgeSelect=document.getElementById("teamBadgeSelect");
+const myBadge=document.getElementById("myBadge");
+const peerBadge=document.getElementById("peerBadge");
+const badgeTeams=new Set(Array.from(teamBadgeSelect.options).map(o=>o.value));
+let selectedBadge="";
+const nplLogoFiles={
+ "Biratnagar Kings":"biratnagar-kings.png",
+ "Chitwan Rhinos":"chitwan-rhinos.png",
+ "Janakpur Bolts":"janakpur-bolts.png",
+ "Karnali Yaks":"karnali-yaks.png",
+ "Kathmandu Gurkhas":"kathmandu-gorkhas.png",
+ "Kathmandu Gorkhas":"kathmandu-gorkhas.png",
+ "Lumbini Lions":"lumbini-lions.png",
+ "Pokhara Avengers":"pokhara-avengers.png",
+ "Sudurpaschim Royals":"sudurpaschim-royals.png"
+};
+function showBadge(el,team){
+ el.replaceChildren();
+ const file=nplLogoFiles[team];
+ el.hidden=!file;
+ if(!file)return;
+ const img=document.createElement("img");
+ img.alt=team+" logo";
+ img.src="/assets/npl/"+file;
+ img.loading="eager";
+ img.onerror=()=>{img.onerror=null;img.src="/assets/npl/fallback.png";};
+ el.title=team;
+ el.setAttribute("aria-label",team+" supporter badge");
+ el.appendChild(img);
+}
+function resetSocial(){
+ myVideoChat.replaceChildren();peerVideoChat.replaceChildren();textChatInput.value="";textChatNotice.textContent="";
+ peerBadge.hidden=true;peerBadge.textContent="";
+ const active=!!partnerId;
+ textChatInput.disabled=!active;textChatSend.disabled=!active;
+}
+function appendText(message,mine){
+ for(const target of [myVideoChat,peerVideoChat]){
+  const line=document.createElement("div");line.className="galli-video-chat-line";
+  const speaker=document.createElement("strong");speaker.textContent=mine?"You: ":"Stranger: ";
+  line.append(speaker,document.createTextNode(message));target.appendChild(line);
+  while(target.childElementCount>6)target.firstElementChild.remove();
+  target.scrollTop=target.scrollHeight;
+ }
+}
+textChatForm.addEventListener("submit",event=>{
+ event.preventDefault();
+ if(!partnerId)return;
+ const message=textChatInput.value.trim();
+ if(!message||message.length>500)return;
+ socket.emit("galli-text",{message});textChatInput.value="";
+});
+socket.on("galli-text",({message}={})=>{
+ if(!partnerId||typeof message!=="string")return;
+ appendText(message,false);
+
+});
+socket.on("galli-text-sent",({message}={})=>{if(partnerId&&typeof message==="string")appendText(message,true);});
+socket.on("galli-text-warning",msg=>{textChatNotice.textContent=String(msg).slice(0,150);});
+teamBadgeSelect.addEventListener("change",()=>{
+ selectedBadge=teamBadgeSelect.value;
+ if(!badgeTeams.has(selectedBadge))return;
+ showBadge(myBadge,selectedBadge);
+ if(socket.connected)socket.emit("galli-badge-select",{team:selectedBadge});
+});
+socket.on("galli-badge-peer",({team}={})=>{
+ if(partnerId&&typeof team==="string"&&badgeTeams.has(team))showBadge(peerBadge,team);
+});
+socket.on("connect",()=>{socket.emit("galli-badge-select",{team:selectedBadge});});
+resetSocial();
+
+startBtn.addEventListener("click", startChat);
+nextBtn.addEventListener("click", nextChat);
+muteBtn.addEventListener("click", toggleMute);
+stopBtn.addEventListener("click", stopChat);
+
+remoteVideo.addEventListener("click", () => {
+  remoteVideo.play().catch(() => {});
+});
+
+window.addEventListener("pagehide", () => {
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+  }
+});
+
+// Face stickers: locally composited on the outgoing video track so the partner sees them.
+// FaceMesh is loaded on demand only when a sticker is selected.
+const stickerSelect=document.getElementById("faceStickerSelect");
+const stickerStatus=document.getElementById("faceStickerStatus");
+const stickerPreview=document.getElementById("faceStickerPreview");
+const stickerPreviewCtx=stickerPreview.getContext("2d");
+const stickerComposite=document.createElement("canvas");
+const stickerCompositeCtx=stickerComposite.getContext("2d");
+let stickerOutgoingTrack=null,stickerCapture=null,stickerRaf=0,stickerFaceMesh=null;
+let stickerFace=null,stickerBusy=false,stickerLastDetect=0,stickerLoading=null;
+let stickerRunning=false;
+function stickerMessage(s){stickerStatus.textContent=s;}
+function stickerResize(){
+ const w=localVideo.videoWidth||640,h=localVideo.videoHeight||480;
+ if(stickerPreview.width!==w||stickerPreview.height!==h){
+  stickerPreview.width=stickerComposite.width=w;
+  stickerPreview.height=stickerComposite.height=h;
+ }
+}
+function stickerPoly(ctx,points,fill,stroke="#111",lineWidth=2){
+ ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);
+ points.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+ ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+ if(stroke){ctx.lineWidth=lineWidth;ctx.strokeStyle=stroke;ctx.stroke();}
+}
+function stickerDraw(ctx,face,mode,w,h){
+ if(!face||mode==="none")return;
+ const p=i=>({x:face[i].x*w,y:face[i].y*h});
+ const eyeL=p(33),eyeR=p(263),lip=p(13),forehead=p(10);
+ const dx=eyeR.x-eyeL.x,dy=eyeR.y-eyeL.y;
+ const eyeDist=Math.hypot(dx,dy);
+ if(eyeDist<10)return;
+ ctx.save();
+ ctx.translate((eyeL.x+eyeR.x)/2,(eyeL.y+eyeR.y)/2);
+ ctx.rotate(Math.atan2(dy,dx));
+ const s=eyeDist;ctx.lineJoin="round";
+ if(mode==="thug"||mode==="party"){
+  const col=mode==="thug"?"#111":"#ff6d00";
+  stickerPoly(ctx,[[-.73*s,-.23*s],[-.06*s,-.2*s],[-.04*s,.28*s],[-.57*s,.32*s]],col);
+  stickerPoly(ctx,[[.06*s,-.2*s],[.73*s,-.23*s],[.57*s,.32*s],[.04*s,.28*s]],col);
+  ctx.strokeStyle=mode==="thug"?"#e9e9e9":"#ffdb3c";ctx.lineWidth=.055*s;
+  ctx.beginPath();ctx.moveTo(-.06*s,-.02*s);ctx.lineTo(.06*s,-.02*s);ctx.stroke();
+  if(mode==="thug"){
+   ctx.fillStyle="#fff";const sq=.095*s;
+   for(let side of [-1,1])for(let r=0;r<3;r++)for(let c=0;c<4;c++)
+    if((r+c)%2===0)ctx.fillRect(side*.39*s+(c-1.5)*sq,-.07*s+r*sq,sq,sq*.65);
+  }
+ }
+ if(mode==="moustache"||mode==="cowboy"){
+  const y=lip.y-(eyeL.y+eyeR.y)/2;
+  stickerPoly(ctx,[[-.53*s,y-.09*s],[-.24*s,y-.19*s],[0,y-.055*s],[.24*s,y-.19*s],[.53*s,y-.09*s],[.3*s,y+.17*s],[0,y+.065*s],[-.3*s,y+.17*s]],"#20120c","#120b09",.02*s);
+ }
+ if(mode==="cowboy"||mode==="crown"){
+  const y=forehead.y-(eyeL.y+eyeR.y)/2;
+  if(mode==="cowboy"){
+   stickerPoly(ctx,[[-.9*s,y+.05*s],[-.55*s,y+.16*s],[.55*s,y+.16*s],[.9*s,y+.05*s],[.6*s,y+.3*s],[-.6*s,y+.3*s]],"#6b3b1c");
+   stickerPoly(ctx,[[-.47*s,y+.15*s],[-.38*s,y-.75*s],[.34*s,y-.75*s],[.47*s,y+.15*s]],"#8b4a22");
+   ctx.fillStyle="#e5ad46";ctx.fillRect(-.4*s,y+.04*s,.8*s,.11*s);
+  }else{
+   stickerPoly(ctx,[[-.65*s,y+.18*s],[-.63*s,y-.58*s],[-.3*s,y-.18*s],[0,y-.85*s],[.3*s,y-.18*s],[.63*s,y-.58*s],[.65*s,y+.18*s]],"#f7c62e","#9b6300",.05*s);
+   ctx.fillStyle="#e43d44";ctx.beginPath();ctx.arc(0,y-.1*s,.1*s,0,Math.PI*2);ctx.fill();
+  }
+ }
+ ctx.restore();
+}
+function stickerRender(t){
+ if(!stickerRunning)return;
+ stickerRaf=requestAnimationFrame(stickerRender);
+ if(!localStream||localVideo.readyState<2)return;
+ stickerResize();
+ const w=stickerPreview.width,h=stickerPreview.height;
+ stickerPreviewCtx.clearRect(0,0,w,h);
+ if(stickerSelect.value!=="none"){
+  stickerDraw(stickerPreviewCtx,stickerFace,stickerSelect.value,w,h);
+  stickerCompositeCtx.drawImage(localVideo,0,0,w,h);
+  stickerCompositeCtx.drawImage(stickerPreview,0,0);
+  if(stickerFaceMesh&&!stickerBusy&&t-stickerLastDetect>85){
+   stickerLastDetect=t;stickerBusy=true;
+   stickerFaceMesh.send({image:localVideo}).catch(()=>{}).finally(()=>{stickerBusy=false;});
+  }
+ }
+}
+function stickerReplaceTrack(track){
+ if(peer&&peer.connectionState!=="closed"){
+  const sender=peer.getSenders().find(s=>s.track&&s.track.kind==="video");
+  if(sender)sender.replaceTrack(track).catch(()=>stickerMessage("Couldn't send sticker to partner."));
+ }
+}
+async function stickerLoadMesh(){
+ if(stickerFaceMesh)return;
+ if(stickerLoading)return stickerLoading;
+ stickerLoading=(async()=>{
+  if(!window.FaceMesh){
+   await new Promise((resolve,reject)=>{
+    const sc=document.createElement("script");
+    sc.src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js";
+    sc.onload=resolve;sc.onerror=()=>reject(new Error("Face tracking library unavailable"));
+    document.head.appendChild(sc);
+   });
+  }
+  const mesh=new window.FaceMesh({locateFile:file=>"https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/"+file});
+  mesh.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:.5,minTrackingConfidence:.5});
+  mesh.onResults(result=>{stickerFace=result.multiFaceLandmarks?.[0]||null;});
+  stickerFaceMesh=mesh;
+ })();
+ try{await stickerLoading;}finally{stickerLoading=null;}
+}
+function startFaceEffects(){
+ if(stickerRunning)return;
+ stickerRunning=true;stickerRaf=requestAnimationFrame(stickerRender);
+ if(stickerSelect.value!=="none")stickerEnable();
+}
+async function stickerEnable(){
+ if(!localStream){stickerMessage("Start your camera first.");return;}
+ if(stickerSelect.value==="none"){stickerDisable();return;}
+ stickerMessage("Loading face tracking...");
+ try{
+  await stickerLoadMesh();
+  if(!localStream||stickerSelect.value==="none")return;
+  stickerResize();
+  if(!stickerOutgoingTrack){
+   stickerCapture=stickerComposite.captureStream(24);
+   stickerOutgoingTrack=stickerCapture.getVideoTracks()[0];
+  }
+  stickerReplaceTrack(stickerOutgoingTrack);
+  stickerMessage("Sticker on · visible to your partner");
+ }catch(e){
+  stickerMessage("Face tracking unavailable. Try again later.");
+  stickerSelect.value="none";stickerDisable();
+ }
+}
+function stickerDisable(){
+ stickerFace=null;
+ if(localStream)stickerReplaceTrack(localStream.getVideoTracks()[0]);
+ stickerPreviewCtx.clearRect(0,0,stickerPreview.width,stickerPreview.height);
+ if(stickerOutgoingTrack){stickerOutgoingTrack.stop();stickerOutgoingTrack=null;}
+ stickerCapture=null;stickerMessage("");
+}
+function stopFaceEffects(){
+ stickerRunning=false;cancelAnimationFrame(stickerRaf);stickerDisable();
+}
+stickerSelect.addEventListener("change",()=>{
+ if(stickerSelect.value==="none")stickerDisable();
+ else if(localStream)stickerEnable();
+ else stickerMessage("Start your camera first.");
+});
+
+
+// Alternating human shoe-sole impressions on the page background.
+// No footprints on videos, dialogs or interactive controls; never intercepts clicks.
+(()=>{
+ const enabled=window.matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)');
+ let last=null,step=0;const prints=[];
+ const sole=`<svg viewBox="0 0 20 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#17140d" d="M10 1C4 1 2.4 5.5 2.5 10.8c.1 4.1 2.2 6.5 2.4 10.5.2 2.5-.7 4.2-1.5 6.5C2.1 31.7 4.5 37 10 37s7.9-5.3 6.6-9.2c-.8-2.3-1.7-4-1.5-6.5.2-4 2.3-6.4 2.4-10.5C17.6 5.5 16 1 10 1Z"/><path fill="#e0b927" opacity=".68" d="M5 10h10v1.7H5zm.4 4.4h9.2v1.7H5.4zm.8 4.3h7.6v1.7H6.2zm-.6 9.5h8.8v1.5H5.6zm1.2 3.2h6.4v1.4H6.8z"/></svg>`;
+ function allowed(x,y){
+  const el=document.elementFromPoint(x,y);
+  if(!el)return false;
+  return !el.closest('#videoStage,.video-box,video,button,a,input,select,textarea,[role="dialog"],.modal,.game-popup,.game-modal');
+ }
+ function printAt(x,y,angle,stomp=false){
+  if(!enabled.matches||!allowed(x,y))return;
+  const side=step++%2===0?-1:1;
+  const rad=angle*Math.PI/180;
+  const offset=side*11;
+  const node=document.createElement('span');node.className='galli-shoeprint'+(stomp?' galli-stomp':'');
+  node.setAttribute('aria-hidden','true');node.innerHTML=sole;
+  node.style.left=(x+Math.cos(rad)*offset-9)+'px';
+  node.style.top=(y+Math.sin(rad)*offset-16)+'px';
+  node.style.transform=`rotate(${angle-90+side*8}deg) scaleX(${side})`;
+  document.body.appendChild(node);prints.push(node);
+  if(prints.length>10)prints.shift()?.remove();
+  node.addEventListener('animationend',()=>{node.remove();const i=prints.indexOf(node);if(i>=0)prints.splice(i,1)},{once:true});
+ }
+ document.addEventListener('pointermove',e=>{
+  if(!enabled.matches||e.pointerType!=='mouse')return;
+  const now={x:e.clientX,y:e.clientY};
+  if(!last){last=now;return;}
+  const dx=now.x-last.x,dy=now.y-last.y,dist=Math.hypot(dx,dy);
+  if(dist<32)return;
+  const angle=Math.atan2(dy,dx)*180/Math.PI;
+  // Avoid a huge burst if the pointer jumps across the screen.
+  printAt(now.x,now.y,angle);last=now;
+ },{passive:true});
+ document.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse'&&e.button===0&&enabled.matches&&allowed(e.clientX,e.clientY))
+   printAt(e.clientX,e.clientY,last?0:90,true);
+ },{passive:true});
+ window.addEventListener('blur',()=>{last=null;});
+})();
+
+</script>
+</body>
+</html>
