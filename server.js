@@ -267,6 +267,36 @@ function gamePair(socket) {
   const other = partners.get(socket.id);
   return other ? {other,key:pairKey(socket.id,other)} : null;
 }
+const wouldRatherQuestions=[
+ {q:"Would you rather explore the mountains or the ocean?",options:["Mountains","Ocean"]},
+ {q:"Would you rather travel to the past or the future?",options:["Past","Future"]},
+ {q:"Would you rather have unlimited books or unlimited movies?",options:["Books","Movies"]},
+ {q:"Would you rather fly or become invisible?",options:["Fly","Invisible"]},
+ {q:"Would you rather live in a big city or a quiet village?",options:["Big city","Quiet village"]},
+ {q:"Would you rather speak every language or play every instrument?",options:["Every language","Every instrument"]},
+ {q:"Would you rather always have summer or always have winter?",options:["Summer","Winter"]},
+ {q:"Would you rather explore space or the deep sea?",options:["Space","Deep sea"]}
+];
+function sendExtraGameState(key,g){
+ const ids=[g.inviter,g.invitee],finished=ids.every(id=>Object.hasOwn(g.choices,id));
+ for(const id of ids){
+  const other=id===g.inviter?g.invitee:g.inviter;
+  const base={type:g.type,finished,chosen:Object.hasOwn(g.choices,id)};
+  if(g.type==="rps"){
+   base.you=id===g.inviter?"A":"B";
+   if(finished){
+    const a=g.choices[id],b=g.choices[other];
+    base.yourChoice=a;base.theirChoice=b;
+    base.result=a===b?"draw":({rock:"scissors",paper:"rock",scissors:"paper"}[a]===b?base.you:"other");
+   }
+  }else{
+   const q=wouldRatherQuestions[g.questionIndex%wouldRatherQuestions.length];
+   base.question=q.q;base.options=q.options;
+   if(finished){base.yourChoice=q.options[g.choices[id]];base.theirChoice=q.options[g.choices[other]];}
+  }
+  io.to(id).emit("galli-extra-game-state",base);
+ }
+}
 function clearGame(socket) {
   const pair=gamePair(socket);
   if(pair) {games.delete(pair.key);io.to(pair.other).emit("galli-game-ended");}
@@ -498,13 +528,14 @@ io.on("connection", (socket) => {
   });
 
 
-  socket.on("galli-game-invite", () => {
+  socket.on("galli-game-invite", ({type="ttt"}={}) => {
+    if(!["ttt","rps","wyr"].includes(type))return;
     const p=gamePair(socket);
     if(!p) return;
     const old=games.get(p.key);
     if(old) return;
-    games.set(p.key,{status:"pending",inviter:socket.id,invitee:p.other});
-    io.to(p.other).emit("galli-game-invite");
+    games.set(p.key,{status:"pending",type,inviter:socket.id,invitee:p.other});
+    io.to(p.other).emit("galli-game-invite",{type});
     socket.emit("galli-game-pending");
   });
   socket.on("galli-game-response", ({accept}={}) => {
@@ -516,6 +547,12 @@ io.on("connection", (socket) => {
       io.to(g.inviter).emit("galli-game-declined");
       return;
     }
+    g.status="playing";
+    if(g.type!=="ttt"){
+      g.choices={};g.round=0;g.questionIndex=0;
+      sendExtraGameState(p.key,g);
+      return;
+    }
     g.status="playing";g.board=Array(9).fill(null);g.turn="X";g.players={[g.inviter]:"X",[g.invitee]:"O"};g.winner=null;g.draw=false;
     io.to(g.inviter).emit("galli-game-state",{board:g.board,turn:g.turn,you:"X",winner:null,draw:false});
     socket.emit("galli-game-state",{board:g.board,turn:g.turn,you:"O",winner:null,draw:false});
@@ -524,7 +561,12 @@ io.on("connection", (socket) => {
     const p=gamePair(socket);if(!p)return;
     const g=games.get(p.key);
     // A replay is allowed only after the current match has finished.
-    if(!g || g.status!=="playing" || (!g.winner && !g.draw))return;
+    if(!g || g.status!=="playing" || (g.type==="ttt" ? (!g.winner && !g.draw) : Object.keys(g.choices||{}).length!==2))return;
+    if(g.type!=="ttt"){
+      g.choices={};g.round=(g.round||0)+1;
+      if(g.type==="wyr")g.questionIndex=(g.questionIndex+1)%wouldRatherQuestions.length;
+      sendExtraGameState(p.key,g);return;
+    }
     g.board=Array(9).fill(null);g.turn="X";g.winner=null;g.draw=false;
     for(const id of [socket.id,p.other]) {
       io.to(id).emit("galli-game-state",{board:g.board,turn:g.turn,you:g.players[id],winner:null,draw:false});
@@ -533,12 +575,21 @@ io.on("connection", (socket) => {
   socket.on("galli-game-move", ({index}={}) => {
     const p=gamePair(socket);if(!p)return;
     const g=games.get(p.key);
-    if(!g||g.status!=="playing"||!Number.isInteger(index)||index<0||index>8||g.board[index]||g.winner||g.draw||g.players[socket.id]!==g.turn)return;
+    if(!g||g.type!=="ttt"||g.status!=="playing"||!Number.isInteger(index)||index<0||index>8||g.board[index]||g.winner||g.draw||g.players[socket.id]!==g.turn)return;
     g.board[index]=g.turn;
     if(winningLines.some(line=>line.every(i=>g.board[i]===g.turn)))g.winner=g.turn;
     else if(g.board.every(Boolean))g.draw=true;
     else g.turn=g.turn==="X"?"O":"X";
     for(const id of [socket.id,p.other])io.to(id).emit("galli-game-state",{board:g.board,turn:g.turn,you:g.players[id],winner:g.winner,draw:g.draw});
+  });
+  socket.on("galli-extra-game-choice", ({choice}={}) => {
+    const p=gamePair(socket);if(!p)return;
+    const g=games.get(p.key);
+    if(!g||g.status!=="playing"||!["rps","wyr"].includes(g.type)||Object.hasOwn(g.choices,socket.id))return;
+    if(g.type==="rps" && !["rock","paper","scissors"].includes(choice))return;
+    if(g.type==="wyr" && ![0,1].includes(choice))return;
+    g.choices[socket.id]=choice;
+    sendExtraGameState(p.key,g);
   });
   socket.on("galli-game-close", () => {
     const p=gamePair(socket);if(!p)return;

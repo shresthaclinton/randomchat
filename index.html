@@ -443,6 +443,13 @@ footer { line-height:1.8; }
 .galli-badge[hidden]{display:none!important}
 .galli-badge img{max-width:100%!important;max-height:100%!important;object-fit:contain!important;background:transparent!important}
 @media(max-width:600px){.galli-badge{width:72px!important;height:72px!important}}
+
+.galli-game-picker,.galli-game-choices{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin:8px 0}
+.galli-game-picker[hidden],.galli-game-choices[hidden]{display:none!important}
+.galli-game-picker button,.galli-game-choices button{background:#e2c441;color:#111;border:0;border-radius:9px;padding:8px 10px;font-weight:700;font-size:13px;cursor:pointer}
+.galli-game-choices button:disabled{opacity:.5;cursor:default}
+.galli-question{font-size:14px;font-weight:700;width:100%;color:white}
+#gamePanel{width:min(300px,calc(100vw - 24px))!important}
 </style>
 </head>
 
@@ -518,9 +525,11 @@ footer { line-height:1.8; }
     </div>
 
   <div class="v4-panel" id="gamePanel" hidden>
- <strong>🎮 Tic-Tac-Toe</strong>
+ <strong id="activeGameTitle">🎮 Games</strong>
+ <div id="gameTypePicker" class="galli-game-picker"><button type="button" data-galli-game="ttt">❎ Tic-Tac-Toe</button><button type="button" data-galli-game="rps">✊ Rock Paper Scissors</button><button type="button" data-galli-game="wyr">🤔 Would You Rather?</button></div>
  <p id="gameMessage" aria-live="polite">Invite your stranger to play.</p>
  <div id="gameBoard" class="v4-board" role="group" aria-label="Tic-Tac-Toe board"></div>
+ <div id="extraGameChoices" class="galli-game-choices" hidden></div>
  <button id="inviteGameBtn">Invite to Play</button>
  <button id="acceptGameBtn" hidden>Accept</button>
  <button id="declineGameBtn" hidden>Decline</button>
@@ -1024,6 +1033,58 @@ const reactionPanel=document.getElementById("reactionPanel");
 document.body.appendChild(reactionPanel);
 requestAnimationFrame(positionGameAtVideoSeam);
 const gameMessage=document.getElementById("gameMessage");
+const activeGameTitle=document.getElementById("activeGameTitle");
+const gameTypePicker=document.getElementById("gameTypePicker");
+const extraGameChoices=document.getElementById("extraGameChoices");
+const gameTitles={ttt:"❎ Tic-Tac-Toe",rps:"✊ Rock Paper Scissors",wyr:"🤔 Would You Rather?"};
+let selectedGameType="ttt",activeExtraGame=null;
+function setGameType(type){
+ if(!gameTitles[type])return;
+ selectedGameType=type;activeGameTitle.textContent=gameTitles[type];
+ gameTypePicker.hidden=true;extraGameChoices.hidden=true;
+ gameBoard.hidden=true;inviteGameBtn.hidden=false;
+ gameMessage.textContent="Invite your stranger to play.";
+}
+function showGamePicker(){
+ activeExtraGame=null;gameTypePicker.hidden=false;extraGameChoices.hidden=true;
+ gameBoard.hidden=true;inviteGameBtn.hidden=true;
+ activeGameTitle.textContent="🎮 Choose a game";
+ gameMessage.textContent="Choose a game to invite your stranger.";
+}
+gameTypePicker.querySelectorAll("[data-galli-game]").forEach(b=>b.addEventListener("click",()=>setGameType(b.dataset.galliGame)));
+function renderExtraGame(state){
+ if(!partnerId)return;
+ activeExtraGame=state;selectedGameType=state.type;
+ activeGameTitle.textContent=gameTitles[state.type];
+ gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);
+ gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
+ inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ extraGameChoices.replaceChildren();
+ const finished=!!state.finished;
+ gamePanel.classList.toggle("game-finished",finished);
+ playAgainGameBtn.hidden=!finished;playAgainGameBtn.disabled=false;
+ if(state.type==="rps"){
+  gameMessage.textContent=finished?(state.result==="draw"?"IT'S A DRAW!":state.result===state.you?"YOU WIN! 🎉":"STRANGER WINS!"):(state.chosen?"Waiting for stranger's choice...":"Choose secretly. Choices reveal together.");
+  if(finished){
+   const line=document.createElement("p");line.textContent=`You: ${state.yourChoice} · Stranger: ${state.theirChoice}`;extraGameChoices.appendChild(line);
+  }else{
+   for(const [choice,label] of [["rock","✊ Rock"],["paper","✋ Paper"],["scissors","✌️ Scissors"]]){
+    const b=document.createElement("button");b.textContent=label;b.disabled=!!state.chosen;
+    b.onclick=()=>socket.emit("galli-extra-game-choice",{choice});extraGameChoices.appendChild(b);
+   }
+  }
+ }else{
+  const question=document.createElement("p");question.className="galli-question";question.textContent=state.question;extraGameChoices.appendChild(question);
+  gameMessage.textContent=finished?"Both answers revealed!":state.chosen?"Waiting for stranger's answer...":"Pick one. Both answers reveal together.";
+  if(finished){
+   const p=document.createElement("p");p.textContent=`You: ${state.yourChoice} · Stranger: ${state.theirChoice}`;extraGameChoices.appendChild(p);
+  }else{
+   state.options.forEach((label,i)=>{const b=document.createElement("button");b.textContent=label;b.disabled=!!state.chosen;b.onclick=()=>socket.emit("galli-extra-game-choice",{choice:i});extraGameChoices.appendChild(b);});
+  }
+ }
+}
+socket.on("galli-extra-game-state",renderExtraGame);
+
 const gameBoard=document.getElementById("gameBoard");
 const inviteGameBtn=document.getElementById("inviteGameBtn");
 const acceptGameBtn=document.getElementById("acceptGameBtn");
@@ -1036,32 +1097,33 @@ let gameState=null, reactionsMuted=false, toastTimeout=null;
 gameBoard.hidden=true;
 function resetV4() {
   gameBoard.hidden=true;
-  gameState=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;
+  gameState=null;activeExtraGame=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;extraGameChoices.hidden=true;gameTypePicker.hidden=false;activeGameTitle.textContent="🎮 Choose a game";
   playAgainGameBtn.hidden=true;
   gameBoard.replaceChildren();gameMessage.textContent="Invite your stranger to play.";
-  inviteGameBtn.hidden=false;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+  inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
   gamesBtn.disabled=!partnerId;
 }
-gamesBtn.onclick=()=>{gamePanel.hidden=!gamePanel.hidden;requestAnimationFrame(positionGameAtVideoSeam);reactionPanel.hidden=true;if(!gameState)gameBoard.hidden=true;};
+gamesBtn.onclick=()=>{const opening=gamePanel.hidden;gamePanel.hidden=!opening;requestAnimationFrame(positionGameAtVideoSeam);reactionPanel.hidden=true;if(opening&&!gameState&&!activeExtraGame)showGamePicker();};
 
-inviteGameBtn.onclick=()=>{if(!partnerId)return;socket.emit("galli-game-invite");gameMessage.textContent="Waiting for your partner to accept...";inviteGameBtn.hidden=true;};
+inviteGameBtn.onclick=()=>{if(!partnerId)return;socket.emit("galli-game-invite",{type:selectedGameType});gameMessage.textContent="Waiting for your partner to accept...";inviteGameBtn.hidden=true;};
 acceptGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:true});acceptGameBtn.hidden=true;declineGameBtn.hidden=true;};
 declineGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:false});resetV4();};
 closeGameBtn.onclick=()=>{socket.emit("galli-game-close");resetV4();};
-playAgainGameBtn.onclick=()=>{if(partnerId&&gameState&&(gameState.winner||gameState.draw)){playAgainGameBtn.disabled=true;socket.emit("galli-game-play-again");}};
-socket.on("galli-game-invite",()=>{
+playAgainGameBtn.onclick=()=>{if(partnerId&&((gameState&&(gameState.winner||gameState.draw))||(activeExtraGame&&activeExtraGame.finished))){playAgainGameBtn.disabled=true;socket.emit("galli-game-play-again");}};
+socket.on("galli-game-invite",({type="ttt"}={})=>{
+ selectedGameType=gameTitles[type]?type:"ttt";activeGameTitle.textContent=gameTitles[selectedGameType];gameTypePicker.hidden=true;extraGameChoices.hidden=true;
  if(!partnerId)return;
  gameBoard.hidden=true;
  gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);reactionPanel.hidden=true;inviteGameBtn.hidden=true;
  acceptGameBtn.hidden=false;declineGameBtn.hidden=false;
- gameMessage.textContent="Your partner invited you to play Tic-Tac-Toe.";
+ gameMessage.textContent=`Your partner invited you to play ${gameTitles[selectedGameType].replace(/^[^ ]+ /,"")}.`;
 });
 socket.on("galli-game-pending",()=>{gameMessage.textContent="Waiting for your partner to accept...";});
-socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);gameMessage.textContent="Your partner declined. You can invite again.";});
-socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);gameMessage.textContent="Game ended.";});
+socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);showGamePicker();gameMessage.textContent="Your partner declined. Choose a game to invite again.";});
+socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);showGamePicker();gameMessage.textContent="Game ended. Choose another game.";});
 socket.on("galli-game-state",state=>{
  if(!partnerId)return;
- gameBoard.hidden=false;
+ gameBoard.hidden=false;extraGameChoices.hidden=true;gameTypePicker.hidden=true;activeGameTitle.textContent=gameTitles.ttt;activeExtraGame=null;
  gameState=state;gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);inviteGameBtn.hidden=true;
  acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
  gameMessage.textContent=state.winner?(`${state.winner} WINS! 🎉`):state.draw?"IT'S A DRAW!":state.turn===state.you?"Your turn":"Partner's turn";
