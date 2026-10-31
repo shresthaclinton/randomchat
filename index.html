@@ -387,6 +387,35 @@ footer { line-height:1.8; }
 .galli-chat-form input{flex:1;min-width:0;border-radius:8px;padding:12px;border:1px solid #666;background:#fff;color:#111;font-size:16px}
 .galli-chat-notice{padding:0 10px 8px;font-size:12px;color:#ffe247}
 @media(max-width:600px){.galli-badge{bottom:9px;right:9px;max-width:62%;padding:5px 7px;font-size:12px}.galli-chat-messages{height:185px}}
+
+/* V5.1: Omegle-style captions displayed inside each participant's video. */
+#videoStage .video-box{position:relative!important}
+.video-chat-captions{
+ position:absolute;left:10px;right:10px;bottom:42px;z-index:35;
+ display:flex;flex-direction:column;align-items:flex-start;gap:5px;
+ max-height:44%;overflow-y:auto;pointer-events:none;
+ scrollbar-width:none;
+}
+.video-chat-captions::-webkit-scrollbar{display:none}
+.video-chat-captions .galli-caption{
+ display:block;max-width:100%;width:fit-content;
+ background:rgba(0,0,0,.72);color:#fff;
+ padding:7px 10px;border-radius:8px;
+ font-size:clamp(12px,2.7vw,16px);line-height:1.4;
+ overflow-wrap:anywhere;white-space:pre-wrap;
+ text-shadow:0 1px 2px #000;
+}
+.galli-chat-bar{margin:0;padding:6px;background:transparent;display:flex;gap:9px}
+.galli-chat-bar input{width:100%;flex:1;min-width:0;min-height:48px;font-size:16px}
+.galli-chat-bar button{flex:none;min-height:48px;padding:10px 17px}
+.galli-social{margin-top:12px}
+.galli-social-tabs{margin-top:10px}
+@media(max-width:600px){
+ .video-chat-captions{left:7px;right:7px;bottom:36px;max-height:38%;gap:3px}
+ .video-chat-captions .galli-caption{padding:5px 8px;font-size:12px}
+ .galli-chat-bar{padding:4px;gap:6px}
+ .galli-chat-bar button{padding:8px 12px}
+}
 </style>
 </head>
 
@@ -445,6 +474,7 @@ footer { line-height:1.8; }
       </div>
       <div class="label">Stranger</div>
       <div class="galli-badge" id="peerBadge" hidden></div>
+      <div class="video-chat-captions" id="peerChatCaptions" aria-live="polite"></div>
     </div>
 
     <div class="video-box">
@@ -457,6 +487,7 @@ footer { line-height:1.8; }
       </div>
       <div class="label">You</div>
       <div class="galli-badge" id="myBadge" hidden></div>
+      <div class="video-chat-captions" id="myChatCaptions" aria-live="polite"></div>
     </div>
 
   <div class="v4-panel" id="gamePanel" hidden>
@@ -492,25 +523,20 @@ footer { line-height:1.8; }
 </div>
 
 <section class="galli-social" aria-label="Text chat and supporter badges">
- <div class="galli-social-tabs">
-  <button type="button" id="toggleTextChat" disabled>💬 Text Chat</button>
-  <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My supporter badge</label>
-  <select id="teamBadgeSelect" aria-label="Choose your supporter badge">
-   <option value="">No badge</option>
-   <option>Biratnagar Kings</option><option>Chitwan Rhinos</option><option>Janakpur Bolts</option>
-   <option>Kathmandu Gurkhas</option><option>Karnali Yaks</option><option>Lumbini Lions</option>
-   <option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
-  </select>
- </div>
- <div id="textChatPanel" class="galli-chat" hidden>
-  <div class="galli-chat-title">💬 Chat with your stranger <span>Messages disappear when you leave or skip.</span></div>
-  <div id="textChatMessages" class="galli-chat-messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
-  <form id="textChatForm" class="galli-chat-form">
-   <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Type a message..." aria-label="Message to stranger" disabled>
-   <button type="submit" id="textChatSend" disabled>Send</button>
+  <form id="textChatForm" class="galli-chat-form galli-chat-bar">
+    <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Message to stranger" disabled>
+    <button type="submit" id="textChatSend" disabled>Send ➤</button>
   </form>
   <div id="textChatNotice" class="galli-chat-notice" role="status"></div>
- </div>
+  <div class="galli-social-tabs">
+    <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My supporter badge</label>
+    <select id="teamBadgeSelect" aria-label="Choose your supporter badge">
+      <option value="">No badge</option>
+      <option>Biratnagar Kings</option><option>Chitwan Rhinos</option><option>Janakpur Bolts</option>
+      <option>Kathmandu Gurkhas</option><option>Karnali Yaks</option><option>Lumbini Lions</option>
+      <option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
+    </select>
+  </div>
 </section>
 
   <div id="status">Ready to enter Online Galli. Camera and microphone access will be requested when you start.</div>
@@ -1046,9 +1072,8 @@ socket.on("galli-reaction",({emoji}={})=>{
 
 
 // V5: transient partner-only text chat and optional text-based team badges.
-const textChatPanel=document.getElementById("textChatPanel");
-const toggleTextChat=document.getElementById("toggleTextChat");
-const textChatMessages=document.getElementById("textChatMessages");
+const myChatCaptions=document.getElementById("myChatCaptions");
+const peerChatCaptions=document.getElementById("peerChatCaptions");
 const textChatForm=document.getElementById("textChatForm");
 const textChatInput=document.getElementById("textChatInput");
 const textChatSend=document.getElementById("textChatSend");
@@ -1063,21 +1088,19 @@ function showBadge(el,team){
  el.hidden=!team;
 }
 function resetSocial(){
- textChatMessages.replaceChildren();textChatNotice.textContent="";
- textChatPanel.hidden=true;peerBadge.hidden=true;peerBadge.textContent="";
+ myChatCaptions.replaceChildren();peerChatCaptions.replaceChildren();textChatNotice.textContent="";
+ textChatInput.value="";peerBadge.hidden=true;peerBadge.textContent="";
  const active=!!partnerId;
- toggleTextChat.disabled=!active;textChatInput.disabled=!active;textChatSend.disabled=!active;
+ textChatInput.disabled=!active;textChatSend.disabled=!active;
 }
-toggleTextChat.addEventListener("click",()=>{
- if(!partnerId)return;
- textChatPanel.hidden=!textChatPanel.hidden;
- if(!textChatPanel.hidden)textChatInput.focus();
-});
 function appendText(message,mine){
- const el=document.createElement("div");el.className="galli-chat-msg "+(mine?"mine":"theirs");
- el.textContent=message;textChatMessages.appendChild(el);
- while(textChatMessages.childElementCount>100)textChatMessages.firstElementChild.remove();
- textChatMessages.scrollTop=textChatMessages.scrollHeight;
+ const target=mine?myChatCaptions:peerChatCaptions;
+ const el=document.createElement("div");
+ el.className="galli-caption";
+ el.textContent=message;
+ target.appendChild(el);
+ while(target.childElementCount>3)target.firstElementChild.remove();
+ target.scrollTop=target.scrollHeight;
 }
 textChatForm.addEventListener("submit",event=>{
  event.preventDefault();
@@ -1089,7 +1112,7 @@ textChatForm.addEventListener("submit",event=>{
 socket.on("galli-text",({message}={})=>{
  if(!partnerId||typeof message!=="string")return;
  appendText(message,false);
- if(textChatPanel.hidden){textChatPanel.hidden=false;textChatNotice.textContent="New message from your stranger.";}
+
 });
 socket.on("galli-text-sent",({message}={})=>{if(partnerId&&typeof message==="string")appendText(message,true);});
 socket.on("galli-text-warning",msg=>{textChatNotice.textContent=String(msg).slice(0,150);});
