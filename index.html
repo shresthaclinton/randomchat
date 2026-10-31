@@ -482,6 +482,13 @@ footer { line-height:1.8; }
  .container>aside .ad{min-height:290px}
  .container>aside .safety{margin-top:15px}
 }
+
+/* Optional local face stickers: original video is unchanged when Off. */
+.galli-face-effects{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:8px 0 6px;font-weight:700}
+.galli-face-effects select{background:#fff;color:#111;border-radius:8px;padding:8px;max-width:185px}
+#faceStickerStatus{font-size:12px;color:#f7d96b;font-weight:400}
+#faceStickerPreview{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;transform:scaleX(-1);object-fit:fill}
+@media(max-width:600px){.galli-face-effects{gap:5px;font-size:12px}.galli-face-effects select{max-width:155px}}
 </style>
 </head>
 
@@ -545,6 +552,7 @@ footer { line-height:1.8; }
 
     <div class="video-box">
       <video id="localVideo" autoplay muted playsinline></video>
+      <canvas id="faceStickerPreview" aria-hidden="true"></canvas>
       <div class="reaction-in-video" id="localReaction" aria-live="polite"></div>
       <div class="placeholder" id="localPlaceholder">
         <div class="emoji">📷</div>
@@ -578,7 +586,16 @@ footer { line-height:1.8; }
   <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Say hello to your stranger" disabled>
   <button type="submit" id="textChatSend" disabled>Send ➤</button>
  </form>
- <div class="galli-inline-reactions" aria-label="Quick reactions">
+ <div class="galli-face-effects" aria-label="Face stickers">
+ <label for="faceStickerSelect">🎭 Face Stickers</label>
+ <select id="faceStickerSelect" aria-label="Choose a face sticker">
+  <option value="none">Off</option><option value="moustache">🥸 Moustache</option>
+  <option value="thug">🕶️ Thug Life</option><option value="cowboy">🤠 Cowboy Hat</option>
+  <option value="party">😎 Party Shades</option><option value="crown">👑 Crown</option>
+ </select>
+ <span id="faceStickerStatus" role="status" aria-live="polite"></span>
+</div>
+<div class="galli-inline-reactions" aria-label="Quick reactions">
   <div id="reactionChoices" class="v4-reactions"></div>
   <button type="button" id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
  <div class="galli-social-tabs">
@@ -770,6 +787,7 @@ async function startChat() {
     });
 
     localVideo.srcObject = localStream;
+    startFaceEffects();
     localPlaceholder.style.display = "none";
 
     nextBtn.disabled = false;
@@ -792,6 +810,7 @@ function stopChat() {
   socket.emit("stop");
   closePeer();
 
+  stopFaceEffects();
   if (localStream) {
     localStream.getTracks().forEach(track => track.stop());
     localStream = null;
@@ -847,7 +866,7 @@ async function createPeer(id) {
   const pc = peer;
 
   localStream.getTracks().forEach(track => {
-    pc.addTrack(track, localStream);
+    pc.addTrack(track.kind === "video" && stickerOutgoingTrack ? stickerOutgoingTrack : track, localStream);
   });
 
   pc.ontrack = event => {
@@ -1283,6 +1302,154 @@ window.addEventListener("pagehide", () => {
     localStream.getTracks().forEach(track => track.stop());
   }
 });
+
+// Face stickers: locally composited on the outgoing video track so the partner sees them.
+// FaceMesh is loaded on demand only when a sticker is selected.
+const stickerSelect=document.getElementById("faceStickerSelect");
+const stickerStatus=document.getElementById("faceStickerStatus");
+const stickerPreview=document.getElementById("faceStickerPreview");
+const stickerPreviewCtx=stickerPreview.getContext("2d");
+const stickerComposite=document.createElement("canvas");
+const stickerCompositeCtx=stickerComposite.getContext("2d");
+let stickerOutgoingTrack=null,stickerCapture=null,stickerRaf=0,stickerFaceMesh=null;
+let stickerFace=null,stickerBusy=false,stickerLastDetect=0,stickerLoading=null;
+let stickerRunning=false;
+function stickerMessage(s){stickerStatus.textContent=s;}
+function stickerResize(){
+ const w=localVideo.videoWidth||640,h=localVideo.videoHeight||480;
+ if(stickerPreview.width!==w||stickerPreview.height!==h){
+  stickerPreview.width=stickerComposite.width=w;
+  stickerPreview.height=stickerComposite.height=h;
+ }
+}
+function stickerPoly(ctx,points,fill,stroke="#111",lineWidth=2){
+ ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);
+ points.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+ ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+ if(stroke){ctx.lineWidth=lineWidth;ctx.strokeStyle=stroke;ctx.stroke();}
+}
+function stickerDraw(ctx,face,mode,w,h){
+ if(!face||mode==="none")return;
+ const p=i=>({x:face[i].x*w,y:face[i].y*h});
+ const eyeL=p(33),eyeR=p(263),lip=p(13),forehead=p(10);
+ const dx=eyeR.x-eyeL.x,dy=eyeR.y-eyeL.y;
+ const eyeDist=Math.hypot(dx,dy);
+ if(eyeDist<10)return;
+ ctx.save();
+ ctx.translate((eyeL.x+eyeR.x)/2,(eyeL.y+eyeR.y)/2);
+ ctx.rotate(Math.atan2(dy,dx));
+ const s=eyeDist;ctx.lineJoin="round";
+ if(mode==="thug"||mode==="party"){
+  const col=mode==="thug"?"#111":"#ff6d00";
+  stickerPoly(ctx,[[-.73*s,-.23*s],[-.06*s,-.2*s],[-.04*s,.28*s],[-.57*s,.32*s]],col);
+  stickerPoly(ctx,[[.06*s,-.2*s],[.73*s,-.23*s],[.57*s,.32*s],[.04*s,.28*s]],col);
+  ctx.strokeStyle=mode==="thug"?"#e9e9e9":"#ffdb3c";ctx.lineWidth=.055*s;
+  ctx.beginPath();ctx.moveTo(-.06*s,-.02*s);ctx.lineTo(.06*s,-.02*s);ctx.stroke();
+  if(mode==="thug"){
+   ctx.fillStyle="#fff";const sq=.095*s;
+   for(let side of [-1,1])for(let r=0;r<3;r++)for(let c=0;c<4;c++)
+    if((r+c)%2===0)ctx.fillRect(side*.39*s+(c-1.5)*sq,-.07*s+r*sq,sq,sq*.65);
+  }
+ }
+ if(mode==="moustache"||mode==="cowboy"){
+  const y=lip.y-(eyeL.y+eyeR.y)/2;
+  stickerPoly(ctx,[[-.53*s,y-.09*s],[-.24*s,y-.19*s],[0,y-.055*s],[.24*s,y-.19*s],[.53*s,y-.09*s],[.3*s,y+.17*s],[0,y+.065*s],[-.3*s,y+.17*s]],"#20120c","#120b09",.02*s);
+ }
+ if(mode==="cowboy"||mode==="crown"){
+  const y=forehead.y-(eyeL.y+eyeR.y)/2;
+  if(mode==="cowboy"){
+   stickerPoly(ctx,[[-.9*s,y+.05*s],[-.55*s,y+.16*s],[.55*s,y+.16*s],[.9*s,y+.05*s],[.6*s,y+.3*s],[-.6*s,y+.3*s]],"#6b3b1c");
+   stickerPoly(ctx,[[-.47*s,y+.15*s],[-.38*s,y-.75*s],[.34*s,y-.75*s],[.47*s,y+.15*s]],"#8b4a22");
+   ctx.fillStyle="#e5ad46";ctx.fillRect(-.4*s,y+.04*s,.8*s,.11*s);
+  }else{
+   stickerPoly(ctx,[[-.65*s,y+.18*s],[-.63*s,y-.58*s],[-.3*s,y-.18*s],[0,y-.85*s],[.3*s,y-.18*s],[.63*s,y-.58*s],[.65*s,y+.18*s]],"#f7c62e","#9b6300",.05*s);
+   ctx.fillStyle="#e43d44";ctx.beginPath();ctx.arc(0,y-.1*s,.1*s,0,Math.PI*2);ctx.fill();
+  }
+ }
+ ctx.restore();
+}
+function stickerRender(t){
+ if(!stickerRunning)return;
+ stickerRaf=requestAnimationFrame(stickerRender);
+ if(!localStream||localVideo.readyState<2)return;
+ stickerResize();
+ const w=stickerPreview.width,h=stickerPreview.height;
+ stickerPreviewCtx.clearRect(0,0,w,h);
+ if(stickerSelect.value!=="none"){
+  stickerDraw(stickerPreviewCtx,stickerFace,stickerSelect.value,w,h);
+  stickerCompositeCtx.drawImage(localVideo,0,0,w,h);
+  stickerCompositeCtx.drawImage(stickerPreview,0,0);
+  if(stickerFaceMesh&&!stickerBusy&&t-stickerLastDetect>85){
+   stickerLastDetect=t;stickerBusy=true;
+   stickerFaceMesh.send({image:localVideo}).catch(()=>{}).finally(()=>{stickerBusy=false;});
+  }
+ }
+}
+function stickerReplaceTrack(track){
+ if(peer&&peer.connectionState!=="closed"){
+  const sender=peer.getSenders().find(s=>s.track&&s.track.kind==="video");
+  if(sender)sender.replaceTrack(track).catch(()=>stickerMessage("Couldn't send sticker to partner."));
+ }
+}
+async function stickerLoadMesh(){
+ if(stickerFaceMesh)return;
+ if(stickerLoading)return stickerLoading;
+ stickerLoading=(async()=>{
+  if(!window.FaceMesh){
+   await new Promise((resolve,reject)=>{
+    const sc=document.createElement("script");
+    sc.src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js";
+    sc.onload=resolve;sc.onerror=()=>reject(new Error("Face tracking library unavailable"));
+    document.head.appendChild(sc);
+   });
+  }
+  const mesh=new window.FaceMesh({locateFile:file=>"https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/"+file});
+  mesh.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:.5,minTrackingConfidence:.5});
+  mesh.onResults(result=>{stickerFace=result.multiFaceLandmarks?.[0]||null;});
+  stickerFaceMesh=mesh;
+ })();
+ try{await stickerLoading;}finally{stickerLoading=null;}
+}
+function startFaceEffects(){
+ if(stickerRunning)return;
+ stickerRunning=true;stickerRaf=requestAnimationFrame(stickerRender);
+ if(stickerSelect.value!=="none")stickerEnable();
+}
+async function stickerEnable(){
+ if(!localStream){stickerMessage("Start your camera first.");return;}
+ if(stickerSelect.value==="none"){stickerDisable();return;}
+ stickerMessage("Loading face tracking...");
+ try{
+  await stickerLoadMesh();
+  if(!localStream||stickerSelect.value==="none")return;
+  stickerResize();
+  if(!stickerOutgoingTrack){
+   stickerCapture=stickerComposite.captureStream(24);
+   stickerOutgoingTrack=stickerCapture.getVideoTracks()[0];
+  }
+  stickerReplaceTrack(stickerOutgoingTrack);
+  stickerMessage("Sticker on · visible to your partner");
+ }catch(e){
+  stickerMessage("Face tracking unavailable. Try again later.");
+  stickerSelect.value="none";stickerDisable();
+ }
+}
+function stickerDisable(){
+ stickerFace=null;
+ if(localStream)stickerReplaceTrack(localStream.getVideoTracks()[0]);
+ stickerPreviewCtx.clearRect(0,0,stickerPreview.width,stickerPreview.height);
+ if(stickerOutgoingTrack){stickerOutgoingTrack.stop();stickerOutgoingTrack=null;}
+ stickerCapture=null;stickerMessage("");
+}
+function stopFaceEffects(){
+ stickerRunning=false;cancelAnimationFrame(stickerRaf);stickerDisable();
+}
+stickerSelect.addEventListener("change",()=>{
+ if(stickerSelect.value==="none")stickerDisable();
+ else if(localStream)stickerEnable();
+ else stickerMessage("Start your camera first.");
+});
+
 </script>
 </body>
 </html>
