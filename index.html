@@ -279,6 +279,23 @@ footer { line-height:1.8; }
  #gamePanel .v4-board button{font-size:23px}
  .reaction-in-video{font-size:clamp(70px,23vw,110px)}
 }
+
+/* V4.4: Position the invitation/game at the real seam of the two video boxes. */
+#videoStage{position:relative!important}
+#gamePanel.v4-panel{
+ left:var(--galli-popup-x,50%)!important;
+ top:var(--galli-popup-y,50%)!important;
+ transform:translate(-50%,-50%)!important;
+ z-index:100!important;
+}
+#gamePanel.game-finished #gameMessage{
+ display:block!important;background:#168a3a!important;color:#fff!important;
+ font-size:clamp(18px,4vw,24px)!important;font-weight:900!important;
+ padding:12px 8px!important;border-radius:10px!important;text-align:center!important;
+}
+@media(max-width:600px){
+ #gamePanel.v4-panel{width:min(245px,calc(100vw - 30px))!important;max-height:300px!important}
+}
 </style>
 </head>
 
@@ -810,6 +827,25 @@ const gamesBtn=document.getElementById("gamesBtn");
 const reactionsBtn=document.getElementById("reactionsBtn");
 const muteReactionsBtn=document.getElementById("muteReactionsBtn");
 const gamePanel=document.getElementById("gamePanel");
+const videoStage=document.getElementById("videoStage");
+function positionGameAtVideoSeam(){
+ const boxes=videoStage.querySelectorAll(".video-box");
+ if(boxes.length!==2)return;
+ const a=boxes[0].getBoundingClientRect(),b=boxes[1].getBoundingClientRect();
+ const stage=videoStage.getBoundingClientRect();
+ const stacked=b.top>=a.bottom-2;
+ const centerX=stacked?(a.left+a.right)/2:(a.right+b.left)/2;
+ const centerY=stacked?(a.bottom+b.top)/2:(Math.max(a.top,b.top)+Math.min(a.bottom,b.bottom))/2;
+ gamePanel.style.setProperty("--galli-popup-x",`${centerX-stage.left}px`);
+ gamePanel.style.setProperty("--galli-popup-y",`${centerY-stage.top}px`);
+}
+window.addEventListener("resize",positionGameAtVideoSeam);
+window.addEventListener("orientationchange",positionGameAtVideoSeam);
+if("ResizeObserver" in window){
+ const observer=new ResizeObserver(positionGameAtVideoSeam);
+ videoStage.querySelectorAll(".video-box").forEach(box=>observer.observe(box));
+}
+requestAnimationFrame(positionGameAtVideoSeam);
 const reactionPanel=document.getElementById("reactionPanel");
 const gameMessage=document.getElementById("gameMessage");
 const gameBoard=document.getElementById("gameBoard");
@@ -828,7 +864,7 @@ function resetV4() {
   inviteGameBtn.hidden=false;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
   gamesBtn.disabled=!partnerId;reactionsBtn.disabled=!partnerId;
 }
-gamesBtn.onclick=()=>{gamePanel.hidden=!gamePanel.hidden;reactionPanel.hidden=true;if(!gameState)gameBoard.hidden=true;};
+gamesBtn.onclick=()=>{gamePanel.hidden=!gamePanel.hidden;positionGameAtVideoSeam();reactionPanel.hidden=true;if(!gameState)gameBoard.hidden=true;};
 reactionsBtn.onclick=()=>{reactionPanel.hidden=!reactionPanel.hidden;gamePanel.hidden=true;};
 inviteGameBtn.onclick=()=>{if(!partnerId)return;socket.emit("galli-game-invite");gameMessage.textContent="Waiting for your partner to accept...";inviteGameBtn.hidden=true;};
 acceptGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:true});acceptGameBtn.hidden=true;declineGameBtn.hidden=true;};
@@ -837,19 +873,19 @@ closeGameBtn.onclick=()=>{socket.emit("galli-game-close");resetV4();};
 socket.on("galli-game-invite",()=>{
  if(!partnerId)return;
  gameBoard.hidden=true;
- gamePanel.hidden=false;reactionPanel.hidden=true;inviteGameBtn.hidden=true;
+ gamePanel.hidden=false;positionGameAtVideoSeam();reactionPanel.hidden=true;inviteGameBtn.hidden=true;
  acceptGameBtn.hidden=false;declineGameBtn.hidden=false;
  gameMessage.textContent="Your partner invited you to play Tic-Tac-Toe.";
 });
 socket.on("galli-game-pending",()=>{gameMessage.textContent="Waiting for your partner to accept...";});
-socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;gameMessage.textContent="Your partner declined. You can invite again.";});
-socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;gameMessage.textContent="Game ended.";});
+socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;positionGameAtVideoSeam();gameMessage.textContent="Your partner declined. You can invite again.";});
+socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;positionGameAtVideoSeam();gameMessage.textContent="Game ended.";});
 socket.on("galli-game-state",state=>{
  if(!partnerId)return;
  gameBoard.hidden=false;
- gameState=state;gamePanel.hidden=false;inviteGameBtn.hidden=true;
+ gameState=state;gamePanel.hidden=false;positionGameAtVideoSeam();inviteGameBtn.hidden=true;
  acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
- gameMessage.textContent=state.winner?(state.winner===state.you?"YOU WIN! 🎉":"YOUR PARTNER WINS!"):state.draw?"IT'S A DRAW!":state.turn===state.you?"Your turn":"Partner's turn";
+ gameMessage.textContent=state.winner?(`${state.winner} WINS! 🎉`):state.draw?"IT'S A DRAW!":state.turn===state.you?"Your turn":"Partner's turn";
  gamePanel.classList.toggle("game-finished",!!state.winner||!!state.draw);
  gameBoard.replaceChildren();
  state.board.forEach((value,index)=>{
