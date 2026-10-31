@@ -450,6 +450,13 @@ footer { line-height:1.8; }
 .galli-game-choices button:disabled{opacity:.5;cursor:default}
 .galli-question{font-size:14px;font-weight:700;width:100%;color:white}
 #gamePanel{width:min(300px,calc(100vw - 24px))!important}
+
+/* V5.4.1: games action is orange; block action lives beside report. */
+#gamesBtn{background:#f58220!important;color:#151515!important;border:2px solid #c95d08!important;font-weight:800!important;box-shadow:0 2px 0 #a94c06!important;cursor:pointer}
+#gamesBtn:hover:not(:disabled){background:#ff9b3c!important}
+#gamesBtn:disabled{opacity:.55;cursor:not-allowed}
+.controls #blockBtn{background:#282828;color:#fff;border:1px solid #555}
+.controls #blockBtn:disabled{opacity:.55}
 </style>
 </head>
 
@@ -567,20 +574,19 @@ footer { line-height:1.8; }
     <button id="muteBtn" disabled>🎤 Mute</button>
     <button class="stop" id="stopBtn" disabled>■ Stop</button>
     <button id="reportBtn" disabled>⚑ Report</button>
+    <button id="blockBtn" disabled>🚫 Block User</button>
   </div>
 
 
 <div class="v4-tools">
- <button id="gamesBtn" disabled>🎮 Tic-Tac-Toe</button>
+ <button id="gamesBtn" disabled aria-label="Play Games: choose from three games">🎮 Play Games ▸</button>
 
 </div>
 
 
 
 <div id="status">Ready to enter Online Galli. Camera and microphone access will be requested when you start.</div>
-  <div id="moderationControls" style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
-    <button id="blockBtn" disabled>🚫 Block User</button>
-  </div>
+
 </section>
 
 <aside>
