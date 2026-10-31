@@ -361,6 +361,32 @@ footer { line-height:1.8; }
 #videoStage .reaction-in-video:empty{display:none!important}
 #videoStage .reaction-in-video:not(:empty){animation:galliReactionV46 .9s ease-out both}
 @keyframes galliReactionV46{0%{opacity:0;scale:.3}35%{opacity:1;scale:1.2}100%{opacity:1;scale:1}}
+
+/* V5: supporter badges stay in their own video boxes */
+.video-box{position:relative!important}
+.galli-badge{position:absolute;bottom:12px;right:12px;z-index:20;max-width:65%;
+ background:#ffe247;color:#161616;border:2px solid #161616;border-radius:10px;
+ font-size:clamp(11px,2vw,15px);font-weight:800;padding:7px 9px;
+ text-align:center;box-shadow:0 3px 10px #0009;pointer-events:none}
+.galli-badge[hidden]{display:none!important}
+.galli-social{margin-top:14px;background:#1e1e1e;border-radius:14px;padding:12px;color:#fff}
+.galli-social-tabs{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.galli-social-tabs button,.galli-chat-form button{background:#ffe247;color:#171717;border:0;border-radius:9px;padding:11px 14px;font-weight:800;cursor:pointer}
+.galli-social-tabs button:disabled,.galli-chat-form button:disabled{opacity:.45;cursor:not-allowed}
+.galli-badge-select-label{font-size:14px;font-weight:700}
+#teamBadgeSelect{background:#fff;color:#161616;border-radius:8px;padding:10px;max-width:100%;font-size:14px}
+.galli-chat{margin-top:12px;border:1px solid #555;border-radius:12px;overflow:hidden}
+.galli-chat[hidden]{display:none!important}
+.galli-chat-title{background:#303030;padding:12px;font-weight:800}
+.galli-chat-title span{display:block;color:#ccc;font-size:12px;font-weight:400;margin-top:3px}
+.galli-chat-messages{height:220px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#111}
+.galli-chat-msg{max-width:88%;padding:9px 12px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.4}
+.galli-chat-msg.mine{align-self:flex-end;background:#ffe247;color:#171717}
+.galli-chat-msg.theirs{align-self:flex-start;background:#383838;color:#fff}
+.galli-chat-form{display:flex;gap:8px;padding:10px;background:#262626}
+.galli-chat-form input{flex:1;min-width:0;border-radius:8px;padding:12px;border:1px solid #666;background:#fff;color:#111;font-size:16px}
+.galli-chat-notice{padding:0 10px 8px;font-size:12px;color:#ffe247}
+@media(max-width:600px){.galli-badge{bottom:9px;right:9px;max-width:62%;padding:5px 7px;font-size:12px}.galli-chat-messages{height:185px}}
 </style>
 </head>
 
@@ -418,6 +444,7 @@ footer { line-height:1.8; }
         <p>Click Enter the Galli to begin</p>
       </div>
       <div class="label">Stranger</div>
+      <div class="galli-badge" id="peerBadge" hidden></div>
     </div>
 
     <div class="video-box">
@@ -429,6 +456,7 @@ footer { line-height:1.8; }
         <p>Camera is off</p>
       </div>
       <div class="label">You</div>
+      <div class="galli-badge" id="myBadge" hidden></div>
     </div>
 
   <div class="v4-panel" id="gamePanel" hidden>
@@ -462,6 +490,29 @@ footer { line-height:1.8; }
  <button id="reactionsBtn" disabled>❤️ Reactions</button>
  <button id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
 </div>
+
+<section class="galli-social" aria-label="Text chat and supporter badges">
+ <div class="galli-social-tabs">
+  <button type="button" id="toggleTextChat" disabled>💬 Text Chat</button>
+  <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My supporter badge</label>
+  <select id="teamBadgeSelect" aria-label="Choose your supporter badge">
+   <option value="">No badge</option>
+   <option>Biratnagar Kings</option><option>Chitwan Rhinos</option><option>Janakpur Bolts</option>
+   <option>Kathmandu Gurkhas</option><option>Karnali Yaks</option><option>Lumbini Lions</option>
+   <option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
+  </select>
+ </div>
+ <div id="textChatPanel" class="galli-chat" hidden>
+  <div class="galli-chat-title">💬 Chat with your stranger <span>Messages disappear when you leave or skip.</span></div>
+  <div id="textChatMessages" class="galli-chat-messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
+  <form id="textChatForm" class="galli-chat-form">
+   <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Type a message..." aria-label="Message to stranger" disabled>
+   <button type="submit" id="textChatSend" disabled>Send</button>
+  </form>
+  <div id="textChatNotice" class="galli-chat-notice" role="status"></div>
+ </div>
+</section>
+
   <div id="status">Ready to enter Online Galli. Camera and microphone access will be requested when you start.</div>
   <div id="moderationControls" style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
     <button id="blockBtn" disabled>🚫 Block User</button>
@@ -587,6 +638,7 @@ function closePeer() {
 
   partnerId = null;
   resetV4();
+  resetSocial();
   reportBtn.disabled = true;
   blockBtn.disabled = true;
   remoteVideo.srcObject = null;
@@ -694,6 +746,7 @@ async function createPeer(id) {
   closePeer();
   partnerId = id;
   resetV4();
+  resetSocial();
   reportBtn.disabled = false;
   blockBtn.disabled = false;
 
@@ -990,6 +1043,67 @@ socket.on("galli-reaction",({emoji}={})=>{
  if(reactionsMuted||!approvedReactions.includes(emoji)||!partnerId)return;
  showGalliReaction(emoji,"remote");
 });
+
+
+// V5: transient partner-only text chat and optional text-based team badges.
+const textChatPanel=document.getElementById("textChatPanel");
+const toggleTextChat=document.getElementById("toggleTextChat");
+const textChatMessages=document.getElementById("textChatMessages");
+const textChatForm=document.getElementById("textChatForm");
+const textChatInput=document.getElementById("textChatInput");
+const textChatSend=document.getElementById("textChatSend");
+const textChatNotice=document.getElementById("textChatNotice");
+const teamBadgeSelect=document.getElementById("teamBadgeSelect");
+const myBadge=document.getElementById("myBadge");
+const peerBadge=document.getElementById("peerBadge");
+const badgeTeams=new Set(Array.from(teamBadgeSelect.options).map(o=>o.value));
+let selectedBadge="";
+function showBadge(el,team){
+ el.textContent=team?"🏏 "+team:"";
+ el.hidden=!team;
+}
+function resetSocial(){
+ textChatMessages.replaceChildren();textChatNotice.textContent="";
+ textChatPanel.hidden=true;peerBadge.hidden=true;peerBadge.textContent="";
+ const active=!!partnerId;
+ toggleTextChat.disabled=!active;textChatInput.disabled=!active;textChatSend.disabled=!active;
+}
+toggleTextChat.addEventListener("click",()=>{
+ if(!partnerId)return;
+ textChatPanel.hidden=!textChatPanel.hidden;
+ if(!textChatPanel.hidden)textChatInput.focus();
+});
+function appendText(message,mine){
+ const el=document.createElement("div");el.className="galli-chat-msg "+(mine?"mine":"theirs");
+ el.textContent=message;textChatMessages.appendChild(el);
+ while(textChatMessages.childElementCount>100)textChatMessages.firstElementChild.remove();
+ textChatMessages.scrollTop=textChatMessages.scrollHeight;
+}
+textChatForm.addEventListener("submit",event=>{
+ event.preventDefault();
+ if(!partnerId)return;
+ const message=textChatInput.value.trim();
+ if(!message||message.length>500)return;
+ socket.emit("galli-text",{message});textChatInput.value="";
+});
+socket.on("galli-text",({message}={})=>{
+ if(!partnerId||typeof message!=="string")return;
+ appendText(message,false);
+ if(textChatPanel.hidden){textChatPanel.hidden=false;textChatNotice.textContent="New message from your stranger.";}
+});
+socket.on("galli-text-sent",({message}={})=>{if(partnerId&&typeof message==="string")appendText(message,true);});
+socket.on("galli-text-warning",msg=>{textChatNotice.textContent=String(msg).slice(0,150);});
+teamBadgeSelect.addEventListener("change",()=>{
+ selectedBadge=teamBadgeSelect.value;
+ if(!badgeTeams.has(selectedBadge))return;
+ showBadge(myBadge,selectedBadge);
+ if(socket.connected)socket.emit("galli-badge-select",{team:selectedBadge});
+});
+socket.on("galli-badge-peer",({team}={})=>{
+ if(partnerId&&typeof team==="string"&&badgeTeams.has(team))showBadge(peerBadge,team);
+});
+socket.on("connect",()=>{socket.emit("galli-badge-select",{team:selectedBadge});});
+resetSocial();
 
 startBtn.addEventListener("click", startChat);
 nextBtn.addEventListener("click", nextChat);

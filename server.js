@@ -238,6 +238,9 @@ const partners = new Map();
 // V4: transient game state, scoped to the currently matched pair.
 const games = new Map();
 const reactionTimes = new Map();
+const textTimes = new Map();
+// Original text-only supporter labels. No official team logos are distributed.
+const supporterTeams = new Set(["", "Biratnagar Kings", "Chitwan Rhinos", "Janakpur Bolts", "Kathmandu Gurkhas", "Karnali Yaks", "Lumbini Lions", "Pokhara Avengers", "Sudurpaschim Royals"]);
 const positiveReactions = new Set(["❤️","😂","👏","🎉","🙌","👍","✨"]);
 const winningLines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8]];
 function gamePair(socket) {
@@ -344,6 +347,8 @@ function findPartner(socket) {
       partnerId: socket.id,
       initiator: false
     });
+    socket.emit("galli-badge-peer", {team: other.data.supporterTeam || ""});
+    other.emit("galli-badge-peer", {team: socket.data.supporterTeam || ""});
 
     recentPartners.set(socket.id, { id: otherId, at: Date.now() });
     recentPartners.set(otherId, { id: socket.id, at: Date.now() });
@@ -388,6 +393,7 @@ io.on("connection", (socket) => {
   socket.data.ready = false;
   socket.data.clientId = null;
   socket.data.blocked = [];
+  socket.data.supporterTeam = "";
   socket.on("identify", ({ clientId, blocked } = {}) => {
     if (typeof clientId !== "string" || !idPattern.test(clientId)) return;
     if ((bannedIds.get(clientId) || 0) > Date.now()) { socket.emit("moderation-warning", "Access temporarily restricted."); socket.disconnect(true); return; }
@@ -508,6 +514,23 @@ io.on("connection", (socket) => {
     const p=gamePair(socket);if(!p)return;
     games.delete(p.key);io.to(p.other).emit("galli-game-ended");
   });
+  socket.on("galli-text", ({message}={}) => {
+    const p=gamePair(socket);
+    if(!p || typeof message!=="string")return;
+    const clean=message.trim();
+    if(!clean || clean.length>500 || /[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(clean))return;
+    if(rateLimited(textTimes,socket.id,12,10000)){
+      socket.emit("galli-text-warning", "Please slow down before sending more messages.");return;
+    }
+    io.to(p.other).emit("galli-text", {message:clean});
+    socket.emit("galli-text-sent", {message:clean});
+  });
+  socket.on("galli-badge-select", ({team}={}) => {
+    if(typeof team!=="string" || !supporterTeams.has(team))return;
+    socket.data.supporterTeam=team;
+    const p=gamePair(socket);
+    if(p)io.to(p.other).emit("galli-badge-peer",{team});
+  });
   socket.on("galli-reaction", ({emoji}={}) => {
     const p=gamePair(socket);
     if(!p||!positiveReactions.has(emoji)||rateLimited(reactionTimes,socket.id,6,10000))return;
@@ -536,6 +559,7 @@ io.on("connection", (socket) => {
     reportTimes.delete(socket.id);
     skipTimes.delete(socket.id);
     reactionTimes.delete(socket.id);
+    textTimes.delete(socket.id);
 
     console.log("User disconnected:", socket.id);
   });
