@@ -472,6 +472,16 @@ footer { line-height:1.8; }
  .controls > button{flex:1 1 auto}
  .controls #gamesBtn{margin-left:auto!important;flex:0 1 auto}
 }
+
+/* V5.4.3: taller advertisement and safety notice below it, in the indicated sidebar space. */
+@media (min-width:901px){
+ .container>aside .ad{min-height:470px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:48px}
+ .container>aside .safety{margin-top:28px}
+}
+@media (max-width:900px){
+ .container>aside .ad{min-height:290px}
+ .container>aside .safety{margin-top:15px}
+}
 </style>
 </head>
 
@@ -1154,7 +1164,7 @@ socket.on("galli-game-state",state=>{
   gameBoard.appendChild(b);
  });
 });
-const approvedReactions=["❤️","😂","👏","🎉","🙌","👍","✨"];
+const approvedReactions=["👍","👏","🎉","🙌","✨","😂"];
 approvedReactions.forEach(emoji=>{
  const b=document.createElement("button");b.textContent=emoji;
  b.setAttribute("aria-label","Send "+emoji+" reaction");
