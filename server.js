@@ -79,6 +79,26 @@ function fetchMeteredIce() {
 // Create the website server
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
+  // Serve only the packaged NPL PNG assets. Do not expose arbitrary files.
+  if (req.method === "GET" && /^\/assets\/npl\/[a-z0-9-]+\.png$/.test(url.pathname)) {
+    const fileName = url.pathname.slice("/assets/npl/".length);
+    const assetPath = path.join(__dirname, "assets", "npl", fileName);
+    fs.stat(assetPath, (err, stat) => {
+      if (err || !stat.isFile()) {
+        res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+        res.end("Image not found"); return;
+      }
+      res.writeHead(200, {
+        "Content-Type": "image/png",
+        "Content-Length": stat.size,
+        "Cache-Control": "public, max-age=3600",
+        "X-Content-Type-Options": "nosniff"
+      });
+      fs.createReadStream(assetPath).pipe(res);
+    });
+    return;
+  }
+
 
   // Socket.IO requests are handled automatically
   // by the Socket.IO server attached below.
@@ -499,6 +519,16 @@ io.on("connection", (socket) => {
     g.status="playing";g.board=Array(9).fill(null);g.turn="X";g.players={[g.inviter]:"X",[g.invitee]:"O"};g.winner=null;g.draw=false;
     io.to(g.inviter).emit("galli-game-state",{board:g.board,turn:g.turn,you:"X",winner:null,draw:false});
     socket.emit("galli-game-state",{board:g.board,turn:g.turn,you:"O",winner:null,draw:false});
+  });
+  socket.on("galli-game-play-again", () => {
+    const p=gamePair(socket);if(!p)return;
+    const g=games.get(p.key);
+    // A replay is allowed only after the current match has finished.
+    if(!g || g.status!=="playing" || (!g.winner && !g.draw))return;
+    g.board=Array(9).fill(null);g.turn="X";g.winner=null;g.draw=false;
+    for(const id of [socket.id,p.other]) {
+      io.to(id).emit("galli-game-state",{board:g.board,turn:g.turn,you:g.players[id],winner:null,draw:false});
+    }
   });
   socket.on("galli-game-move", ({index}={}) => {
     const p=gamePair(socket);if(!p)return;

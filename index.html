@@ -435,6 +435,8 @@ footer { line-height:1.8; }
 .galli-badge[hidden]{display:none!important}
 .galli-badge img{width:100%;height:100%;object-fit:contain;display:block}
 @media(max-width:600px){.galli-badge{width:48px!important;height:48px!important;right:8px!important;bottom:8px!important;padding:4px!important}}
+#playAgainGameBtn:not([hidden]){background:#f9d74d;color:#171717;font-weight:800;border-radius:9px;margin-right:6px}
+#playAgainGameBtn[hidden]{display:none!important}
 </style>
 </head>
 
@@ -516,6 +518,7 @@ footer { line-height:1.8; }
  <button id="inviteGameBtn">Invite to Play</button>
  <button id="acceptGameBtn" hidden>Accept</button>
  <button id="declineGameBtn" hidden>Decline</button>
+ <button id="playAgainGameBtn" hidden>↻ Play Again</button>
  <button id="closeGameBtn">Close Game</button>
 </div>
 <div class="v4-panel" id="reactionPanel" hidden></div>
@@ -1020,6 +1023,7 @@ const inviteGameBtn=document.getElementById("inviteGameBtn");
 const acceptGameBtn=document.getElementById("acceptGameBtn");
 const declineGameBtn=document.getElementById("declineGameBtn");
 const closeGameBtn=document.getElementById("closeGameBtn");
+const playAgainGameBtn=document.getElementById("playAgainGameBtn");
 const localReaction=document.getElementById("localReaction");
 const remoteReaction=document.getElementById("remoteReaction");
 let gameState=null, reactionsMuted=false, toastTimeout=null;
@@ -1027,6 +1031,7 @@ gameBoard.hidden=true;
 function resetV4() {
   gameBoard.hidden=true;
   gameState=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;
+  playAgainGameBtn.hidden=true;
   gameBoard.replaceChildren();gameMessage.textContent="Invite your stranger to play.";
   inviteGameBtn.hidden=false;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
   gamesBtn.disabled=!partnerId;
@@ -1037,6 +1042,7 @@ inviteGameBtn.onclick=()=>{if(!partnerId)return;socket.emit("galli-game-invite")
 acceptGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:true});acceptGameBtn.hidden=true;declineGameBtn.hidden=true;};
 declineGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:false});resetV4();};
 closeGameBtn.onclick=()=>{socket.emit("galli-game-close");resetV4();};
+playAgainGameBtn.onclick=()=>{if(partnerId&&gameState&&(gameState.winner||gameState.draw)){playAgainGameBtn.disabled=true;socket.emit("galli-game-play-again");}};
 socket.on("galli-game-invite",()=>{
  if(!partnerId)return;
  gameBoard.hidden=true;
@@ -1054,6 +1060,7 @@ socket.on("galli-game-state",state=>{
  acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
  gameMessage.textContent=state.winner?(`${state.winner} WINS! 🎉`):state.draw?"IT'S A DRAW!":state.turn===state.you?"Your turn":"Partner's turn";
  gamePanel.classList.toggle("game-finished",!!state.winner||!!state.draw);
+ playAgainGameBtn.hidden=!(state.winner||state.draw);playAgainGameBtn.disabled=false;
  gameBoard.replaceChildren();
  state.board.forEach((value,index)=>{
   const b=document.createElement("button");
@@ -1121,9 +1128,9 @@ function showBadge(el,team){
  if(!file)return;
  const img=document.createElement("img");
  img.alt=team+" logo";
- img.src="assets/npl/"+file;
+ img.src="/assets/npl/"+file;
  img.loading="eager";
- img.onerror=()=>{img.onerror=null;img.src="assets/npl/fallback.png";};
+ img.onerror=()=>{img.onerror=null;img.src="/assets/npl/fallback.png";};
  el.title=team;
  el.setAttribute("aria-label",team+" supporter badge");
  el.appendChild(img);
