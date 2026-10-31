@@ -332,6 +332,35 @@ footer { line-height:1.8; }
   #gamePanel.v4-panel{width:min(245px,calc(100vw - 22px))!important;max-height:min(290px,70dvh)!important}
   #gamePanel .v4-board{width:min(145px,100%)!important}
  }
+
+#gamePanel[hidden],#reactionPanel[hidden]{display:none!important}
+#gamePanel.v4-panel{
+ position:fixed!important;left:var(--galli-popup-x,50vw)!important;
+ top:var(--galli-popup-y,50dvh)!important;
+ transform:translate(-50%,-50%)!important;
+ z-index:10020!important;max-height:min(320px,78dvh)!important;
+ width:min(255px,calc(100vw - 24px))!important;
+ box-sizing:border-box!important;overflow-y:auto!important;
+}
+#gamePanel .v4-board{width:min(160px,100%)!important;margin:8px auto!important}
+#gamePanel .v4-board button{min-height:38px!important;font-size:23px!important;padding:5px!important}
+#reactionPanel.v4-panel{
+ position:fixed!important;left:50%!important;bottom:max(14px,env(safe-area-inset-bottom))!important;
+ top:auto!important;transform:translateX(-50%)!important;
+ z-index:10021!important;width:min(440px,calc(100vw - 20px))!important;
+ box-sizing:border-box!important;
+}
+#videoStage .video-box{position:relative!important;isolation:isolate!important}
+#videoStage .reaction-in-video{
+ display:flex!important;align-items:center;justify-content:center;
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ z-index:999!important;pointer-events:none!important;
+ transform:none!important;font-size:clamp(76px,20vw,135px)!important;
+ text-shadow:0 6px 20px #000b;
+}
+#videoStage .reaction-in-video:empty{display:none!important}
+#videoStage .reaction-in-video:not(:empty){animation:galliReactionV46 .9s ease-out both}
+@keyframes galliReactionV46{0%{opacity:0;scale:.3}35%{opacity:1;scale:1.2}100%{opacity:1;scale:1}}
 </style>
 </head>
 
@@ -883,9 +912,9 @@ if("ResizeObserver" in window){
  videoStage.querySelectorAll(".video-box").forEach(box=>observer.observe(box));
 }
 document.body.appendChild(gamePanel);
+const reactionPanel=document.getElementById("reactionPanel");
 document.body.appendChild(reactionPanel);
 requestAnimationFrame(positionGameAtVideoSeam);
-const reactionPanel=document.getElementById("reactionPanel");
 const gameMessage=document.getElementById("gameMessage");
 const gameBoard=document.getElementById("gameBoard");
 const inviteGameBtn=document.getElementById("inviteGameBtn");
