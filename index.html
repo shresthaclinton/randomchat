@@ -388,33 +388,32 @@ footer { line-height:1.8; }
 .galli-chat-notice{padding:0 10px 8px;font-size:12px;color:#ffe247}
 @media(max-width:600px){.galli-badge{bottom:9px;right:9px;max-width:62%;padding:5px 7px;font-size:12px}.galli-chat-messages{height:185px}}
 
-/* V5.1: Omegle-style captions displayed inside each participant's video. */
+/* V5.2: mirrored Omegle-style chat captions in BOTH video frames */
 #videoStage .video-box{position:relative!important}
-.video-chat-captions{
- position:absolute;left:10px;right:10px;bottom:42px;z-index:35;
- display:flex;flex-direction:column;align-items:flex-start;gap:5px;
- max-height:44%;overflow-y:auto;pointer-events:none;
- scrollbar-width:none;
-}
-.video-chat-captions::-webkit-scrollbar{display:none}
-.video-chat-captions .galli-caption{
- display:block;max-width:100%;width:fit-content;
- background:rgba(0,0,0,.72);color:#fff;
- padding:7px 10px;border-radius:8px;
- font-size:clamp(12px,2.7vw,16px);line-height:1.4;
- overflow-wrap:anywhere;white-space:pre-wrap;
- text-shadow:0 1px 2px #000;
-}
-.galli-chat-bar{margin:0;padding:6px;background:transparent;display:flex;gap:9px}
-.galli-chat-bar input{width:100%;flex:1;min-width:0;min-height:48px;font-size:16px}
-.galli-chat-bar button{flex:none;min-height:48px;padding:10px 17px}
-.galli-social{margin-top:12px}
-.galli-social-tabs{margin-top:10px}
+.galli-video-chat{position:absolute;z-index:38;left:9px;right:9px;bottom:39px;
+ display:flex;flex-direction:column;align-items:flex-start;gap:4px;max-height:47%;
+ overflow-y:auto;scrollbar-width:none;pointer-events:none}
+.galli-video-chat::-webkit-scrollbar{display:none}
+.galli-video-chat-line{max-width:100%;width:fit-content;background:rgba(0,0,0,.74);
+ color:white;padding:6px 9px;border-radius:7px;line-height:1.4;
+ font-size:clamp(12px,2.5vw,15px);overflow-wrap:anywhere;white-space:pre-wrap;
+ text-shadow:0 1px 2px #000}
+.galli-video-chat-line strong{color:#fff;font-weight:800}
+.galli-chat-bar{display:flex;flex-direction:row;align-items:stretch;gap:8px;margin:0;padding:4px}
+.galli-chat-bar input{flex:1;min-width:0;min-height:48px;font-size:16px}
+.galli-chat-bar button{flex:none;min-height:48px;padding:8px 15px}
+.galli-inline-reactions{display:flex;flex-wrap:wrap;align-items:center;gap:7px;
+ padding:7px 3px;margin-top:6px}
+.galli-inline-reactions .v4-reactions{display:flex;flex-wrap:wrap;gap:5px;flex:1}
+.galli-inline-reactions .v4-reactions button{font-size:23px;min-width:39px;min-height:39px;
+ padding:5px;border-radius:9px;cursor:pointer}
+.galli-inline-reactions #muteReactionsBtn{margin-left:auto;white-space:nowrap;padding:9px}
+.galli-social-tabs{margin-top:8px}
 @media(max-width:600px){
- .video-chat-captions{left:7px;right:7px;bottom:36px;max-height:38%;gap:3px}
- .video-chat-captions .galli-caption{padding:5px 8px;font-size:12px}
- .galli-chat-bar{padding:4px;gap:6px}
- .galli-chat-bar button{padding:8px 12px}
+ .galli-video-chat{left:6px;right:6px;bottom:32px;gap:3px;max-height:40%}
+ .galli-video-chat-line{font-size:12px;padding:5px 7px}
+ .galli-chat-bar button{padding:7px 12px}
+ .galli-inline-reactions .v4-reactions button{font-size:21px;min-width:35px;min-height:35px}
 }
 </style>
 </head>
@@ -474,7 +473,7 @@ footer { line-height:1.8; }
       </div>
       <div class="label">Stranger</div>
       <div class="galli-badge" id="peerBadge" hidden></div>
-      <div class="video-chat-captions" id="peerChatCaptions" aria-live="polite"></div>
+<div class="galli-video-chat" id="peerVideoChat" role="log" aria-label="Conversation on stranger video"></div>
     </div>
 
     <div class="video-box">
@@ -487,7 +486,7 @@ footer { line-height:1.8; }
       </div>
       <div class="label">You</div>
       <div class="galli-badge" id="myBadge" hidden></div>
-      <div class="video-chat-captions" id="myChatCaptions" aria-live="polite"></div>
+<div class="galli-video-chat" id="myVideoChat" role="log" aria-label="Conversation on your video"></div>
     </div>
 
   <div class="v4-panel" id="gamePanel" hidden>
@@ -499,10 +498,7 @@ footer { line-height:1.8; }
  <button id="declineGameBtn" hidden>Decline</button>
  <button id="closeGameBtn">Close Game</button>
 </div>
-<div class="v4-panel" id="reactionPanel" hidden>
- <strong>Send a positive reaction</strong>
- <div class="v4-reactions" id="reactionChoices"></div>
-</div>
+<div class="v4-panel" id="reactionPanel" hidden></div>
 
 
 
@@ -518,28 +514,30 @@ footer { line-height:1.8; }
 
 <div class="v4-tools">
  <button id="gamesBtn" disabled>🎮 Tic-Tac-Toe</button>
- <button id="reactionsBtn" disabled>❤️ Reactions</button>
- <button id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
+
 </div>
 
-<section class="galli-social" aria-label="Text chat and supporter badges">
-  <form id="textChatForm" class="galli-chat-form galli-chat-bar">
-    <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Message to stranger" disabled>
-    <button type="submit" id="textChatSend" disabled>Send ➤</button>
-  </form>
-  <div id="textChatNotice" class="galli-chat-notice" role="status"></div>
-  <div class="galli-social-tabs">
-    <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My supporter badge</label>
-    <select id="teamBadgeSelect" aria-label="Choose your supporter badge">
-      <option value="">No badge</option>
-      <option>Biratnagar Kings</option><option>Chitwan Rhinos</option><option>Janakpur Bolts</option>
-      <option>Kathmandu Gurkhas</option><option>Karnali Yaks</option><option>Lumbini Lions</option>
-      <option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
-    </select>
-  </div>
+<section class="galli-social" aria-label="Chat and supporter badges">
+ <form id="textChatForm" class="galli-chat-form galli-chat-bar">
+  <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Say hello to your stranger" disabled>
+  <button type="submit" id="textChatSend" disabled>Send ➤</button>
+ </form>
+ <div class="galli-inline-reactions" aria-label="Quick reactions">
+  <div id="reactionChoices" class="v4-reactions"></div>
+  <button type="button" id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
+ </div>
+ <div id="textChatNotice" class="galli-chat-notice" role="status"></div>
+ <div class="galli-social-tabs">
+  <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My supporter badge</label>
+  <select id="teamBadgeSelect" aria-label="Choose your supporter badge">
+   <option value="">No badge</option><option>Biratnagar Kings</option><option>Chitwan Rhinos</option>
+   <option>Janakpur Bolts</option><option>Kathmandu Gurkhas</option><option>Karnali Yaks</option>
+   <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
+  </select>
+ </div>
 </section>
 
-  <div id="status">Ready to enter Online Galli. Camera and microphone access will be requested when you start.</div>
+<div id="status">Ready to enter Online Galli. Camera and microphone access will be requested when you start.</div>
   <div id="moderationControls" style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
     <button id="blockBtn" disabled>🚫 Block User</button>
   </div>
@@ -968,7 +966,7 @@ socket.on("moderation-warning", message => status(message));
 
 // V4 game and positive reaction controls. No additional video processing.
 const gamesBtn=document.getElementById("gamesBtn");
-const reactionsBtn=document.getElementById("reactionsBtn");
+
 const muteReactionsBtn=document.getElementById("muteReactionsBtn");
 const gamePanel=document.getElementById("gamePanel");
 const videoStage=document.getElementById("videoStage");
@@ -1012,7 +1010,7 @@ function resetV4() {
   gamesBtn.disabled=!partnerId;reactionsBtn.disabled=!partnerId;
 }
 gamesBtn.onclick=()=>{gamePanel.hidden=!gamePanel.hidden;requestAnimationFrame(positionGameAtVideoSeam);reactionPanel.hidden=true;if(!gameState)gameBoard.hidden=true;};
-reactionsBtn.onclick=()=>{reactionPanel.hidden=!reactionPanel.hidden;gamePanel.hidden=true;};
+
 inviteGameBtn.onclick=()=>{if(!partnerId)return;socket.emit("galli-game-invite");gameMessage.textContent="Waiting for your partner to accept...";inviteGameBtn.hidden=true;};
 acceptGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:true});acceptGameBtn.hidden=true;declineGameBtn.hidden=true;};
 declineGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:false});resetV4();};
@@ -1072,8 +1070,8 @@ socket.on("galli-reaction",({emoji}={})=>{
 
 
 // V5: transient partner-only text chat and optional text-based team badges.
-const myChatCaptions=document.getElementById("myChatCaptions");
-const peerChatCaptions=document.getElementById("peerChatCaptions");
+const myVideoChat=document.getElementById("myVideoChat");
+const peerVideoChat=document.getElementById("peerVideoChat");
 const textChatForm=document.getElementById("textChatForm");
 const textChatInput=document.getElementById("textChatInput");
 const textChatSend=document.getElementById("textChatSend");
@@ -1088,19 +1086,19 @@ function showBadge(el,team){
  el.hidden=!team;
 }
 function resetSocial(){
- myChatCaptions.replaceChildren();peerChatCaptions.replaceChildren();textChatNotice.textContent="";
- textChatInput.value="";peerBadge.hidden=true;peerBadge.textContent="";
+ myVideoChat.replaceChildren();peerVideoChat.replaceChildren();textChatInput.value="";textChatNotice.textContent="";
+ peerBadge.hidden=true;peerBadge.textContent="";
  const active=!!partnerId;
  textChatInput.disabled=!active;textChatSend.disabled=!active;
 }
 function appendText(message,mine){
- const target=mine?myChatCaptions:peerChatCaptions;
- const el=document.createElement("div");
- el.className="galli-caption";
- el.textContent=message;
- target.appendChild(el);
- while(target.childElementCount>3)target.firstElementChild.remove();
- target.scrollTop=target.scrollHeight;
+ for(const target of [myVideoChat,peerVideoChat]){
+  const line=document.createElement("div");line.className="galli-video-chat-line";
+  const speaker=document.createElement("strong");speaker.textContent=mine?"You: ":"Stranger: ";
+  line.append(speaker,document.createTextNode(message));target.appendChild(line);
+  while(target.childElementCount>6)target.firstElementChild.remove();
+  target.scrollTop=target.scrollHeight;
+ }
 }
 textChatForm.addEventListener("submit",event=>{
  event.preventDefault();
