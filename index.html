@@ -245,6 +245,40 @@ footer { line-height:1.8; }
  #gamePanel button { font-size:12px;padding:6px 8px; }
  #reactionToast.v4-toast { font-size:clamp(74px,22vw,115px); }
 }
+
+#videoStage { position:relative; isolation:isolate; overflow:visible; }
+#gamePanel.v4-panel {
+ position:absolute!important; left:50%!important; top:50%!important;
+ bottom:auto!important; right:auto!important;
+ transform:translate(-50%,-50%)!important;
+ margin:0!important; z-index:80!important;
+ width:min(270px,calc(100% - 18px))!important;
+ max-height:min(390px,95%)!important;
+ overflow:auto; box-sizing:border-box;
+}
+#gamePanel.game-finished #gameMessage {
+ background:#168a3a;color:#fff;font-size:20px;font-weight:900;
+ padding:12px 7px;border-radius:10px;letter-spacing:.02em;
+}
+.reaction-in-video {
+ position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);
+ z-index:12;pointer-events:none;font-size:clamp(66px,11vw,120px);
+ line-height:1;text-shadow:0 6px 16px #0009;
+}
+.reaction-in-video:not(:empty){animation:galliInBox .8s ease-out both}
+@keyframes galliInBox {
+ 0%{opacity:0;transform:translate(-50%,-25%) scale(.3)}
+ 35%{opacity:1;transform:translate(-50%,-55%) scale(1.18)}
+ 100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@media(max-width:600px){
+ #videoStage {display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+ #videoStage>.video-box{min-width:0}
+ #gamePanel.v4-panel {max-height:min(330px,82%)!important;width:min(240px,calc(100% - 24px))!important}
+ #gamePanel .v4-board{width:min(150px,100%)}
+ #gamePanel .v4-board button{font-size:23px}
+ .reaction-in-video{font-size:clamp(70px,23vw,110px)}
+}
 </style>
 </head>
 
@@ -295,6 +329,7 @@ footer { line-height:1.8; }
 
     <div class="video-box">
       <video id="remoteVideo" autoplay playsinline></video>
+      <div class="reaction-in-video" id="remoteReaction" aria-live="polite"></div>
       <div class="placeholder" id="remotePlaceholder">
         <div class="emoji">👤</div>
         <h3>Someone new is around the corner...</h3>
@@ -305,6 +340,7 @@ footer { line-height:1.8; }
 
     <div class="video-box">
       <video id="localVideo" autoplay muted playsinline></video>
+      <div class="reaction-in-video" id="localReaction" aria-live="polite"></div>
       <div class="placeholder" id="localPlaceholder">
         <div class="emoji">📷</div>
         <h3>Your Camera</h3>
@@ -326,7 +362,7 @@ footer { line-height:1.8; }
  <strong>Send a positive reaction</strong>
  <div class="v4-reactions" id="reactionChoices"></div>
 </div>
-<div class="v4-toast" id="reactionToast" aria-live="polite"></div>
+
 
 
   </div>
@@ -781,12 +817,13 @@ const inviteGameBtn=document.getElementById("inviteGameBtn");
 const acceptGameBtn=document.getElementById("acceptGameBtn");
 const declineGameBtn=document.getElementById("declineGameBtn");
 const closeGameBtn=document.getElementById("closeGameBtn");
-const reactionToast=document.getElementById("reactionToast");
+const localReaction=document.getElementById("localReaction");
+const remoteReaction=document.getElementById("remoteReaction");
 let gameState=null, reactionsMuted=false, toastTimeout=null;
 gameBoard.hidden=true;
 function resetV4() {
   gameBoard.hidden=true;
-  gameState=null;gamePanel.hidden=true;reactionPanel.hidden=true;
+  gameState=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;
   gameBoard.replaceChildren();gameMessage.textContent="Invite your stranger to play.";
   inviteGameBtn.hidden=false;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
   gamesBtn.disabled=!partnerId;reactionsBtn.disabled=!partnerId;
@@ -812,7 +849,8 @@ socket.on("galli-game-state",state=>{
  gameBoard.hidden=false;
  gameState=state;gamePanel.hidden=false;inviteGameBtn.hidden=true;
  acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
- gameMessage.textContent=state.winner?`${state.winner===state.you?"You win!":"Your partner wins!"}`:state.draw?"It's a draw!":state.turn===state.you?"Your turn":"Partner's turn";
+ gameMessage.textContent=state.winner?(state.winner===state.you?"YOU WIN! 🎉":"YOUR PARTNER WINS!"):state.draw?"IT'S A DRAW!":state.turn===state.you?"Your turn":"Partner's turn";
+ gamePanel.classList.toggle("game-finished",!!state.winner||!!state.draw);
  gameBoard.replaceChildren();
  state.board.forEach((value,index)=>{
   const b=document.createElement("button");
@@ -827,7 +865,7 @@ const approvedReactions=["❤️","😂","👏","🎉","🙌","👍","✨"];
 approvedReactions.forEach(emoji=>{
  const b=document.createElement("button");b.textContent=emoji;
  b.setAttribute("aria-label","Send "+emoji+" reaction");
- b.onclick=()=>{if(partnerId){socket.emit("galli-reaction",{emoji});showGalliReaction(emoji);}};
+ b.onclick=()=>{if(partnerId){socket.emit("galli-reaction",{emoji});showGalliReaction(emoji,"local");}};
  document.getElementById("reactionChoices").appendChild(b);
 });
 muteReactionsBtn.onclick=()=>{
@@ -835,14 +873,18 @@ muteReactionsBtn.onclick=()=>{
  muteReactionsBtn.textContent=reactionsMuted?"🔕 Reactions Muted":"🔔 Reactions On";
  muteReactionsBtn.setAttribute("aria-pressed",String(reactionsMuted));
 };
-function showGalliReaction(emoji){
- reactionToast.textContent="";void reactionToast.offsetWidth;
- reactionToast.textContent=emoji;
- clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>reactionToast.textContent="",1800);
+const reactionTimers={local:null,remote:null};
+function showGalliReaction(emoji,side){
+ const target=side==="local"?localReaction:remoteReaction;
+ target.textContent="";
+ void target.offsetWidth;
+ target.textContent=emoji;
+ clearTimeout(reactionTimers[side]);
+ reactionTimers[side]=setTimeout(()=>target.textContent="",1800);
 }
 socket.on("galli-reaction",({emoji}={})=>{
  if(reactionsMuted||!approvedReactions.includes(emoji)||!partnerId)return;
- showGalliReaction(emoji);
+ showGalliReaction(emoji,"remote");
 });
 
 startBtn.addEventListener("click", startChat);
