@@ -79,6 +79,26 @@ function fetchMeteredIce() {
 // Create the website server
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
+  // Serve the approved brown Oxford shoe cursor image.
+  if (req.method === "GET" && url.pathname === "/assets/shoe-cursor.png") {
+    const assetPath = path.join(__dirname, "assets", "shoe-cursor.png");
+    fs.stat(assetPath, (err, stat) => {
+      if (err || !stat.isFile()) {
+        res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+        res.end("Shoe cursor not found");
+        return;
+      }
+      res.writeHead(200, {
+        "Content-Type": "image/png",
+        "Content-Length": stat.size,
+        "Cache-Control": "public, max-age=300",
+        "X-Content-Type-Options": "nosniff"
+      });
+      fs.createReadStream(assetPath).pipe(res);
+    });
+    return;
+  }
+
   // Serve only the packaged NPL PNG assets. Do not expose arbitrary files.
   if (req.method === "GET" && /^\/assets\/npl\/[a-z0-9-]+\.png$/.test(url.pathname)) {
     const fileName = url.pathname.slice("/assets/npl/".length);
