@@ -415,6 +415,16 @@ footer { line-height:1.8; }
  .galli-chat-bar button{padding:7px 12px}
  .galli-inline-reactions .v4-reactions button{font-size:21px;min-width:35px;min-height:35px}
 }
+
+/* V5.3: chat above main controls; My Support beside quick reactions. */
+.galli-social{margin:10px 0 12px!important}
+.galli-inline-reactions{display:flex!important;align-items:center!important;gap:7px!important;flex-wrap:wrap!important}
+.galli-inline-reactions .v4-reactions{flex:0 1 auto!important}
+.galli-inline-reactions #muteReactionsBtn{margin-left:0!important}
+.galli-inline-reactions .galli-social-tabs{display:flex!important;align-items:center!important;gap:7px!important;margin:0!important;flex-wrap:wrap!important}
+.galli-inline-reactions .galli-badge-select-label{white-space:nowrap;font-size:13px}
+.galli-inline-reactions #teamBadgeSelect{max-width:180px;min-height:39px;padding:7px}
+@media(max-width:600px){.galli-inline-reactions{gap:6px!important}.galli-inline-reactions .v4-reactions button{min-width:34px;min-height:35px;font-size:21px}.galli-inline-reactions #teamBadgeSelect{max-width:150px}}
 </style>
 </head>
 
@@ -503,6 +513,26 @@ footer { line-height:1.8; }
 
 
   </div>
+<section class="galli-social" aria-label="Chat and My Support">
+ <form id="textChatForm" class="galli-chat-form galli-chat-bar">
+  <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Say hello to your stranger" disabled>
+  <button type="submit" id="textChatSend" disabled>Send ➤</button>
+ </form>
+ <div class="galli-inline-reactions" aria-label="Quick reactions">
+  <div id="reactionChoices" class="v4-reactions"></div>
+  <button type="button" id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
+ <div class="galli-social-tabs">
+  <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My Support</label>
+  <select id="teamBadgeSelect" aria-label="Choose My Support">
+   <option value="">No badge</option><option>Biratnagar Kings</option><option>Chitwan Rhinos</option>
+   <option>Janakpur Bolts</option><option>Kathmandu Gurkhas</option><option>Karnali Yaks</option>
+   <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
+  </select>
+ </div>
+ </div>
+ <div id="textChatNotice" class="galli-chat-notice" role="status"></div>
+</section>
+
 <div class="controls">
     <button class="start" id="startBtn">▶ Enter the Galli</button>
     <button class="next" id="nextBtn" disabled>⏭ Next Corner</button>
@@ -517,25 +547,7 @@ footer { line-height:1.8; }
 
 </div>
 
-<section class="galli-social" aria-label="Chat and supporter badges">
- <form id="textChatForm" class="galli-chat-form galli-chat-bar">
-  <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Say hello to your stranger" disabled>
-  <button type="submit" id="textChatSend" disabled>Send ➤</button>
- </form>
- <div class="galli-inline-reactions" aria-label="Quick reactions">
-  <div id="reactionChoices" class="v4-reactions"></div>
-  <button type="button" id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
- </div>
- <div id="textChatNotice" class="galli-chat-notice" role="status"></div>
- <div class="galli-social-tabs">
-  <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My supporter badge</label>
-  <select id="teamBadgeSelect" aria-label="Choose your supporter badge">
-   <option value="">No badge</option><option>Biratnagar Kings</option><option>Chitwan Rhinos</option>
-   <option>Janakpur Bolts</option><option>Kathmandu Gurkhas</option><option>Karnali Yaks</option>
-   <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
-  </select>
- </div>
-</section>
+
 
 <div id="status">Ready to enter Online Galli. Camera and microphone access will be requested when you start.</div>
   <div id="moderationControls" style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
