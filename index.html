@@ -483,12 +483,29 @@ footer { line-height:1.8; }
  .container>aside .safety{margin-top:15px}
 }
 
+/* Keep Face Stickers and My Support next to the reactions, on one responsive row. */
+.galli-inline-reactions{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.galli-inline-reactions .v4-reactions{flex:0 1 auto}
+.galli-inline-reactions .galli-face-effects{display:flex;align-items:center;flex-wrap:wrap;margin:0;gap:6px}
+.galli-inline-reactions .galli-social-tabs{display:flex;align-items:center;gap:6px;margin:0}
+.galli-inline-reactions #faceStickerSelect{max-width:145px;padding:8px}
+.galli-inline-reactions #teamBadgeSelect{max-width:170px;padding:8px}
+@media(max-width:650px){.galli-inline-reactions{gap:7px}.galli-inline-reactions .galli-face-effects,.galli-inline-reactions .galli-social-tabs{font-size:12px}}
 /* Optional local face stickers: original video is unchanged when Off. */
 .galli-face-effects{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:8px 0 6px;font-weight:700}
 .galli-face-effects select{background:#fff;color:#111;border-radius:8px;padding:8px;max-width:185px}
 #faceStickerStatus{font-size:12px;color:#f7d96b;font-weight:400}
 #faceStickerPreview{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;transform:scaleX(-1);object-fit:fill}
 @media(max-width:600px){.galli-face-effects{gap:5px;font-size:12px}.galli-face-effects select{max-width:155px}}
+
+/* Walking through the Galli: desktop pointer only; respects reduced motion. */
+@media (hover:hover) and (pointer:fine) {
+  .galli-shoeprint{position:fixed;width:18px;height:32px;pointer-events:none;z-index:2147483640;opacity:.72;transform-origin:center;animation:galli-step-fade 1s ease-out forwards;will-change:opacity,transform}
+  .galli-shoeprint svg{display:block;width:100%;height:100%;filter:drop-shadow(0 1px 0 rgba(255,255,255,.12))}
+  @keyframes galli-step-fade{0%{opacity:.72;scale:.88}20%{opacity:.72;scale:1}100%{opacity:0;scale:1.05}}
+  .galli-shoeprint.galli-stomp{width:23px;height:40px;animation-duration:.75s}
+}
+@media (prefers-reduced-motion:reduce){.galli-shoeprint{display:none!important}}
 </style>
 </head>
 
@@ -586,6 +603,10 @@ footer { line-height:1.8; }
   <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Say hello to your stranger" disabled>
   <button type="submit" id="textChatSend" disabled>Send ➤</button>
  </form>
+
+<div class="galli-inline-reactions" aria-label="Quick reactions">
+  <div id="reactionChoices" class="v4-reactions"></div>
+  <button type="button" id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
  <div class="galli-face-effects" aria-label="Face stickers">
  <label for="faceStickerSelect">🎭 Face Stickers</label>
  <select id="faceStickerSelect" aria-label="Choose a face sticker">
@@ -595,9 +616,6 @@ footer { line-height:1.8; }
  </select>
  <span id="faceStickerStatus" role="status" aria-live="polite"></span>
 </div>
-<div class="galli-inline-reactions" aria-label="Quick reactions">
-  <div id="reactionChoices" class="v4-reactions"></div>
-  <button type="button" id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
  <div class="galli-social-tabs">
   <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My Support</label>
   <select id="teamBadgeSelect" aria-label="Choose My Support">
@@ -1449,6 +1467,49 @@ stickerSelect.addEventListener("change",()=>{
  else if(localStream)stickerEnable();
  else stickerMessage("Start your camera first.");
 });
+
+
+// Alternating human shoe-sole impressions on the page background.
+// No footprints on videos, dialogs or interactive controls; never intercepts clicks.
+(()=>{
+ const enabled=window.matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)');
+ let last=null,step=0;const prints=[];
+ const sole=`<svg viewBox="0 0 20 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#17140d" d="M10 1C4 1 2.4 5.5 2.5 10.8c.1 4.1 2.2 6.5 2.4 10.5.2 2.5-.7 4.2-1.5 6.5C2.1 31.7 4.5 37 10 37s7.9-5.3 6.6-9.2c-.8-2.3-1.7-4-1.5-6.5.2-4 2.3-6.4 2.4-10.5C17.6 5.5 16 1 10 1Z"/><path fill="#e0b927" opacity=".68" d="M5 10h10v1.7H5zm.4 4.4h9.2v1.7H5.4zm.8 4.3h7.6v1.7H6.2zm-.6 9.5h8.8v1.5H5.6zm1.2 3.2h6.4v1.4H6.8z"/></svg>`;
+ function allowed(x,y){
+  const el=document.elementFromPoint(x,y);
+  if(!el)return false;
+  return !el.closest('#videoStage,.video-box,video,button,a,input,select,textarea,[role="dialog"],.modal,.game-popup,.game-modal');
+ }
+ function printAt(x,y,angle,stomp=false){
+  if(!enabled.matches||!allowed(x,y))return;
+  const side=step++%2===0?-1:1;
+  const rad=angle*Math.PI/180;
+  const offset=side*11;
+  const node=document.createElement('span');node.className='galli-shoeprint'+(stomp?' galli-stomp':'');
+  node.setAttribute('aria-hidden','true');node.innerHTML=sole;
+  node.style.left=(x+Math.cos(rad)*offset-9)+'px';
+  node.style.top=(y+Math.sin(rad)*offset-16)+'px';
+  node.style.transform=`rotate(${angle-90+side*8}deg) scaleX(${side})`;
+  document.body.appendChild(node);prints.push(node);
+  if(prints.length>10)prints.shift()?.remove();
+  node.addEventListener('animationend',()=>{node.remove();const i=prints.indexOf(node);if(i>=0)prints.splice(i,1)},{once:true});
+ }
+ document.addEventListener('pointermove',e=>{
+  if(!enabled.matches||e.pointerType!=='mouse')return;
+  const now={x:e.clientX,y:e.clientY};
+  if(!last){last=now;return;}
+  const dx=now.x-last.x,dy=now.y-last.y,dist=Math.hypot(dx,dy);
+  if(dist<32)return;
+  const angle=Math.atan2(dy,dx)*180/Math.PI;
+  // Avoid a huge burst if the pointer jumps across the screen.
+  printAt(now.x,now.y,angle);last=now;
+ },{passive:true});
+ document.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse'&&e.button===0&&enabled.matches&&allowed(e.clientX,e.clientY))
+   printAt(e.clientX,e.clientY,last?0:90,true);
+ },{passive:true});
+ window.addEventListener('blur',()=>{last=null;});
+})();
 
 </script>
 </body>
