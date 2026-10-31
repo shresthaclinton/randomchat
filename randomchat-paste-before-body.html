@@ -1,0 +1,177 @@
+<script>
+/* RandomChat layout-only fix: place the EXISTING Tic-Tac-Toe panel between videos.
+   Does not replace game markup, socket events, or event listeners. */
+(() => {
+  'use strict';
+
+  const STYLE_ID = 'rc-game-middle-styles';
+  const SLOT_ID = 'rcGameMiddleSlot';
+  const TITLE_RE = /tic[\s\-–]*tac[\s\-–]*toe/i;
+  const GAME_CONTENT_RE = /\b(invited|accept|decline|partner.s turn|your turn|waiting for|close game|play again|game over|winner|draw)\b/i;
+  let scheduled = false;
+
+  function installStyles() {
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = `
+      .rc-game-videos { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+      .rc-game-videos > .rc-video-remote { order: 1; min-width: 0; }
+      .rc-game-videos > .rc-video-local { order: 2; min-width: 0; }
+      .rc-game-videos > #${SLOT_ID} { order: 3; grid-column: 1 / -1; min-width: 0; width: 100%; }
+      #${SLOT_ID}:empty, #${SLOT_ID}[hidden] { display: none !important; }
+      #${SLOT_ID} > .rc-game-panel { max-width: 100%; width: 100%; box-sizing: border-box; margin: 0 !important; }
+      #${SLOT_ID} .rc-ttt-board { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; width: min(100%, 270px) !important; max-width: 270px !important; margin: 12px auto !important; }
+      #${SLOT_ID} .rc-ttt-board > * { box-sizing: border-box !important; width: 100% !important; height: auto !important; min-width: 0 !important; min-height: 0 !important; aspect-ratio: 1 / 1 !important; padding: 0 !important; font-size: clamp(20px, 6vw, 34px) !important; }
+      @media (min-width: 1100px) {
+        .rc-game-videos:has(> #${SLOT_ID}:not([hidden])) { grid-template-columns: minmax(0, 1fr) minmax(210px, 290px) minmax(0, 1fr) !important; }
+        .rc-game-videos:has(> #${SLOT_ID}:not([hidden])) > .rc-video-local { order: 3; grid-column: 3; }
+        .rc-game-videos:has(> #${SLOT_ID}:not([hidden])) > #${SLOT_ID} { order: 2; grid-column: 2; }
+      }
+      @media (max-width: 900px) {
+        .rc-game-videos { grid-template-columns: minmax(0, 1fr) !important; }
+        .rc-game-videos > .rc-video-remote { order: 1; grid-column: 1; }
+        .rc-game-videos > #${SLOT_ID} { order: 2; grid-column: 1; }
+        .rc-game-videos > .rc-video-local { order: 3; grid-column: 1; }
+        .rc-game-videos > .rc-video-remote, .rc-game-videos > .rc-video-local { aspect-ratio: 16 / 9; }
+        #${SLOT_ID} > .rc-game-panel { padding: 12px !important; }
+        #${SLOT_ID} .rc-ttt-board { width: min(100%, 234px) !important; max-width: 234px !important; gap: 5px !important; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function getVideos() {
+    const remote = document.getElementById('remoteVideo');
+    const local = document.getElementById('localVideo');
+    if (!remote || !local) return null;
+    const remoteBox = remote.closest('.video-box') || remote.parentElement;
+    const localBox = local.closest('.video-box') || local.parentElement;
+    if (!remoteBox || !localBox || remoteBox.parentElement !== localBox.parentElement) return null;
+    return { remote, local, remoteBox, localBox, wrapper: remoteBox.parentElement };
+  }
+
+  function locateTitle() {
+    // Don't confuse the "Tic-Tac-Toe" toolbar button with the actual game panel.
+    const possible = document.querySelectorAll('h1,h2,h3,h4,h5,h6,[role="heading"],.game-title,.ttt-title,strong,b,div,span');
+    for (const el of possible) {
+      if (el.closest('button,a,[role="button"]')) continue;
+      // Inspect the element's *own* text, rather than the text of an entire page.
+      const ownText = Array.from(el.childNodes)
+        .filter(node => node.nodeType === 3)
+        .map(node => node.nodeValue)
+        .join(' ').trim();
+      if (ownText.length <= 75 && TITLE_RE.test(ownText)) return el;
+    }
+    return null;
+  }
+
+  function locatePanel(videos) {
+    const known = [
+      '#tttPanel', '#ticTacToePanel', '#ticTacToeGame', '#tttGame',
+      '#gamePanel', '#gameCard', '#gameContainer', '#tttContainer',
+      '[data-game="tic-tac-toe"]', '.ttt-panel', '.tic-tac-toe-panel',
+      '.game-panel', '.game-card'
+    ];
+    for (const selector of known) {
+      const el = document.querySelector(selector);
+      if (el && !el.contains(videos.remote) && !el.contains(videos.local) && TITLE_RE.test(el.textContent || '')) return el;
+    }
+
+    const title = locateTitle();
+    if (!title) return null;
+    let candidate = null;
+    for (let node = title.parentElement, hops = 0; node && hops < 9; node = node.parentElement, hops++) {
+      if (node === document.body || node === document.documentElement || node.contains(videos.remote) || node.contains(videos.local)) break;
+      const content = (node.textContent || '').slice(0, 2500);
+      if (!TITLE_RE.test(content)) continue;
+      const buttonCount = node.querySelectorAll('button,[role="button"]').length;
+      const panelish = /(ttt|tic.?tac|game.?panel|game.?card|game.?box)/i.test((node.id || '') + ' ' + (typeof node.className === 'string' ? node.className : ''));
+      const hasContent = GAME_CONTENT_RE.test(content);
+      if (panelish || (hasContent && (buttonCount > 0 || content.length > 40))) {
+        candidate = node;
+        // Prefer the smallest complete card, not its outer wrapper or controls.
+        break;
+      }
+    }
+    return candidate;
+  }
+
+  function makeBoardCompact(panel) {
+    if (!panel) return;
+    let board = null;
+    const candidates = panel.querySelectorAll('[id*="board" i],[class*="board" i],[class*="grid" i]');
+    for (const el of candidates) {
+      if (el.children.length === 9 || el.querySelectorAll('button,[role="button"]').length === 9) {
+        board = el;
+        break;
+      }
+    }
+    if (!board) {
+      // Fallback: 3×3 games often use a 9-button div without an explicit board class.
+      for (const el of panel.querySelectorAll('div,section')) {
+        if (el.children.length === 9 && [...el.children].every(ch => ch.matches('button,[role="button"],div'))) {
+          board = el;
+          break;
+        }
+      }
+    }
+    if (board) board.classList.add('rc-ttt-board');
+  }
+
+  function layout() {
+    const videos = getVideos();
+    if (!videos) return;
+    installStyles();
+    videos.wrapper.classList.add('rc-game-videos');
+    videos.remoteBox.classList.add('rc-video-remote');
+    videos.localBox.classList.add('rc-video-local');
+    let slot = document.getElementById(SLOT_ID);
+    if (!slot) {
+      slot = document.createElement('div');
+      slot.id = SLOT_ID;
+      slot.setAttribute('aria-label', 'Tic-Tac-Toe game between video streams');
+      videos.wrapper.insertBefore(slot, videos.localBox);
+    }
+    const panel = locatePanel(videos);
+    if (panel && panel !== slot && !panel.contains(slot)) {
+      if (panel.parentElement !== slot) slot.appendChild(panel); // MOVES, doesn't clone: listeners and state survive.
+      panel.classList.add('rc-game-panel');
+      makeBoardCompact(panel);
+      const computed = getComputedStyle(panel);
+      const shouldHide = panel.hidden || computed.display === 'none' || computed.visibility === 'hidden';
+      if (slot.hidden !== shouldHide) slot.hidden = shouldHide;
+    } else if (slot.firstElementChild) {
+      const existing = slot.firstElementChild;
+      makeBoardCompact(existing);
+      const computed = getComputedStyle(existing);
+      const shouldHide = existing.hidden || computed.display === 'none' || computed.visibility === 'hidden';
+      if (slot.hidden !== shouldHide) slot.hidden = shouldHide;
+    } else {
+      if (!slot.hidden) slot.hidden = true;
+    }
+  }
+
+  function queueLayout() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      layout();
+    });
+  }
+
+  function start() {
+    layout();
+    new MutationObserver(queueLayout).observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class', 'hidden']
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+  else start();
+})();
+
+</script>
