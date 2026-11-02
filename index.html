@@ -674,9 +674,13 @@ footer { line-height:1.8; }
  <div class="galli-face-effects" aria-label="Face stickers">
  <label for="faceStickerSelect">🎭 Face Stickers</label>
  <select id="faceStickerSelect" aria-label="Choose a face sticker">
-  <option value="none">Off</option><option value="moustache">🥸 Moustache</option>
-  <option value="thug">🕶️ Thug Life</option><option value="cowboy">🤠 Cowboy Hat</option>
-  <option value="party">😎 Party Shades</option><option value="crown">👑 Crown</option>
+  <option value="none">Off</option>
+  <option value="thug">🕶️ Thug Life</option>
+  <option value="chaplin">🎩 Charlie Chaplin</option>
+  <option value="aviator">🕶️ Aviator Sunglasses</option>
+  <option value="wayfarer">🕶️ Wayfarer Classic</option>
+  <option value="shelby">🧢 Thomas Shelby Cap</option>
+  <option value="steampunk">🥽 Steampunk Round Glasses</option>
  </select>
  <span id="faceStickerStatus" role="status" aria-live="polite"></span>
 </div>
@@ -1414,50 +1418,40 @@ function stickerResize(){
   stickerPreview.height=stickerComposite.height=h;
  }
 }
-function stickerPoly(ctx,points,fill,stroke="#111",lineWidth=2){
- ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);
- points.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
- ctx.closePath();ctx.fillStyle=fill;ctx.fill();
- if(stroke){ctx.lineWidth=lineWidth;ctx.strokeStyle=stroke;ctx.stroke();}
+// Photo-derived transparent accessory artwork with landmark positioning.
+const faceArt={};
+for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk"]){
+ const image=new Image();image.src="/assets/face-effects/"+name+".png";faceArt[name]=image;
+}
+let smoothFace=null;
+function stickerAsset(ctx,name,x,y,width,height){
+ const image=faceArt[name];if(image&&image.complete&&image.naturalWidth)ctx.drawImage(image,x,y,width,height);
 }
 function stickerDraw(ctx,face,mode,w,h){
  if(!face||mode==="none")return;
  const p=i=>({x:face[i].x*w,y:face[i].y*h});
- const eyeL=p(33),eyeR=p(263),lip=p(13),forehead=p(10);
+ const eyeL=p(33),eyeR=p(263),forehead=p(10),lip=p(13),chin=p(152);
  const dx=eyeR.x-eyeL.x,dy=eyeR.y-eyeL.y;
- const eyeDist=Math.hypot(dx,dy);
- if(eyeDist<10)return;
- ctx.save();
- ctx.translate((eyeL.x+eyeR.x)/2,(eyeL.y+eyeR.y)/2);
- ctx.rotate(Math.atan2(dy,dx));
- const s=eyeDist;ctx.lineJoin="round";
- if(mode==="thug"||mode==="party"){
-  const col=mode==="thug"?"#111":"#ff6d00";
-  stickerPoly(ctx,[[-.73*s,-.23*s],[-.06*s,-.2*s],[-.04*s,.28*s],[-.57*s,.32*s]],col);
-  stickerPoly(ctx,[[.06*s,-.2*s],[.73*s,-.23*s],[.57*s,.32*s],[.04*s,.28*s]],col);
-  ctx.strokeStyle=mode==="thug"?"#e9e9e9":"#ffdb3c";ctx.lineWidth=.055*s;
-  ctx.beginPath();ctx.moveTo(-.06*s,-.02*s);ctx.lineTo(.06*s,-.02*s);ctx.stroke();
-  if(mode==="thug"){
-   ctx.fillStyle="#fff";const sq=.095*s;
-   for(let side of [-1,1])for(let r=0;r<3;r++)for(let c=0;c<4;c++)
-    if((r+c)%2===0)ctx.fillRect(side*.39*s+(c-1.5)*sq,-.07*s+r*sq,sq,sq*.65);
-  }
+ const eyeDist=Math.hypot(dx,dy);if(eyeDist<12)return;
+ const cx=(eyeL.x+eyeR.x)/2,cy=(eyeL.y+eyeR.y)/2;
+ const roll=Math.atan2(dy,dx);
+ // Scale and follow tilt; slightly adjust for yaw based on relative nose position.
+ const nose=p(1);const yaw=Math.max(-.24,Math.min(.24,(nose.x-cx)/eyeDist));
+ ctx.save();ctx.translate(cx,cy);ctx.rotate(roll);ctx.scale(1-Math.abs(yaw)*.3,1);
+ const s=eyeDist;
+ if(["thug","aviator","wayfarer","steampunk"].includes(mode)){
+  const widths={thug:1.67,aviator:1.75,wayfarer:1.68,steampunk:1.78};
+  const heights={thug:.67,aviator:.72,wayfarer:.62,steampunk:.75};
+  const ww=s*widths[mode],hh=s*heights[mode];
+  stickerAsset(ctx,mode,-ww/2,-hh*.40,ww,hh);
  }
- if(mode==="moustache"||mode==="cowboy"){
-  const y=lip.y-(eyeL.y+eyeR.y)/2;
-  stickerPoly(ctx,[[-.53*s,y-.09*s],[-.24*s,y-.19*s],[0,y-.055*s],[.24*s,y-.19*s],[.53*s,y-.09*s],[.3*s,y+.17*s],[0,y+.065*s],[-.3*s,y+.17*s]],"#20120c","#120b09",.02*s);
+ const headY=(forehead.y-cy)*Math.cos(roll)+(forehead.x-cx)*Math.sin(roll);
+ if(mode==="chaplin"){
+  stickerAsset(ctx,"chaplin-hat",-s*.96,headY-s*.64,s*1.92,s*.96);
+  const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
+  stickerAsset(ctx,"chaplin-moustache",-s*.23,lipY-s*.31,s*.46,s*.22);
  }
- if(mode==="cowboy"||mode==="crown"){
-  const y=forehead.y-(eyeL.y+eyeR.y)/2;
-  if(mode==="cowboy"){
-   stickerPoly(ctx,[[-.9*s,y+.05*s],[-.55*s,y+.16*s],[.55*s,y+.16*s],[.9*s,y+.05*s],[.6*s,y+.3*s],[-.6*s,y+.3*s]],"#6b3b1c");
-   stickerPoly(ctx,[[-.47*s,y+.15*s],[-.38*s,y-.75*s],[.34*s,y-.75*s],[.47*s,y+.15*s]],"#8b4a22");
-   ctx.fillStyle="#e5ad46";ctx.fillRect(-.4*s,y+.04*s,.8*s,.11*s);
-  }else{
-   stickerPoly(ctx,[[-.65*s,y+.18*s],[-.63*s,y-.58*s],[-.3*s,y-.18*s],[0,y-.85*s],[.3*s,y-.18*s],[.63*s,y-.58*s],[.65*s,y+.18*s]],"#f7c62e","#9b6300",.05*s);
-   ctx.fillStyle="#e43d44";ctx.beginPath();ctx.arc(0,y-.1*s,.1*s,0,Math.PI*2);ctx.fill();
-  }
- }
+ if(mode==="shelby")stickerAsset(ctx,"shelby",-s*1.07,headY-s*.67,s*2.14,s*1.00);
  ctx.restore();
 }
 function stickerRender(t){
@@ -1497,7 +1491,15 @@ async function stickerLoadMesh(){
   }
   const mesh=new window.FaceMesh({locateFile:file=>"https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/"+file});
   mesh.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:.5,minTrackingConfidence:.5});
-  mesh.onResults(result=>{stickerFace=result.multiFaceLandmarks?.[0]||null;});
+  mesh.onResults(result=>{const next=result.multiFaceLandmarks?.[0]||null;
+   if(!next){stickerFace=null;smoothFace=null;return;}
+   if(!smoothFace||smoothFace.length!==next.length)smoothFace=next.map(p=>({...p}));
+   else for(let i=0;i<next.length;i++){
+    smoothFace[i].x=smoothFace[i].x*.60+next[i].x*.40;
+    smoothFace[i].y=smoothFace[i].y*.60+next[i].y*.40;
+    smoothFace[i].z=smoothFace[i].z*.60+next[i].z*.40;
+   }
+   stickerFace=smoothFace;});
   stickerFaceMesh=mesh;
  })();
  try{await stickerLoading;}finally{stickerLoading=null;}
@@ -1527,7 +1529,7 @@ async function stickerEnable(){
  }
 }
 function stickerDisable(){
- stickerFace=null;
+ stickerFace=null;smoothFace=null;
  if(localStream)stickerReplaceTrack(localStream.getVideoTracks()[0]);
  stickerPreviewCtx.clearRect(0,0,stickerPreview.width,stickerPreview.height);
  if(stickerOutgoingTrack){stickerOutgoingTrack.stop();stickerOutgoingTrack=null;}
