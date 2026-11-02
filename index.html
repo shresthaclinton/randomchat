@@ -569,6 +569,60 @@ footer { line-height:1.8; }
  @keyframes galli-led-glow{from{filter:brightness(.96)}to{filter:brightness(1.08)}}
 }
 
+
+/* V5.7.2 — reposition the SAME billboard below the mobile introduction,
+   directly above the stranger camera. No duplicate ads or new dependencies. */
+#galliMobileAdPosition{display:none}
+@media(max-width:600px){
+ #galliMobileAdPosition{display:none;width:100%;margin:0 0 12px}
+ #galliMobileAdPosition.galli-ad-visible{display:block}
+ #galliIntroBanner.galli-intro-hidden{display:none}
+ #galliMobileAdPosition .galli-billboard-slot{
+   display:block!important;width:100%;max-width:none!important;
+   padding:3px 4px 9px!important;margin:0!important;
+   min-height:0!important;background:transparent!important;border:0!important;
+ }
+ #galliMobileAdPosition .galli-led-stage{
+   width:100%;padding:0 4px 2px;filter:drop-shadow(5px 6px 4px #0004)
+ }
+ #galliMobileAdPosition .galli-led-board{
+   width:98%;aspect-ratio:2.7 / 1;min-height:120px;max-height:190px;
+   padding:5px;transform:rotateY(-3deg) rotateX(1deg);
+   box-shadow:inset 1px 0 2px #777,3px 4px 0 #090b11,5px 6px 8px #0006;
+ }
+ #galliMobileAdPosition .galli-led-screen{
+   display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+   grid-template-rows:auto 1fr auto;align-items:center;justify-items:center;
+   column-gap:5px;row-gap:1px;padding:7px 9px;
+ }
+ #galliMobileAdPosition .galli-led-brand{
+   grid-column:1;grid-row:1;font-size:clamp(12px,3.6vw,18px);
+   letter-spacing:-.5px;justify-self:start
+ }
+ #galliMobileAdPosition .galli-led-headline{
+   grid-column:1;grid-row:2 / span 2;font-size:clamp(18px,5.3vw,29px);
+   letter-spacing:-.5px;text-align:left;justify-self:start;line-height:1.02
+ }
+ #galliMobileAdPosition .galli-led-headline em{font-size:1.2em}
+ #galliMobileAdPosition .galli-led-subtitle{
+   grid-column:2;grid-row:1;font-size:clamp(7px,2vw,10px);
+   letter-spacing:.8px;line-height:1.25
+ }
+ #galliMobileAdPosition .galli-led-benefits{
+   grid-column:2;grid-row:2;font-size:clamp(12px,3.2vw,17px);
+   gap:0;align-self:center
+ }
+ #galliMobileAdPosition .galli-led-benefits small{
+   font-size:clamp(6px,1.55vw,9px);line-height:1.1
+ }
+ #galliMobileAdPosition .galli-led-cta{
+   grid-column:2;grid-row:3;width:100%;padding:6px 3px;
+   font-size:clamp(8px,2.2vw,11px);white-space:nowrap;
+ }
+ #galliMobileAdPosition .galli-led-sponsored{display:none}
+ #galliMobileAdPosition .galli-led-foot{height:9px}
+}
+
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -614,8 +668,11 @@ footer { line-height:1.8; }
 <main class="container">
 
 <section>
-  <h1 class="tagline">A new encounter around every corner।</h1>
-  <p class="subtitle">Explore a virtual street and meet someone new. · Meet someone unexpected.</p>
+  <div id="galliIntroBanner">
+    <h1 class="tagline">A new encounter around every corner।</h1>
+    <p class="subtitle">Explore a virtual street and meet someone new. · Meet someone unexpected.</p>
+  </div>
+  <div id="galliMobileAdPosition" aria-label="Mobile advertising position" hidden></div>
   <div class="videos" id="videoStage">
 
     <div class="video-box">
@@ -741,6 +798,38 @@ footer { line-height:1.8; }
 
 <footer>Online Galli © 2026 · 18+ beta · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/guidelines">Community Guidelines</a> · Be respectful. Stay safe.</footer>
 
+<script>
+/* Move the existing billboard, not a copy: mobile = below intro, desktop = sidebar. */
+(function(){
+ const ad=document.querySelector('aside .galli-billboard-slot');
+ const mobileSlot=document.getElementById('galliMobileAdPosition');
+ const sidebar=document.querySelector('.container > aside');
+ if(!ad||!mobileSlot||!sidebar)return;
+ const mobileQuery=window.matchMedia('(max-width: 600px)');
+ function positionBillboard(){
+  if(mobileQuery.matches){
+   if(ad.parentNode!==mobileSlot)mobileSlot.appendChild(ad);
+  }else if(ad.parentNode!==sidebar){
+   sidebar.insertBefore(ad,sidebar.firstChild);
+  }
+ }
+ // Replace the introduction in its exact location after 30 seconds on this page.
+ const intro=document.getElementById('galliIntroBanner');
+ let elapsed=false;
+ function updateMobileIntro(){
+  const showAd=mobileQuery.matches&&elapsed;
+  if(intro)intro.classList.toggle('galli-intro-hidden',showAd);
+  mobileSlot.classList.toggle('galli-ad-visible',showAd);
+  mobileSlot.hidden=!showAd;
+ }
+ const originalPosition=positionBillboard;
+ positionBillboard=function(){originalPosition();updateMobileIntro();};
+ positionBillboard();
+ window.setTimeout(function(){elapsed=true;updateMobileIntro();},30000);
+ if(mobileQuery.addEventListener)mobileQuery.addEventListener('change',positionBillboard);
+ else mobileQuery.addListener(positionBillboard);
+})();
+</script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
