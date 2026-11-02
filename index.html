@@ -623,6 +623,38 @@ footer { line-height:1.8; }
  #galliMobileAdPosition .galli-led-foot{height:9px}
 }
 
+
+/* V5.7.4: second always-visible mobile square LED billboard below controls,
+   with safety notice immediately below. Original 30-second banner remains. */
+#galliMobileBottomAds{display:none}
+@media(max-width:600px){
+ #galliMobileBottomAds{display:flex;flex-direction:column;gap:12px;margin:18px 0 10px;width:100%}
+ #galliMobileBottomAds .galli-billboard-slot{
+   display:block!important;width:100%;max-width:none!important;min-height:0!important;
+   padding:8px 7px 14px!important;margin:0!important;background:transparent!important;
+   border:0!important;text-align:center!important
+ }
+ #galliMobileBottomAds .galli-led-stage{width:100%;padding:0 5px 3px}
+ #galliMobileBottomAds .galli-led-board{
+   width:96%;aspect-ratio:1/1;min-height:0;max-height:none;padding:8px;
+   transform:rotateY(-4deg) rotateX(1deg)
+ }
+ #galliMobileBottomAds .galli-led-screen{
+   display:flex;flex-direction:column;align-items:center;justify-content:space-around;
+   gap:4px;padding:10px 8px
+ }
+ #galliMobileBottomAds .galli-led-brand{font-size:clamp(17px,5.1vw,25px)}
+ #galliMobileBottomAds .galli-led-headline{font-size:clamp(26px,7.4vw,43px);line-height:1.01}
+ #galliMobileBottomAds .galli-led-headline em{font-size:1.22em}
+ #galliMobileBottomAds .galli-led-subtitle{font-size:clamp(9px,2.65vw,14px);letter-spacing:1.3px}
+ #galliMobileBottomAds .galli-led-benefits{font-size:clamp(16px,5vw,23px)}
+ #galliMobileBottomAds .galli-led-benefits small{font-size:clamp(8px,2.3vw,11px)}
+ #galliMobileBottomAds .galli-led-cta{font-size:clamp(10px,3.2vw,15px);padding:8px 13px}
+ #galliMobileBottomAds .galli-led-sponsored{font-size:7px}
+ #galliMobileBottomAds .galli-led-foot{height:12px}
+ #galliMobileBottomAds .safety{display:block!important;margin:0!important;width:100%}
+}
+
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -765,6 +797,7 @@ footer { line-height:1.8; }
     <button id="blockBtn" disabled>🚫 Block User</button>
     <button id="gamesBtn" disabled aria-label="Play Games: choose from three games">🎮 Play Games ▸</button>
   </div>
+  <div id="galliMobileBottomAds" aria-label="Advertising and safety information"></div>
 
 </section>
 
@@ -804,7 +837,27 @@ footer { line-height:1.8; }
  const ad=document.querySelector('aside .galli-billboard-slot');
  const mobileSlot=document.getElementById('galliMobileAdPosition');
  const sidebar=document.querySelector('.container > aside');
- if(!ad||!mobileSlot||!sidebar)return;
+ const bottomSlot=document.getElementById('galliMobileBottomAds');
+ const safety=sidebar?.querySelector('.safety');
+ if(!ad||!mobileSlot||!sidebar||!bottomSlot)return;
+ // Clone the same billboard artwork for a second, always-visible square ad.
+ // Keep the original for the timed introduction replacement.
+ const secondAd=ad.cloneNode(true);
+ secondAd.setAttribute('aria-label','Business advertising billboard');
+ bottomSlot.appendChild(secondAd);
+ // Move the existing safety notice to directly below the second billboard
+ // on mobile, and restore it to the desktop sidebar on wider screens.
+ const safetyAnchor=safety?document.createComment('Safety notice original position'):null;
+ if(safety&&safetyAnchor)safety.parentNode.insertBefore(safetyAnchor,safety);
+ function positionSafety(){
+  if(!safety)return;
+  if(window.matchMedia('(max-width: 600px)').matches){
+   if(safety.parentNode!==bottomSlot)bottomSlot.appendChild(safety);
+  }else if(safetyAnchor&&safety.parentNode!==sidebar){
+   sidebar.insertBefore(safety,safetyAnchor.nextSibling);
+  }
+ }
+
  const mobileQuery=window.matchMedia('(max-width: 600px)');
  function positionBillboard(){
   if(mobileQuery.matches){
@@ -825,9 +878,10 @@ footer { line-height:1.8; }
  const originalPosition=positionBillboard;
  positionBillboard=function(){originalPosition();updateMobileIntro();};
  positionBillboard();
+ positionSafety();
  window.setTimeout(function(){elapsed=true;updateMobileIntro();},30000);
- if(mobileQuery.addEventListener)mobileQuery.addEventListener('change',positionBillboard);
- else mobileQuery.addListener(positionBillboard);
+ if(mobileQuery.addEventListener)mobileQuery.addEventListener('change',function(){positionBillboard();positionSafety();});
+ else mobileQuery.addListener(function(){positionBillboard();positionSafety();});
 })();
 </script>
 <script src="/socket.io/socket.io.js"></script>
