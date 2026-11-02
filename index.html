@@ -703,7 +703,7 @@ footer { line-height:1.8; }
     </div>
     <button class="next" id="nextBtn" disabled>⏭ Next Corner</button>
     <button id="muteBtn" disabled>🎤 Mute</button>
-    <button class="stop" id="stopBtn" disabled>■ Stop</button>
+    <button class="stop" id="stopBtn" disabled>🚪 Exit Galli</button>
     <button id="reportBtn" disabled>⚑ Report</button>
     <button id="blockBtn" disabled>🚫 Block User</button>
     <button id="gamesBtn" disabled aria-label="Play Games: choose from three games">🎮 Play Games ▸</button>
@@ -1447,11 +1447,11 @@ function stickerDraw(ctx,face,mode,w,h){
  }
  const headY=(forehead.y-cy)*Math.cos(roll)+(forehead.x-cx)*Math.sin(roll);
  if(mode==="chaplin"){
-  stickerAsset(ctx,"chaplin-hat",-s*.96,headY-s*.64,s*1.92,s*.96);
+  stickerAsset(ctx,"chaplin-hat",-s*1.17,headY-s*.76,s*2.34,s*1.16);
   const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
   stickerAsset(ctx,"chaplin-moustache",-s*.23,lipY-s*.31,s*.46,s*.22);
  }
- if(mode==="shelby")stickerAsset(ctx,"shelby",-s*1.07,headY-s*.67,s*2.14,s*1.00);
+ if(mode==="shelby")stickerAsset(ctx,"shelby",-s*1.28,headY-s*.80,s*2.56,s*1.20);
  ctx.restore();
 }
 function stickerRender(t){
@@ -1465,7 +1465,7 @@ function stickerRender(t){
   stickerDraw(stickerPreviewCtx,stickerFace,stickerSelect.value,w,h);
   stickerCompositeCtx.drawImage(localVideo,0,0,w,h);
   stickerCompositeCtx.drawImage(stickerPreview,0,0);
-  if(stickerFaceMesh&&!stickerBusy&&t-stickerLastDetect>85){
+  if(stickerFaceMesh&&!stickerBusy&&t-stickerLastDetect>33){
    stickerLastDetect=t;stickerBusy=true;
    stickerFaceMesh.send({image:localVideo}).catch(()=>{}).finally(()=>{stickerBusy=false;});
   }
@@ -1494,10 +1494,19 @@ async function stickerLoadMesh(){
   mesh.onResults(result=>{const next=result.multiFaceLandmarks?.[0]||null;
    if(!next){stickerFace=null;smoothFace=null;return;}
    if(!smoothFace||smoothFace.length!==next.length)smoothFace=next.map(p=>({...p}));
-   else for(let i=0;i<next.length;i++){
-    smoothFace[i].x=smoothFace[i].x*.60+next[i].x*.40;
-    smoothFace[i].y=smoothFace[i].y*.60+next[i].y*.40;
-    smoothFace[i].z=smoothFace[i].z*.60+next[i].z*.40;
+   else {
+    // Adaptive smoothing: respond quickly to large head movements while
+    // retaining a little filtering when the face is nearly stationary.
+    const anchor=1;
+    const movement=Math.hypot(next[anchor].x-smoothFace[anchor].x,
+                              next[anchor].y-smoothFace[anchor].y);
+    const alpha=movement>.018?.92:movement>.007?.78:.62;
+    const keep=1-alpha;
+    for(let i=0;i<next.length;i++){
+     smoothFace[i].x=smoothFace[i].x*keep+next[i].x*alpha;
+     smoothFace[i].y=smoothFace[i].y*keep+next[i].y*alpha;
+     smoothFace[i].z=smoothFace[i].z*keep+next[i].z*alpha;
+    }
    }
    stickerFace=smoothFace;});
   stickerFaceMesh=mesh;
@@ -1518,7 +1527,7 @@ async function stickerEnable(){
   if(!localStream||stickerSelect.value==="none")return;
   stickerResize();
   if(!stickerOutgoingTrack){
-   stickerCapture=stickerComposite.captureStream(24);
+   stickerCapture=stickerComposite.captureStream(30);
    stickerOutgoingTrack=stickerCapture.getVideoTracks()[0];
   }
   stickerReplaceTrack(stickerOutgoingTrack);
