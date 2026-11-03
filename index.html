@@ -662,6 +662,10 @@ footer { line-height:1.8; }
 .galli-clear-badge{border:1px solid #ddd;background:#333;color:white;border-radius:7px;padding:8px;cursor:pointer}
 #customBadgeStatus{font-size:11px;color:#ffe247;max-width:210px}
 @media(max-width:600px){.galli-upload-label{font-size:11px;padding:7px}#customBadgeUpload{width:110px}}
+
+/* V5.7.6: custom PNG badges retain their silhouette, without the round badge plate. */
+.galli-badge.galli-custom-transparent{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0!important;overflow:visible!important;backdrop-filter:none!important}
+.galli-badge.galli-custom-transparent img{background:transparent!important;border:0!important;border-radius:0!important;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -1489,6 +1493,7 @@ const nplLogoFiles={
 function showBadge(el,team){
  el.replaceChildren();
  const isCustom=team==="__custom__";
+ el.classList.toggle("galli-custom-transparent",isCustom);
  const file=nplLogoFiles[team];
  el.hidden=!(file||(isCustom&&customBadgeData));
  if(el.hidden)return;
@@ -1503,13 +1508,14 @@ function showBadge(el,team){
 }
 function showPeerCustomBadge(data){
  peerBadge.replaceChildren();
+ peerBadge.classList.add("galli-custom-transparent");
  if(!/^data:image\/png;base64,[A-Za-z0-9+/=]{1,65000}$/.test(data||"")){peerBadge.hidden=true;return;}
  const img=document.createElement("img");img.alt="Custom supporter badge";img.src=data;
  peerBadge.appendChild(img);peerBadge.hidden=false;
 }
 function resetSocial(){
  myVideoChat.replaceChildren();peerVideoChat.replaceChildren();textChatInput.value="";textChatNotice.textContent="";
- peerBadge.hidden=true;peerBadge.textContent="";
+ peerBadge.hidden=true;peerBadge.textContent="";peerBadge.classList.remove("galli-custom-transparent");
  const active=!!partnerId;
  textChatInput.disabled=!active;textChatSend.disabled=!active;
 }
@@ -1553,11 +1559,37 @@ customBadgeUpload.addEventListener("change",async()=>{
   const ratio=Math.min(96/bitmap.width,96/bitmap.height);
   ctx.drawImage(bitmap,(96-bitmap.width*ratio)/2,(96-bitmap.height*ratio)/2,bitmap.width*ratio,bitmap.height*ratio);
   if(bitmap.close)bitmap.close();
+  // Remove a simple solid-color backdrop only when it is connected to the
+  // outer edges. Existing transparent PNG pixels are preserved. This is not
+  // AI segmentation; complex photo backgrounds require a separate remover.
+  const frame=ctx.getImageData(0,0,96,96);
+  const px=frame.data, W=96, H=96;
+  const corners=[0,(W-1)*4,((H-1)*W)*4,(H*W-1)*4];
+  const opaqueCorners=corners.filter(i=>px[i+3]>240);
+  if(opaqueCorners.length===4){
+   const bg=[0,1,2].map(c=>Math.round(opaqueCorners.reduce((a,i)=>a+px[i+c],0)/4));
+   const consistent=opaqueCorners.every(i=>Math.max(...bg.map((v,c)=>Math.abs(v-px[i+c])))<16);
+   if(consistent){
+    const seen=new Uint8Array(W*H),stack=[];
+    const close=(p)=>px[p*4+3]>0&&Math.max(...bg.map((v,c)=>Math.abs(v-px[p*4+c])))<32;
+    for(let x=0;x<W;x++){stack.push(x,(H-1)*W+x);}
+    for(let y=0;y<H;y++){stack.push(y*W,y*W+W-1);}
+    while(stack.length){
+     const p=stack.pop();if(seen[p])continue;seen[p]=1;
+     if(!close(p))continue;
+     px[p*4+3]=0;
+     const x=p%W,y=Math.floor(p/W);
+     if(x>0)stack.push(p-1);if(x<W-1)stack.push(p+1);
+     if(y>0)stack.push(p-W);if(y<H-1)stack.push(p+W);
+    }
+    ctx.putImageData(frame,0,0);
+   }
+  }
   const data=canvas.toDataURL("image/png");
   if(data.length>65000)throw Error("Badge is too complex; choose a simpler PNG.");
   customBadgeData=data;selectedBadge="__custom__";teamBadgeSelect.value="";
   showBadge(myBadge,selectedBadge);
-  clearCustomBadge.hidden=false;customBadgeStatus.textContent="Custom badge active";
+  clearCustomBadge.hidden=false;customBadgeStatus.textContent="Custom badge active · transparent shape";
   if(socket.connected)socket.emit("galli-custom-badge",{data});
  }catch(e){customBadgeStatus.textContent=e.message||"Couldn't load PNG";}
  customBadgeUpload.value="";
