@@ -798,8 +798,8 @@ footer { line-height:1.8; }
    <option>Janakpur Bolts</option><option>Kathmandu Gurkhas</option><option>Karnali Yaks</option>
    <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
   </select>
-  <label class="galli-upload-label" for="customBadgeUpload">📤 Custom PNG badge</label>
-  <input id="customBadgeUpload" type="file" accept="image/png,.png" aria-label="Upload custom PNG badge" />
+  <label class="galli-upload-label" for="customBadgeUpload">📤 Upload custom badge</label>
+  <input id="customBadgeUpload" type="file" accept=".png,.jpg,.jpeg,.jfif,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp" aria-label="Upload custom image badge" /><small class="galli-badge-format-help" style="display:block;font-size:10px;opacity:.8">PNG · JPG/JPEG · JFIF · WebP · GIF (still) · BMP · max 5 MB</small>
   <div id="badgeEditPanel" hidden><div class="badge-preview-row"><div><small>Original</small><canvas id="badgeBefore" width="96" height="96"></canvas></div><div><small>Background removed</small><canvas id="badgeAfter" width="96" height="96"></canvas></div></div><label for="badgeTolerance">Removal strength <output id="badgeToleranceValue">32</output><input id="badgeTolerance" type="range" min="8" max="85" value="32" step="1"></label><label><input id="badgeKeepOriginal" type="checkbox"> Keep original background</label><button type="button" id="badgeApply">Apply badge</button></div>
   <button id="clearCustomBadge" type="button" class="galli-clear-badge" hidden>Remove badge</button>
   <span id="customBadgeStatus" role="status" aria-live="polite"></span>
@@ -1631,10 +1631,13 @@ badgeKeepOriginal.addEventListener('change',renderBadgePreview);
 customBadgeUpload.addEventListener("change",async()=>{
  const file=customBadgeUpload.files&&customBadgeUpload.files[0];
  if(!file)return;
- if(file.type!=="image/png"||!file.name.toLowerCase().endsWith(".png")){
-  customBadgeStatus.textContent="PNG files only.";customBadgeUpload.value="";return;
+ // Validate by extension AND known MIME when present; do not accept SVG or arbitrary files.
+ const ext=(file.name.split('.').pop()||'').toLowerCase();
+ const mimeByExt={png:['image/png'],jpg:['image/jpeg'],jpeg:['image/jpeg'],jfif:['image/jpeg'],webp:['image/webp'],gif:['image/gif'],bmp:['image/bmp','image/x-ms-bmp']};
+ if(!mimeByExt[ext]||(file.type&&!mimeByExt[ext].includes(file.type))){
+  customBadgeStatus.textContent="Supported: PNG, JPG, JPEG, JFIF, WebP, GIF, BMP.";customBadgeUpload.value="";return;
  }
- if(file.size>1024*1024){customBadgeStatus.textContent="PNG must be under 1 MB.";customBadgeUpload.value="";return;}
+ if(file.size>5*1024*1024){customBadgeStatus.textContent="Image must be under 5 MB.";customBadgeUpload.value="";return;}
  try{
   const bitmap=await createImageBitmap(file);
   const ctx=badgeBefore.getContext("2d");ctx.clearRect(0,0,96,96);
@@ -1644,14 +1647,14 @@ customBadgeUpload.addEventListener("change",async()=>{
   badgeOriginalPixels=ctx.getImageData(0,0,96,96);
   badgeTolerance.value="32";badgeKeepOriginal.checked=false;
   badgeEditPanel.hidden=false;renderBadgePreview();
-  customBadgeStatus.textContent="Preview background removal, then click Apply badge.";
- }catch(e){customBadgeStatus.textContent=e.message||"Couldn't load PNG";}
+  customBadgeStatus.textContent="Preview background removal, then click Apply badge. GIF uses its first frame.";
+ }catch(e){customBadgeStatus.textContent=e.message||"Couldn't load image. Try PNG or JPEG.";}
  customBadgeUpload.value="";
 });
 document.getElementById("badgeApply").addEventListener("click",()=>{
  if(!badgeOriginalPixels)return;
  const data=badgeAfter.toDataURL("image/png");
- if(data.length>65000){customBadgeStatus.textContent="Badge is too complex; choose a simpler PNG.";return;}
+ if(data.length>65000){customBadgeStatus.textContent="Badge is too complex; choose a simpler image.";return;}
  customBadgeData=data;selectedBadge="__custom__";teamBadgeSelect.value="";
  showBadge(myBadge,selectedBadge);
  clearCustomBadge.hidden=false;badgeEditPanel.hidden=true;
