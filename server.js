@@ -25,6 +25,16 @@ async function initializeDatabase() {
     client_id TEXT PRIMARY KEY, until_at TIMESTAMPTZ NOT NULL)`);
   await pool.query(`CREATE TABLE IF NOT EXISTS moderation_blocks (
     pair_key TEXT PRIMARY KEY)`);
+  // Anonymous, persistent analytics; browser IDs already exist for moderation.
+  await pool.query(`CREATE TABLE IF NOT EXISTS analytics_visitors (
+    client_id TEXT PRIMARY KEY, first_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(), last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS analytics_visit_days (
+    client_id TEXT NOT NULL, visit_day DATE NOT NULL, PRIMARY KEY (client_id, visit_day))`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS analytics_visit_days_day_idx ON analytics_visit_days(visit_day)`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS analytics_chats (
+    id TEXT PRIMARY KEY, started_at TIMESTAMPTZ NOT NULL, ended_at TIMESTAMPTZ,
+    duration_seconds INTEGER, client_a TEXT, client_b TEXT)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS analytics_chats_started_idx ON analytics_chats(started_at)`);
   const [savedReports, savedBans, savedBlocks] = await Promise.all([
     pool.query(`SELECT id, time, reason, reporter, reported, reported_client_id, reporter_client_id, description, status FROM moderation_reports ORDER BY id DESC LIMIT 500`),
     pool.query(`SELECT client_id, until_at FROM moderation_bans WHERE until_at > NOW()`),
@@ -77,51 +87,8 @@ function fetchMeteredIce() {
 }
 
 // Create the website server
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
-  // Google Search Console ownership verification; keep this file after verification.
-  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/google5e23824073191d84.html") {
-    fs.readFile(path.join(__dirname, "google5e23824073191d84.html"), (error, data) => {
-      if (error) { res.writeHead(404); res.end("Verification file not found"); return; }
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
-      res.end(req.method === "HEAD" ? "" : data);
-    }); return;
-  }
-
-  // SEO routes; fixed origin avoids trusting arbitrary Host headers.
-  const siteOrigin = "https://randomchat-2yl7.onrender.com";
-  if (["/admin", "/developer-reset"].includes(url.pathname) || url.pathname.startsWith("/api/")) {
-    res.setHeader("X-Robots-Tag", "noindex, nofollow");
-  }
-  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/index.html") {
-    res.writeHead(301, { Location: "/" + url.search }); res.end(); return;
-  }
-  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/robots.txt") {
-    res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-    res.end(req.method === "HEAD" ? "" : "User-agent: *\nAllow: /\nDisallow: /socket.io/\nSitemap: " + siteOrigin + "/sitemap.xml\n"); return;
-  }
-  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/sitemap.xml") {
-    const xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
-      ["/", "/about", "/omegle-ometv-alternative"].map(route => "<url><loc>" + siteOrigin + route + "</loc></url>").join("") + "</urlset>";
-    res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8" });
-    res.end(req.method === "HEAD" ? "" : xml); return;
-  }
-  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/about") {
-    fs.readFile(path.join(__dirname, "about.html"), (error, data) => {
-      if (error) { res.writeHead(500); res.end("Cannot load page"); return; }
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
-      res.end(req.method === "HEAD" ? "" : data);
-    }); return;
-  }
-
-  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/omegle-ometv-alternative") {
-    fs.readFile(path.join(__dirname, "alternative.html"), (error, data) => {
-      if (error) { res.writeHead(500); res.end("Cannot load page"); return; }
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
-      res.end(req.method === "HEAD" ? "" : data);
-    }); return;
-  }
-
   // Serve only bundled photorealistic face-effect images.
   if (req.method === "GET" && /^\/assets\/face-effects\/[a-z-]+\.png$/.test(url.pathname)) {
     const fileName = url.pathname.slice("/assets/face-effects/".length);
@@ -243,7 +210,37 @@ const server = http.createServer((req, res) => {
       const now = Date.now();
       for (const [id, until] of bannedIds) if (until <= now) bannedIds.delete(id);
       const activeChatSeconds = [...chatStarts.values()].reduce((sum, start) => sum + Math.max(0, Math.round((now - start) / 1000)), 0);
-      const payload = { ok: true, monitor: { ...monitor, activeChatSeconds, totalChatSeconds: monitor.completedChatSeconds + activeChatSeconds, estimatedAverageChatSeconds: monitor.matches ? Math.round((monitor.completedChatSeconds + activeChatSeconds) / monitor.matches) : 0, scope: "Current server process only; resets on restart", turnBytes: null }, online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse().map(r => ({...r, uniqueReporters: new Set(reports.filter(x => x.reportedClientId && x.reportedClientId === r.reportedClientId && x.reporterClientId).map(x => x.reporterClientId)).size || (r.reporterClientId ? 1 : null)})), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
+      let dailyAnalytics;
+      try {
+        // Nepal calendar day; counts are derived from PostgreSQL, not process memory.
+        const r = await pool.query(`WITH bounds AS (
+          SELECT ((NOW() AT TIME ZONE 'Asia/Kathmandu')::date)::timestamp AT TIME ZONE 'Asia/Kathmandu' AS start_at,
+                 (((NOW() AT TIME ZONE 'Asia/Kathmandu')::date + 1)::timestamp AT TIME ZONE 'Asia/Kathmandu') AS end_at,
+                 (NOW() AT TIME ZONE 'Asia/Kathmandu')::date AS today
+        ) SELECT
+          (SELECT COUNT(*) FROM analytics_visit_days v, bounds b WHERE v.visit_day=b.today)::int AS visitors_today,
+          (SELECT COUNT(*) FROM analytics_visitors v, bounds b WHERE v.first_seen>=b.start_at AND v.first_seen<b.end_at)::int AS new_visitors_today,
+          (SELECT COUNT(*) FROM analytics_visit_days v JOIN analytics_visitors u USING(client_id), bounds b WHERE v.visit_day=b.today AND u.first_seen<b.start_at)::int AS returning_visitors_today,
+          (SELECT COUNT(DISTINCT client_id) FROM analytics_visit_days v, bounds b WHERE v.visit_day BETWEEN b.today-29 AND b.today)::int AS visitors_30d,
+          (SELECT COUNT(DISTINCT client_id) FROM analytics_visit_days v, bounds b WHERE v.visit_day=b.today)::int AS dau,
+          (SELECT COUNT(DISTINCT client_id) FROM analytics_visit_days v, bounds b WHERE v.visit_day BETWEEN b.today-29 AND b.today)::int AS mau,
+          (SELECT COUNT(*) FROM analytics_chats c, bounds b WHERE c.started_at>=b.start_at AND c.started_at<b.end_at)::int AS chats_started_today,
+          (SELECT COUNT(*) FROM analytics_chats c, bounds b WHERE c.ended_at>=b.start_at AND c.ended_at<b.end_at)::int AS chats_completed_today,
+          (SELECT COALESCE(SUM(duration_seconds),0) FROM analytics_chats c, bounds b WHERE c.ended_at>=b.start_at AND c.ended_at<b.end_at)::bigint AS completed_chat_seconds_today,
+          (SELECT COALESCE(ROUND(AVG(duration_seconds)),0) FROM analytics_chats c, bounds b WHERE c.ended_at>=b.start_at AND c.ended_at<b.end_at)::int AS average_completed_chat_seconds_today,
+          (SELECT COUNT(DISTINCT cid) FROM (
+            SELECT client_a AS cid FROM analytics_chats c, bounds b WHERE c.started_at>=b.start_at AND c.started_at<b.end_at
+            UNION SELECT client_b AS cid FROM analytics_chats c, bounds b WHERE c.started_at>=b.start_at AND c.started_at<b.end_at
+          ) q WHERE cid IS NOT NULL)::int AS unique_chatters_today,
+          (SELECT COUNT(DISTINCT current_day.client_id) FROM analytics_visit_days current_day
+            JOIN analytics_visit_days prior ON prior.client_id=current_day.client_id, bounds b
+            WHERE current_day.visit_day=b.today AND prior.visit_day BETWEEN b.today-7 AND b.today-1)::int AS returned_within_7d_today`);
+        dailyAnalytics = r.rows[0];
+      } catch (error) {
+        console.error('ANALYTICS_OVERVIEW_ERROR', error);
+        dailyAnalytics = { error: 'Analytics temporarily unavailable' };
+      }
+      const payload = { ok: true, dailyAnalytics, monitor: { ...monitor, activeChatSeconds, totalChatSeconds: monitor.completedChatSeconds + activeChatSeconds, estimatedAverageChatSeconds: monitor.matches ? Math.round((monitor.completedChatSeconds + activeChatSeconds) / monitor.matches) : 0, scope: "Current server process only; resets on restart", turnBytes: null }, icePaths: icePathOverview(), online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse().map(r => ({...r, uniqueReporters: new Set(reports.filter(x => x.reportedClientId && x.reportedClientId === r.reportedClientId && x.reporterClientId).map(x => x.reporterClientId)).size || (r.reporterClientId ? 1 : null)})), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
       res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
       res.end(JSON.stringify(payload));
       return;
@@ -328,6 +325,28 @@ const waiting = [];
 
 // Store connected partners
 const partners = new Map();
+// Ephemeral connection-path reports; cleared on disconnect and restart.
+// Reports describe the browser-selected ICE candidate pair, not billed bandwidth.
+const icePaths = new Map();
+function icePathOverview() {
+  const now = Date.now();
+  const counts = { p2p: 0, turn: 0, unknown: 0 };
+  const seen = new Set();
+  for (const [id, other] of partners) {
+    const key = [id, other].sort().join(':');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const a = icePaths.get(id), b = icePaths.get(other);
+    const fresh = x => x && now - x.at < 20000 && x.partner === partners.get(x.id);
+    const x = fresh(a) ? a.path : 'unknown';
+    const y = fresh(b) ? b.path : 'unknown';
+    // Both sides must report before classifying a call.
+    if (x === 'turn' || y === 'turn') counts.turn++;
+    else if (x === 'p2p' && y === 'p2p') counts.p2p++;
+    else counts.unknown++;
+  }
+  return { ...counts, observedCalls: counts.p2p + counts.turn, note: 'Live ICE path samples only; no TURN bytes or historical totals' };
+}
 
 // V4: transient game state, scoped to the currently matched pair.
 const games = new Map();
@@ -379,6 +398,19 @@ function clearGame(socket) {
 // Lightweight process-lifetime metrics. Reset whenever Render restarts.
 const monitor = { startedAt: new Date().toISOString(), connections: 0, matches: 0, completedChatSeconds: 0, longestChatSeconds: 0 };
 const chatStarts = new Map();
+const analyticsSessions = new Map();
+function persistAnalytics(sql, params) {
+  pool.query(sql, params).catch(error => console.error('ANALYTICS_WRITE_ERROR', error));
+}
+function recordVisitor(clientId) {
+  // PostgreSQL uses Nepal time for the visit-day key; one row per browser/day.
+  persistAnalytics(`INSERT INTO analytics_visitors (client_id) VALUES ($1)
+    ON CONFLICT(client_id) DO UPDATE SET last_seen=NOW()`, [clientId]);
+  persistAnalytics(`INSERT INTO analytics_visit_days (client_id, visit_day)
+    VALUES ($1, (NOW() AT TIME ZONE 'Asia/Kathmandu')::date)
+    ON CONFLICT DO NOTHING`, [clientId]);
+}
+
 function closeChatTimer(a, b) {
   const key = pairKey(a, b);
   const started = chatStarts.get(key);
@@ -387,6 +419,14 @@ function closeChatTimer(a, b) {
   monitor.completedChatSeconds += seconds;
   monitor.longestChatSeconds = Math.max(monitor.longestChatSeconds, seconds);
   chatStarts.delete(key);
+  const session = analyticsSessions.get(key);
+  if (session) {
+    analyticsSessions.delete(key);
+    persistAnalytics(`INSERT INTO analytics_chats(id, started_at, ended_at, duration_seconds, client_a, client_b)
+      VALUES($1,$2,NOW(),$3,$4,$5)
+      ON CONFLICT(id) DO UPDATE SET ended_at=EXCLUDED.ended_at, duration_seconds=EXCLUDED.duration_seconds`,
+      [session.id, new Date(session.started), seconds, session.a, session.b]);
+  }
 }
 
 // Beta moderation state: kept in memory until the server restarts.
@@ -460,7 +500,14 @@ function findPartner(socket) {
     partners.set(socket.id, otherId);
     partners.set(otherId, socket.id);
     monitor.matches++;
-    chatStarts.set(pairKey(socket.id, otherId), Date.now());
+    const started = Date.now();
+    const chatKey = pairKey(socket.id, otherId);
+    chatStarts.set(chatKey, started);
+    const session = { id: crypto.randomUUID(), started, a: socket.data.clientId, b: other.data.clientId };
+    analyticsSessions.set(chatKey, session);
+    persistAnalytics(`INSERT INTO analytics_chats(id, started_at, client_a, client_b)
+      VALUES($1,$2,$3,$4) ON CONFLICT(id) DO NOTHING`,
+      [session.id, new Date(started), session.a, session.b]);
 
     socket.emit("matched", {
       partnerId: otherId,
@@ -490,11 +537,13 @@ function findPartner(socket) {
 
 function leavePartner(socket) {
   removeWaiting(socket.id);
+  icePaths.delete(socket.id);
 
   const otherId = partners.get(socket.id);
 
   if (!otherId) return;
 
+  icePaths.delete(otherId);
   closeChatTimer(socket.id, otherId);
   clearGame(socket);
   partners.delete(socket.id);
@@ -523,12 +572,21 @@ io.on("connection", (socket) => {
   socket.on("identify", ({ clientId, blocked } = {}) => {
     if (typeof clientId !== "string" || !idPattern.test(clientId)) return;
     if ((bannedIds.get(clientId) || 0) > Date.now()) { socket.emit("moderation-warning", "Access temporarily restricted."); socket.disconnect(true); return; }
+    if (socket.data.clientId !== clientId) recordVisitor(clientId);
     socket.data.clientId = clientId;
     socket.data.blocked = Array.isArray(blocked)
       ? blocked.filter(x => typeof x === "string" && idPattern.test(x)).slice(0, 300)
       : [];
     // If a request arrived before identification, retry matchmaking now.
     if (socket.data.ready && !partners.has(socket.id)) findPartner(socket);
+  });
+
+  socket.on('galli-ice-path', ({ path } = {}) => {
+    if (!['p2p', 'turn', 'unknown'].includes(path)) return;
+    const partner = partners.get(socket.id);
+    if (!partner) return;
+    if (path === 'unknown') icePaths.delete(socket.id);
+    else icePaths.set(socket.id, { id: socket.id, partner, path, at: Date.now() });
   });
 
   socket.on("report-user", ({ reason, description } = {}, ack) => {
@@ -723,6 +781,7 @@ io.on("connection", (socket) => {
     leavePartner(socket);
     removeWaiting(socket.id);
     recentPartners.delete(socket.id);
+    icePaths.delete(socket.id);
     reportTimes.delete(socket.id);
     skipTimes.delete(socket.id);
     reactionTimes.delete(socket.id);
