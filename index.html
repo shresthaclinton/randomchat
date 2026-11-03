@@ -992,7 +992,41 @@ function remoteMessage(title, description) {
   remotePlaceholder.querySelector("p").textContent = description;
 }
 
+
+// Private, low-frequency ICE path telemetry. No IP addresses, SDP or candidate details leave the browser.
+let icePathTimer = null;
+let lastIcePath = '';
+async function publishIcePath(pc, expectedGeneration) {
+  if (peer !== pc || generation !== expectedGeneration || pc.connectionState !== 'connected') return;
+  try {
+    const stats = await pc.getStats();
+    let selected = null;
+    stats.forEach(item => {
+      if (item.type === 'transport' && item.selectedCandidatePairId) selected = stats.get(item.selectedCandidatePairId) || selected;
+    });
+    if (!selected) stats.forEach(item => {
+      if (item.type === 'candidate-pair' && item.state === 'succeeded' && (item.selected || item.nominated)) selected = item;
+    });
+    if (!selected) return;
+    const local = stats.get(selected.localCandidateId);
+    const remote = stats.get(selected.remoteCandidateId);
+    if (!local || !remote) return;
+    const path = local.candidateType === 'relay' || remote.candidateType === 'relay' ? 'turn' : 'p2p';
+    if (path !== lastIcePath) {
+      lastIcePath = path;
+      socket.emit('galli-ice-path', { path });
+    }
+  } catch (error) { console.debug('ICE path statistics unavailable', error); }
+}
+function startIcePathMonitor(pc, expectedGeneration) {
+  clearInterval(icePathTimer);
+  icePathTimer = setInterval(() => publishIcePath(pc, expectedGeneration), 5000);
+  publishIcePath(pc, expectedGeneration);
+}
+
 function closePeer() {
+  clearInterval(icePathTimer); icePathTimer = null; lastIcePath = "";
+  if (partnerId && socket.connected) socket.emit("galli-ice-path", { path: "unknown" });
   clearConnectionTimers();
   generation++;
   pendingCandidates = [];
@@ -1169,6 +1203,7 @@ async function createPeer(id) {
     if (pc.connectionState === "connected") {
       clearConnectionTimers();
       status("Connected! You can now talk.");
+      startIcePathMonitor(pc, currentGeneration);
     } else if (pc.connectionState === "disconnected") {
       status("Connection interrupted. Reconnecting...");
       clearTimeout(disconnectTimer);
@@ -1716,7 +1751,7 @@ function stickerResize(){
 // Photo-derived transparent accessory artwork with landmark positioning.
 const faceArt={};
 for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","prithvi","cowboy"]){
- const image=new Image();image.src="/assets/face-effects/"+name+".png";faceArt[name]=image;
+ const image=new Image();image.src="/assets/face-effects/"+name+".png?v=5710";faceArt[name]=image;
 }
 let smoothFace=null;
 function stickerAsset(ctx,name,x,y,width,height){
