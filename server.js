@@ -79,6 +79,15 @@ function fetchMeteredIce() {
 // Create the website server
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
+  // Google Search Console ownership verification; keep this file after verification.
+  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/google5e23824073191d84.html") {
+    fs.readFile(path.join(__dirname, "google5e23824073191d84.html"), (error, data) => {
+      if (error) { res.writeHead(404); res.end("Verification file not found"); return; }
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
+      res.end(req.method === "HEAD" ? "" : data);
+    }); return;
+  }
+
   // SEO routes; fixed origin avoids trusting arbitrary Host headers.
   const siteOrigin = "https://randomchat-2yl7.onrender.com";
   if (["/admin", "/developer-reset"].includes(url.pathname) || url.pathname.startsWith("/api/")) {
