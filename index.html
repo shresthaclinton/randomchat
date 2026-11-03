@@ -666,6 +666,11 @@ footer { line-height:1.8; }
 /* V5.7.6: custom PNG badges retain their silhouette, without the round badge plate. */
 .galli-badge.galli-custom-transparent{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0!important;overflow:visible!important;backdrop-filter:none!important}
 .galli-badge.galli-custom-transparent img{background:transparent!important;border:0!important;border-radius:0!important;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+/* Badge editing preview; checkerboard here indicates actual transparency only. */
+#badgeEditPanel{width:100%;max-width:300px;padding:10px;background:#161321;border:1px solid #655782;border-radius:10px;color:#fff;font-size:12px}
+#badgeEditPanel[hidden]{display:none!important}.badge-preview-row{display:flex;gap:12px;justify-content:space-around;margin-bottom:8px}
+.badge-preview-row>div{display:grid;gap:4px;text-align:center}.badge-preview-row canvas{width:96px;height:96px;object-fit:contain;border:1px solid #777;border-radius:5px;background-color:#eee;background-image:linear-gradient(45deg,#bbb 25%,transparent 25%),linear-gradient(-45deg,#bbb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#bbb 75%),linear-gradient(-45deg,transparent 75%,#bbb 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+#badgeEditPanel label{display:block;margin:8px 0}#badgeTolerance{width:100%;accent-color:#ffe247}#badgeApply{background:#ffe247;border:0;border-radius:6px;padding:8px 12px;font-weight:800;cursor:pointer}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -795,6 +800,7 @@ footer { line-height:1.8; }
   </select>
   <label class="galli-upload-label" for="customBadgeUpload">📤 Custom PNG badge</label>
   <input id="customBadgeUpload" type="file" accept="image/png,.png" aria-label="Upload custom PNG badge" />
+  <div id="badgeEditPanel" hidden><div class="badge-preview-row"><div><small>Original</small><canvas id="badgeBefore" width="96" height="96"></canvas></div><div><small>Background removed</small><canvas id="badgeAfter" width="96" height="96"></canvas></div></div><label for="badgeTolerance">Removal strength <output id="badgeToleranceValue">32</output><input id="badgeTolerance" type="range" min="8" max="85" value="32" step="1"></label><label><input id="badgeKeepOriginal" type="checkbox"> Keep original background</label><button type="button" id="badgeApply">Apply badge</button></div>
   <button id="clearCustomBadge" type="button" class="galli-clear-badge" hidden>Remove badge</button>
   <span id="customBadgeStatus" role="status" aria-live="polite"></span>
  </div>
@@ -1545,6 +1551,83 @@ socket.on("galli-text-warning",msg=>{textChatNotice.textContent=String(msg).slic
 const customBadgeUpload=document.getElementById("customBadgeUpload");
 const clearCustomBadge=document.getElementById("clearCustomBadge");
 const customBadgeStatus=document.getElementById("customBadgeStatus");
+const badgeEditPanel=document.getElementById("badgeEditPanel");
+const badgeBefore=document.getElementById("badgeBefore");
+const badgeAfter=document.getElementById("badgeAfter");
+const badgeTolerance=document.getElementById("badgeTolerance");
+const badgeToleranceValue=document.getElementById("badgeToleranceValue");
+const badgeKeepOriginal=document.getElementById("badgeKeepOriginal");
+let badgeOriginalPixels=null;
+function removeBadgeBackground(original,tolerance){
+ const W=96,H=96,src=original.data,out=new ImageData(new Uint8ClampedArray(src),W,H);
+ const px=out.data;
+ const color=(i)=>[src[i*4],src[i*4+1],src[i*4+2]];
+ const dist=(a,b)=>Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]),Math.abs(a[2]-b[2]));
+ // Sample only opaque perimeter pixels. Transparent padding must never be
+ // interpreted as a solid background color.
+ const edge=[];
+ for(let x=0;x<W;x+=3){edge.push(x,(H-1)*W+x);}
+ for(let y=0;y<H;y+=3){edge.push(y*W,y*W+W-1);}
+ const opaque=edge.filter(p=>src[p*4+3]>230);
+ if(opaque.length<12)return out;
+ const colors=opaque.map(color);
+ // Most frequent perimeter color cluster. Handles white, black, and arbitrary
+ // single-color backgrounds without assuming that the background is white.
+ let best=[],candidate=null;
+ for(let i=0;i<colors.length;i+=Math.max(1,Math.floor(colors.length/36))){
+  const cluster=colors.filter(c=>dist(c,colors[i])<=Math.max(10,tolerance*.6));
+  if(cluster.length>best.length){best=cluster;candidate=colors[i];}
+ }
+ const solid=best.length/opaque.length>=.72;
+ // Detect baked-in light/dark checkerboard, only if two recurring color
+ // clusters dominate the perimeter and alternate spatially.
+ let checker=false,second=null;
+ if(!solid&&candidate){
+  const rest=colors.filter(c=>dist(c,candidate)>tolerance);
+  if(rest.length){
+   let groups=[];
+   for(let i=0;i<rest.length;i+=Math.max(1,Math.floor(rest.length/24))){
+    const cl=rest.filter(c=>dist(c,rest[i])<=Math.max(10,tolerance*.6));
+    if(cl.length>groups.length){groups=cl;second=rest[i];}
+   }
+   const covered=opaque.filter(p=>dist(color(p),candidate)<=tolerance||dist(color(p),second)<=tolerance).length/opaque.length;
+   const sep=dist(candidate,second);
+   // Restrict checker detection to neutral gray/white tones to avoid
+   // accidentally removing multi-colored badge borders.
+   const neutral=c=>Math.max(...c)-Math.min(...c)<18;
+   checker=covered>.87&&best.length>opaque.length*.16&&groups.length>opaque.length*.16&&sep>18&&sep<160&&neutral(candidate)&&neutral(second);
+  }
+ }
+ if(!solid&&!checker)return out;
+ const isBg=p=>{
+  const i=p*4;if(src[i+3]<8)return true;
+  const c=color(p);
+  return dist(c,candidate)<=tolerance||(checker&&dist(c,second)<=tolerance);
+ };
+ // Flood fill from the perimeter: do not remove matching colors enclosed
+ // inside the logo. Preserve already-transparent pixels.
+ const seen=new Uint8Array(W*H),stack=[];
+ for(let x=0;x<W;x++){stack.push(x,(H-1)*W+x);}
+ for(let y=0;y<H;y++){stack.push(y*W,y*W+W-1);}
+ while(stack.length){
+  const p=stack.pop();if(seen[p])continue;seen[p]=1;
+  if(!isBg(p))continue;
+  px[p*4+3]=0;
+  const x=p%W,y=(p/W)|0;
+  if(x)stack.push(p-1);if(x<W-1)stack.push(p+1);
+  if(y)stack.push(p-W);if(y<H-1)stack.push(p+W);
+ }
+ return out;
+}
+function renderBadgePreview(){
+ if(!badgeOriginalPixels)return;
+ badgeToleranceValue.textContent=badgeTolerance.value;
+ const ctx=badgeAfter.getContext('2d');
+ ctx.clearRect(0,0,96,96);
+ ctx.putImageData(badgeKeepOriginal.checked?badgeOriginalPixels:removeBadgeBackground(badgeOriginalPixels,Number(badgeTolerance.value)),0,0);
+}
+badgeTolerance.addEventListener('input',renderBadgePreview);
+badgeKeepOriginal.addEventListener('change',renderBadgePreview);
 customBadgeUpload.addEventListener("change",async()=>{
  const file=customBadgeUpload.files&&customBadgeUpload.files[0];
  if(!file)return;
@@ -1554,45 +1637,26 @@ customBadgeUpload.addEventListener("change",async()=>{
  if(file.size>1024*1024){customBadgeStatus.textContent="PNG must be under 1 MB.";customBadgeUpload.value="";return;}
  try{
   const bitmap=await createImageBitmap(file);
-  const canvas=document.createElement("canvas");canvas.width=canvas.height=96;
-  const ctx=canvas.getContext("2d");ctx.clearRect(0,0,96,96);
+  const ctx=badgeBefore.getContext("2d");ctx.clearRect(0,0,96,96);
   const ratio=Math.min(96/bitmap.width,96/bitmap.height);
   ctx.drawImage(bitmap,(96-bitmap.width*ratio)/2,(96-bitmap.height*ratio)/2,bitmap.width*ratio,bitmap.height*ratio);
   if(bitmap.close)bitmap.close();
-  // Remove a simple solid-color backdrop only when it is connected to the
-  // outer edges. Existing transparent PNG pixels are preserved. This is not
-  // AI segmentation; complex photo backgrounds require a separate remover.
-  const frame=ctx.getImageData(0,0,96,96);
-  const px=frame.data, W=96, H=96;
-  const corners=[0,(W-1)*4,((H-1)*W)*4,(H*W-1)*4];
-  const opaqueCorners=corners.filter(i=>px[i+3]>240);
-  if(opaqueCorners.length===4){
-   const bg=[0,1,2].map(c=>Math.round(opaqueCorners.reduce((a,i)=>a+px[i+c],0)/4));
-   const consistent=opaqueCorners.every(i=>Math.max(...bg.map((v,c)=>Math.abs(v-px[i+c])))<16);
-   if(consistent){
-    const seen=new Uint8Array(W*H),stack=[];
-    const close=(p)=>px[p*4+3]>0&&Math.max(...bg.map((v,c)=>Math.abs(v-px[p*4+c])))<32;
-    for(let x=0;x<W;x++){stack.push(x,(H-1)*W+x);}
-    for(let y=0;y<H;y++){stack.push(y*W,y*W+W-1);}
-    while(stack.length){
-     const p=stack.pop();if(seen[p])continue;seen[p]=1;
-     if(!close(p))continue;
-     px[p*4+3]=0;
-     const x=p%W,y=Math.floor(p/W);
-     if(x>0)stack.push(p-1);if(x<W-1)stack.push(p+1);
-     if(y>0)stack.push(p-W);if(y<H-1)stack.push(p+W);
-    }
-    ctx.putImageData(frame,0,0);
-   }
-  }
-  const data=canvas.toDataURL("image/png");
-  if(data.length>65000)throw Error("Badge is too complex; choose a simpler PNG.");
-  customBadgeData=data;selectedBadge="__custom__";teamBadgeSelect.value="";
-  showBadge(myBadge,selectedBadge);
-  clearCustomBadge.hidden=false;customBadgeStatus.textContent="Custom badge active · transparent shape";
-  if(socket.connected)socket.emit("galli-custom-badge",{data});
+  badgeOriginalPixels=ctx.getImageData(0,0,96,96);
+  badgeTolerance.value="32";badgeKeepOriginal.checked=false;
+  badgeEditPanel.hidden=false;renderBadgePreview();
+  customBadgeStatus.textContent="Preview background removal, then click Apply badge.";
  }catch(e){customBadgeStatus.textContent=e.message||"Couldn't load PNG";}
  customBadgeUpload.value="";
+});
+document.getElementById("badgeApply").addEventListener("click",()=>{
+ if(!badgeOriginalPixels)return;
+ const data=badgeAfter.toDataURL("image/png");
+ if(data.length>65000){customBadgeStatus.textContent="Badge is too complex; choose a simpler PNG.";return;}
+ customBadgeData=data;selectedBadge="__custom__";teamBadgeSelect.value="";
+ showBadge(myBadge,selectedBadge);
+ clearCustomBadge.hidden=false;badgeEditPanel.hidden=true;
+ customBadgeStatus.textContent="Custom PNG badge active";
+ if(socket.connected)socket.emit("galli-custom-badge",{data});
 });
 clearCustomBadge.addEventListener("click",()=>{
  customBadgeData="";selectedBadge="";teamBadgeSelect.value="";clearCustomBadge.hidden=true;
