@@ -102,12 +102,20 @@ const server = http.createServer((req, res) => {
   }
   if (["GET", "HEAD"].includes(req.method) && url.pathname === "/sitemap.xml") {
     const xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
-      ["/", "/about"].map(route => "<url><loc>" + siteOrigin + route + "</loc></url>").join("") + "</urlset>";
+      ["/", "/about", "/omegle-ometv-alternative"].map(route => "<url><loc>" + siteOrigin + route + "</loc></url>").join("") + "</urlset>";
     res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8" });
     res.end(req.method === "HEAD" ? "" : xml); return;
   }
   if (["GET", "HEAD"].includes(req.method) && url.pathname === "/about") {
     fs.readFile(path.join(__dirname, "about.html"), (error, data) => {
+      if (error) { res.writeHead(500); res.end("Cannot load page"); return; }
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
+      res.end(req.method === "HEAD" ? "" : data);
+    }); return;
+  }
+
+  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/omegle-ometv-alternative") {
+    fs.readFile(path.join(__dirname, "alternative.html"), (error, data) => {
       if (error) { res.writeHead(500); res.end("Cannot load page"); return; }
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
       res.end(req.method === "HEAD" ? "" : data);
