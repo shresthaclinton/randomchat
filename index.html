@@ -4,17 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Online Galli — Free Random Video Chat with Fun Games</title>
-<meta name="description" content="Meet new people through free one-to-one video chat on Online Galli. Play games, try fun face effects and start a conversation. For adults 18+.">
-<link rel="canonical" href="https://randomchat-2yl7.onrender.com/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Online Galli">
-<meta property="og:title" content="Online Galli — Free Random Video Chat with Fun Games">
-<meta property="og:description" content="Meet new people through free one-to-one video chat on Online Galli. Play games, try fun face effects and start a conversation. For adults 18+.">
-<meta property="og:url" content="https://randomchat-2yl7.onrender.com/">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Online Galli — Free Random Video Chat with Fun Games">
-<meta name="twitter:description" content="Meet new people through free one-to-one video chat on Online Galli. Play games, try fun face effects and start a conversation. For adults 18+.">
+<title>Online Galli | A new encounter around every corner</title>
+<meta name="description" content="Online Galli is an 18+ place for spontaneous one-to-one video conversations. A new encounter around every corner।">
 <meta name="theme-color" content="#ffe247">
 
 <style>
@@ -682,8 +673,6 @@ footer { line-height:1.8; }
 #badgeEditPanel label{display:block;margin:8px 0}#badgeTolerance{width:100%;accent-color:#ffe247}#badgeApply{background:#ffe247;border:0;border-radius:6px;padding:8px 12px;font-weight:800;cursor:pointer}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "name": "Online Galli", "alternateName": "अनलाइन गल्ली", "url": "https://randomchat-2yl7.onrender.com/", "description": "Meet new people through free one-to-one video chat on Online Galli. Play games, try fun face effects and start a conversation. For adults 18+.", "inLanguage": "en"}</script>
-<meta name="google-site-verification" content="iFVu8Gk8-l-GFs7ir_wj1u0r4dd6u-Qf1AWM7yxIoVQ" />
 </head>
 
 <body>
@@ -708,7 +697,6 @@ footer { line-height:1.8; }
    <a href="/guidelines" target="_blank" rel="noopener">Community Guidelines</a>.</span>
   </label>
   <button id="confirmEntryBtn" type="button" disabled>✓ I Agree — Enter Online Galli</button>
-  <p><a href="/about">About Online Galli · How it works</a></p>
   <p class="gate-footnote">Camera and microphone access is requested only after clicking “Enter the Galli”.</p>
  </div>
 </div>
@@ -730,7 +718,7 @@ footer { line-height:1.8; }
 <section>
   <div id="galliIntroBanner">
     <h1 class="tagline">A new encounter around every corner।</h1>
-    <p class="subtitle">Free random video chat for adults (18+). Meet someone new around every corner.</p>
+    <p class="subtitle">Explore a virtual street and meet someone new. · Meet someone unexpected.</p>
   </div>
   <div id="galliMobileAdPosition" aria-label="Mobile advertising position" hidden></div>
   <div class="videos" id="videoStage">
@@ -864,7 +852,7 @@ footer { line-height:1.8; }
 
 </main>
 
-<footer>Online Galli © 2026 · 18+ beta · <a href="/about">About &amp; FAQ</a> · <a href="/omegle-ometv-alternative">Omegle &amp; OmeTV alternative</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/guidelines">Community Guidelines</a> · Be respectful. Stay safe.</footer>
+<footer>Online Galli © 2026 · 18+ beta · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/guidelines">Community Guidelines</a> · Be respectful. Stay safe.</footer>
 
 <script>
 /* Move the existing billboard, not a copy: mobile = below intro, desktop = sidebar. */
@@ -1004,7 +992,40 @@ function remoteMessage(title, description) {
   remotePlaceholder.querySelector("p").textContent = description;
 }
 
+
+// Private, low-frequency ICE path telemetry. No IP addresses, SDP or candidate details leave the browser.
+let icePathTimer = null;
+let lastIcePath = '';
+async function publishIcePath(pc, expectedGeneration) {
+  if (peer !== pc || generation !== expectedGeneration || pc.connectionState !== 'connected') return;
+  try {
+    const stats = await pc.getStats();
+    let selected = null;
+    stats.forEach(item => {
+      if (item.type === 'transport' && item.selectedCandidatePairId) selected = stats.get(item.selectedCandidatePairId) || selected;
+    });
+    if (!selected) stats.forEach(item => {
+      if (item.type === 'candidate-pair' && item.state === 'succeeded' && (item.selected || item.nominated)) selected = item;
+    });
+    if (!selected) return;
+    const local = stats.get(selected.localCandidateId);
+    const remote = stats.get(selected.remoteCandidateId);
+    if (!local || !remote) return;
+    const path = local.candidateType === 'relay' || remote.candidateType === 'relay' ? 'turn' : 'p2p';
+    // Heartbeat every 5s: server expires ICE reports after 20s.
+    lastIcePath = path;
+    if (socket.connected) socket.emit('galli-ice-path', { path });
+  } catch (error) { console.debug('ICE path statistics unavailable', error); }
+}
+function startIcePathMonitor(pc, expectedGeneration) {
+  clearInterval(icePathTimer);
+  icePathTimer = setInterval(() => publishIcePath(pc, expectedGeneration), 5000);
+  publishIcePath(pc, expectedGeneration);
+}
+
 function closePeer() {
+  clearInterval(icePathTimer); icePathTimer = null; lastIcePath = "";
+  if (partnerId && socket.connected) socket.emit("galli-ice-path", { path: "unknown" });
   clearConnectionTimers();
   generation++;
   pendingCandidates = [];
@@ -1181,6 +1202,7 @@ async function createPeer(id) {
     if (pc.connectionState === "connected") {
       clearConnectionTimers();
       status("Connected! You can now talk.");
+      startIcePathMonitor(pc, currentGeneration);
     } else if (pc.connectionState === "disconnected") {
       status("Connection interrupted. Reconnecting...");
       clearTimeout(disconnectTimer);
@@ -1728,7 +1750,7 @@ function stickerResize(){
 // Photo-derived transparent accessory artwork with landmark positioning.
 const faceArt={};
 for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","prithvi","cowboy"]){
- const image=new Image();image.src="/assets/face-effects/"+name+".png?v="+(name==="thug"?"5711":"5710");faceArt[name]=image;
+ const image=new Image();image.src="/assets/face-effects/"+name+".png?v=5710";faceArt[name]=image;
 }
 let smoothFace=null;
 function stickerAsset(ctx,name,x,y,width,height){
@@ -1748,9 +1770,9 @@ function stickerDraw(ctx,face,mode,w,h){
  const s=eyeDist;
  if(["thug","aviator","wayfarer","steampunk"].includes(mode)){
   const widths={thug:1.84,aviator:1.75,wayfarer:1.68,steampunk:1.68};
-  const heights={thug:.43,aviator:.72,wayfarer:.62,steampunk:.66};
+  const heights={thug:.70,aviator:.72,wayfarer:.62,steampunk:.66};
   const ww=s*widths[mode],hh=s*heights[mode];
-  stickerAsset(ctx,mode,-ww/2,mode==="steampunk"?-hh*.48:mode==="thug"?-hh*.48:-hh*.40,ww,hh);
+  stickerAsset(ctx,mode,-ww/2,mode==="steampunk"?-hh*.48:-hh*.40,ww,hh);
  }
  const headY=(forehead.y-cy)*Math.cos(roll)+(forehead.x-cx)*Math.sin(roll);
  if(mode==="chaplin"){
