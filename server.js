@@ -428,8 +428,10 @@ function findPartner(socket) {
       partnerId: socket.id,
       initiator: false
     });
-    socket.emit("galli-badge-peer", {team: other.data.supporterTeam || ""});
-    other.emit("galli-badge-peer", {team: socket.data.supporterTeam || ""});
+    if(other.data.customBadge)socket.emit("galli-custom-badge-peer",{data:other.data.customBadge});
+    else socket.emit("galli-badge-peer", {team: other.data.supporterTeam || ""});
+    if(socket.data.customBadge)other.emit("galli-custom-badge-peer",{data:socket.data.customBadge});
+    else other.emit("galli-badge-peer", {team: socket.data.supporterTeam || ""});
 
     recentPartners.set(socket.id, { id: otherId, at: Date.now() });
     recentPartners.set(otherId, { id: socket.id, at: Date.now() });
@@ -640,8 +642,18 @@ io.on("connection", (socket) => {
   socket.on("galli-badge-select", ({team}={}) => {
     if(typeof team!=="string" || !supporterTeams.has(team))return;
     socket.data.supporterTeam=team;
+    socket.data.customBadge=null;
     const p=gamePair(socket);
     if(p)io.to(p.other).emit("galli-badge-peer",{team});
+  });
+  socket.on("galli-custom-badge",({data}={})=>{
+    // Only small PNG data URLs; never write uploaded content to disk.
+    if(typeof data!=="string"||!/^data:image\/png;base64,[A-Za-z0-9+/=]{1,65000}$/.test(data))return;
+    if(rateLimited(reactionTimes,socket.id,4,60000))return;
+    socket.data.customBadge=data;
+    socket.data.supporterTeam="";
+    const p=gamePair(socket);
+    if(p)io.to(p.other).emit("galli-custom-badge-peer",{data});
   });
   socket.on("galli-reaction", ({emoji}={}) => {
     const p=gamePair(socket);

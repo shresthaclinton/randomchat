@@ -655,6 +655,13 @@ footer { line-height:1.8; }
  #galliMobileBottomAds .safety{display:block!important;margin:0!important;width:100%}
 }
 
+
+/* Custom PNG badge picker: stays compact on phones */
+.galli-upload-label{display:inline-flex;align-items:center;cursor:pointer;background:#ffe247;color:#111;border-radius:8px;padding:9px;font-size:12px;font-weight:800}
+#customBadgeUpload{width:130px;max-width:100%;font-size:11px;color:#fff}
+.galli-clear-badge{border:1px solid #ddd;background:#333;color:white;border-radius:7px;padding:8px;cursor:pointer}
+#customBadgeStatus{font-size:11px;color:#ffe247;max-width:210px}
+@media(max-width:600px){.galli-upload-label{font-size:11px;padding:7px}#customBadgeUpload{width:110px}}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -770,6 +777,8 @@ footer { line-height:1.8; }
   <option value="wayfarer">🕶️ Wayfarer Classic</option>
   <option value="shelby">🧢 Thomas Shelby Cap</option>
   <option value="steampunk">🥽 Steampunk Round Glasses</option>
+  <option value="prithvi">🥸 Prithvi Narayan Shah Moustache</option>
+  <option value="cowboy">🤠 Cowboy Hat</option>
  </select>
  <span id="faceStickerStatus" role="status" aria-live="polite"></span>
 </div>
@@ -780,6 +789,10 @@ footer { line-height:1.8; }
    <option>Janakpur Bolts</option><option>Kathmandu Gurkhas</option><option>Karnali Yaks</option>
    <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
   </select>
+  <label class="galli-upload-label" for="customBadgeUpload">📤 Custom PNG badge</label>
+  <input id="customBadgeUpload" type="file" accept="image/png,.png" aria-label="Upload custom PNG badge" />
+  <button id="clearCustomBadge" type="button" class="galli-clear-badge" hidden>Remove badge</button>
+  <span id="customBadgeStatus" role="status" aria-live="polite"></span>
  </div>
  </div>
  <div id="textChatNotice" class="galli-chat-notice" role="status"></div>
@@ -1461,6 +1474,7 @@ const myBadge=document.getElementById("myBadge");
 const peerBadge=document.getElementById("peerBadge");
 const badgeTeams=new Set(Array.from(teamBadgeSelect.options).map(o=>o.value));
 let selectedBadge="";
+let customBadgeData="";
 const nplLogoFiles={
  "Biratnagar Kings":"biratnagar-kings.png",
  "Chitwan Rhinos":"chitwan-rhinos.png",
@@ -1474,17 +1488,24 @@ const nplLogoFiles={
 };
 function showBadge(el,team){
  el.replaceChildren();
+ const isCustom=team==="__custom__";
  const file=nplLogoFiles[team];
- el.hidden=!file;
- if(!file)return;
+ el.hidden=!(file||(isCustom&&customBadgeData));
+ if(el.hidden)return;
  const img=document.createElement("img");
  img.alt=team+" logo";
- img.src="/assets/npl/"+file;
+ img.src=isCustom?customBadgeData:"/assets/npl/"+file;
  img.loading="eager";
- img.onerror=()=>{img.onerror=null;img.src="/assets/npl/fallback.png";};
+ img.onerror=()=>{img.onerror=null;if(!isCustom)img.src="/assets/npl/fallback.png";};
  el.title=team;
  el.setAttribute("aria-label",team+" supporter badge");
  el.appendChild(img);
+}
+function showPeerCustomBadge(data){
+ peerBadge.replaceChildren();
+ if(!/^data:image\/png;base64,[A-Za-z0-9+/=]{1,65000}$/.test(data||"")){peerBadge.hidden=true;return;}
+ const img=document.createElement("img");img.alt="Custom supporter badge";img.src=data;
+ peerBadge.appendChild(img);peerBadge.hidden=false;
 }
 function resetSocial(){
  myVideoChat.replaceChildren();peerVideoChat.replaceChildren();textChatInput.value="";textChatNotice.textContent="";
@@ -1515,6 +1536,38 @@ socket.on("galli-text",({message}={})=>{
 });
 socket.on("galli-text-sent",({message}={})=>{if(partnerId&&typeof message==="string")appendText(message,true);});
 socket.on("galli-text-warning",msg=>{textChatNotice.textContent=String(msg).slice(0,150);});
+const customBadgeUpload=document.getElementById("customBadgeUpload");
+const clearCustomBadge=document.getElementById("clearCustomBadge");
+const customBadgeStatus=document.getElementById("customBadgeStatus");
+customBadgeUpload.addEventListener("change",async()=>{
+ const file=customBadgeUpload.files&&customBadgeUpload.files[0];
+ if(!file)return;
+ if(file.type!=="image/png"||!file.name.toLowerCase().endsWith(".png")){
+  customBadgeStatus.textContent="PNG files only.";customBadgeUpload.value="";return;
+ }
+ if(file.size>1024*1024){customBadgeStatus.textContent="PNG must be under 1 MB.";customBadgeUpload.value="";return;}
+ try{
+  const bitmap=await createImageBitmap(file);
+  const canvas=document.createElement("canvas");canvas.width=canvas.height=96;
+  const ctx=canvas.getContext("2d");ctx.clearRect(0,0,96,96);
+  const ratio=Math.min(96/bitmap.width,96/bitmap.height);
+  ctx.drawImage(bitmap,(96-bitmap.width*ratio)/2,(96-bitmap.height*ratio)/2,bitmap.width*ratio,bitmap.height*ratio);
+  if(bitmap.close)bitmap.close();
+  const data=canvas.toDataURL("image/png");
+  if(data.length>65000)throw Error("Badge is too complex; choose a simpler PNG.");
+  customBadgeData=data;selectedBadge="__custom__";teamBadgeSelect.value="";
+  showBadge(myBadge,selectedBadge);
+  clearCustomBadge.hidden=false;customBadgeStatus.textContent="Custom badge active";
+  if(socket.connected)socket.emit("galli-custom-badge",{data});
+ }catch(e){customBadgeStatus.textContent=e.message||"Couldn't load PNG";}
+ customBadgeUpload.value="";
+});
+clearCustomBadge.addEventListener("click",()=>{
+ customBadgeData="";selectedBadge="";teamBadgeSelect.value="";clearCustomBadge.hidden=true;
+ customBadgeStatus.textContent="Badge removed";showBadge(myBadge,"");
+ if(socket.connected)socket.emit("galli-badge-select",{team:""});
+});
+socket.on("galli-custom-badge-peer",({data}={})=>{if(partnerId)showPeerCustomBadge(data);});
 teamBadgeSelect.addEventListener("change",()=>{
  selectedBadge=teamBadgeSelect.value;
  if(!badgeTeams.has(selectedBadge))return;
@@ -1524,7 +1577,7 @@ teamBadgeSelect.addEventListener("change",()=>{
 socket.on("galli-badge-peer",({team}={})=>{
  if(partnerId&&typeof team==="string"&&badgeTeams.has(team))showBadge(peerBadge,team);
 });
-socket.on("connect",()=>{socket.emit("galli-badge-select",{team:selectedBadge});});
+socket.on("connect",()=>{if(selectedBadge==="__custom__"&&customBadgeData)socket.emit("galli-custom-badge",{data:customBadgeData});else socket.emit("galli-badge-select",{team:selectedBadge});});
 resetSocial();
 
 startBtn.addEventListener("click", startChat);
@@ -1563,7 +1616,7 @@ function stickerResize(){
 }
 // Photo-derived transparent accessory artwork with landmark positioning.
 const faceArt={};
-for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk"]){
+for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","prithvi","cowboy"]){
  const image=new Image();image.src="/assets/face-effects/"+name+".png";faceArt[name]=image;
 }
 let smoothFace=null;
@@ -1580,21 +1633,26 @@ function stickerDraw(ctx,face,mode,w,h){
  const roll=Math.atan2(dy,dx);
  // Scale and follow tilt; slightly adjust for yaw based on relative nose position.
  const nose=p(1);const yaw=Math.max(-.24,Math.min(.24,(nose.x-cx)/eyeDist));
- ctx.save();ctx.translate(cx,cy);ctx.rotate(roll);ctx.scale(1-Math.abs(yaw)*.3,1);
+ ctx.save();ctx.translate(cx,cy);ctx.rotate(mode==="steampunk"?Math.max(-.18,Math.min(.18,roll*.42)):roll);ctx.scale(1-Math.abs(yaw)*.3,1);
  const s=eyeDist;
  if(["thug","aviator","wayfarer","steampunk"].includes(mode)){
-  const widths={thug:1.67,aviator:1.75,wayfarer:1.68,steampunk:1.78};
-  const heights={thug:.67,aviator:.72,wayfarer:.62,steampunk:.75};
+  const widths={thug:1.84,aviator:1.75,wayfarer:1.68,steampunk:1.68};
+  const heights={thug:.70,aviator:.72,wayfarer:.62,steampunk:.66};
   const ww=s*widths[mode],hh=s*heights[mode];
-  stickerAsset(ctx,mode,-ww/2,-hh*.40,ww,hh);
+  stickerAsset(ctx,mode,-ww/2,mode==="steampunk"?-hh*.48:-hh*.40,ww,hh);
  }
  const headY=(forehead.y-cy)*Math.cos(roll)+(forehead.x-cx)*Math.sin(roll);
  if(mode==="chaplin"){
-  stickerAsset(ctx,"chaplin-hat",-s*1.17,headY-s*.76,s*2.34,s*1.16);
+  stickerAsset(ctx,"chaplin-hat",-s*1.34,headY-s*.89,s*2.68,s*1.34);
   const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
   stickerAsset(ctx,"chaplin-moustache",-s*.23,lipY-s*.31,s*.46,s*.22);
  }
- if(mode==="shelby")stickerAsset(ctx,"shelby",-s*1.28,headY-s*.80,s*2.56,s*1.20);
+ if(mode==="shelby")stickerAsset(ctx,"shelby",-s*1.47,headY-s*.95,s*2.94,s*1.39);
+ if(mode==="cowboy")stickerAsset(ctx,"cowboy",-s*1.50,headY-s*.95,s*3.00,s*1.55);
+ if(mode==="prithvi"){
+  const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
+  stickerAsset(ctx,"prithvi",-s*.66,lipY-s*.38,s*1.32,s*.51);
+ }
  ctx.restore();
 }
 function stickerRender(t){
