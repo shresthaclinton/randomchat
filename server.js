@@ -79,6 +79,32 @@ function fetchMeteredIce() {
 // Create the website server
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
+  // SEO routes; fixed origin avoids trusting arbitrary Host headers.
+  const siteOrigin = "https://randomchat-2yl7.onrender.com";
+  if (["/admin", "/developer-reset"].includes(url.pathname) || url.pathname.startsWith("/api/")) {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow");
+  }
+  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/index.html") {
+    res.writeHead(301, { Location: "/" + url.search }); res.end(); return;
+  }
+  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/robots.txt") {
+    res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+    res.end(req.method === "HEAD" ? "" : "User-agent: *\nAllow: /\nDisallow: /socket.io/\nSitemap: " + siteOrigin + "/sitemap.xml\n"); return;
+  }
+  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/sitemap.xml") {
+    const xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
+      ["/", "/about"].map(route => "<url><loc>" + siteOrigin + route + "</loc></url>").join("") + "</urlset>";
+    res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8" });
+    res.end(req.method === "HEAD" ? "" : xml); return;
+  }
+  if (["GET", "HEAD"].includes(req.method) && url.pathname === "/about") {
+    fs.readFile(path.join(__dirname, "about.html"), (error, data) => {
+      if (error) { res.writeHead(500); res.end("Cannot load page"); return; }
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
+      res.end(req.method === "HEAD" ? "" : data);
+    }); return;
+  }
+
   // Serve only bundled photorealistic face-effect images.
   if (req.method === "GET" && /^\/assets\/face-effects\/[a-z-]+\.png$/.test(url.pathname)) {
     const fileName = url.pathname.slice("/assets/face-effects/".length);
@@ -200,7 +226,7 @@ const server = http.createServer((req, res) => {
       const now = Date.now();
       for (const [id, until] of bannedIds) if (until <= now) bannedIds.delete(id);
       const activeChatSeconds = [...chatStarts.values()].reduce((sum, start) => sum + Math.max(0, Math.round((now - start) / 1000)), 0);
-      const payload = { ok: true, monitor: { ...monitor, activeChatSeconds, totalChatSeconds: monitor.completedChatSeconds + activeChatSeconds, estimatedAverageChatSeconds: monitor.matches ? Math.round((monitor.completedChatSeconds + activeChatSeconds) / monitor.matches) : 0, scope: "Current server process only; resets on restart", turnBytes: null }, icePaths: icePathOverview(), online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse().map(r => ({...r, uniqueReporters: new Set(reports.filter(x => x.reportedClientId && x.reportedClientId === r.reportedClientId && x.reporterClientId).map(x => x.reporterClientId)).size || (r.reporterClientId ? 1 : null)})), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
+      const payload = { ok: true, monitor: { ...monitor, activeChatSeconds, totalChatSeconds: monitor.completedChatSeconds + activeChatSeconds, estimatedAverageChatSeconds: monitor.matches ? Math.round((monitor.completedChatSeconds + activeChatSeconds) / monitor.matches) : 0, scope: "Current server process only; resets on restart", turnBytes: null }, online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse().map(r => ({...r, uniqueReporters: new Set(reports.filter(x => x.reportedClientId && x.reportedClientId === r.reportedClientId && x.reporterClientId).map(x => x.reporterClientId)).size || (r.reporterClientId ? 1 : null)})), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
       res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
       res.end(JSON.stringify(payload));
       return;
@@ -285,28 +311,6 @@ const waiting = [];
 
 // Store connected partners
 const partners = new Map();
-// Ephemeral connection-path reports; cleared on disconnect and restart.
-// Reports describe the browser-selected ICE candidate pair, not billed bandwidth.
-const icePaths = new Map();
-function icePathOverview() {
-  const now = Date.now();
-  const counts = { p2p: 0, turn: 0, unknown: 0 };
-  const seen = new Set();
-  for (const [id, other] of partners) {
-    const key = [id, other].sort().join(':');
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const a = icePaths.get(id), b = icePaths.get(other);
-    const fresh = x => x && now - x.at < 20000 && x.partner === partners.get(x.id);
-    const x = fresh(a) ? a.path : 'unknown';
-    const y = fresh(b) ? b.path : 'unknown';
-    // Both sides must report before classifying a call.
-    if (x === 'turn' || y === 'turn') counts.turn++;
-    else if (x === 'p2p' && y === 'p2p') counts.p2p++;
-    else counts.unknown++;
-  }
-  return { ...counts, observedCalls: counts.p2p + counts.turn, note: 'Live ICE path samples only; no TURN bytes or historical totals' };
-}
 
 // V4: transient game state, scoped to the currently matched pair.
 const games = new Map();
@@ -469,13 +473,11 @@ function findPartner(socket) {
 
 function leavePartner(socket) {
   removeWaiting(socket.id);
-  icePaths.delete(socket.id);
 
   const otherId = partners.get(socket.id);
 
   if (!otherId) return;
 
-  icePaths.delete(otherId);
   closeChatTimer(socket.id, otherId);
   clearGame(socket);
   partners.delete(socket.id);
@@ -510,14 +512,6 @@ io.on("connection", (socket) => {
       : [];
     // If a request arrived before identification, retry matchmaking now.
     if (socket.data.ready && !partners.has(socket.id)) findPartner(socket);
-  });
-
-  socket.on('galli-ice-path', ({ path } = {}) => {
-    if (!['p2p', 'turn', 'unknown'].includes(path)) return;
-    const partner = partners.get(socket.id);
-    if (!partner) return;
-    if (path === 'unknown') icePaths.delete(socket.id);
-    else icePaths.set(socket.id, { id: socket.id, partner, path, at: Date.now() });
   });
 
   socket.on("report-user", ({ reason, description } = {}, ack) => {
@@ -712,7 +706,6 @@ io.on("connection", (socket) => {
     leavePartner(socket);
     removeWaiting(socket.id);
     recentPartners.delete(socket.id);
-    icePaths.delete(socket.id);
     reportTimes.delete(socket.id);
     skipTimes.delete(socket.id);
     reactionTimes.delete(socket.id);
