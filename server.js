@@ -663,6 +663,9 @@ io.on("connection", (socket) => {
 
 
   socket.on("galli-game-invite", ({type="ttt"}={}) => {
+    if(["ludo","snakes"].includes(type)){
+      socket.emit("galli-pro-required",{feature:type});return;
+    }
     if(!["ttt","rps","wyr"].includes(type))return;
     const p=gamePair(socket);
     if(!p) return;
@@ -748,6 +751,8 @@ io.on("connection", (socket) => {
     if(p)io.to(p.other).emit("galli-badge-peer",{team});
   });
   socket.on("galli-custom-badge",({data}={})=>{
+    // Custom uploads are Pro-only until a verified subscription entitlement system exists.
+    socket.emit("galli-pro-required",{feature:"custom-badge"});return;
     // Only small PNG data URLs; never write uploaded content to disk.
     if(typeof data!=="string"||!/^data:image\/png;base64,[A-Za-z0-9+/=]{1,65000}$/.test(data))return;
     if(rateLimited(reactionTimes,socket.id,4,60000))return;
