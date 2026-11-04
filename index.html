@@ -704,6 +704,11 @@ footer { line-height:1.8; }
 .og-board-cell:nth-child(odd){background:#e2f0e6}
 .og-ludo-track{display:grid;gap:8px}.og-ludo-track>div{display:flex;flex-wrap:wrap;gap:4px}.og-ludo-track button{font-size:11px;padding:5px}
 @media(max-width:600px){.controls .galli-enter-wrap{flex:1 1 100%!important;max-width:none!important}.controls #previousCornerBtn{order:1!important;flex:1 1 28%!important}.controls #nextBtn{order:2!important;flex:1 1 28%!important}.controls #gamesBtn{order:3!important;flex:1 1 28%!important}.controls #muteBtn{order:4!important}.controls #stopBtn{order:5!important}.controls #reportBtn{order:6!important}.controls #blockBtn{order:7!important}.galli-game-picker{padding-top:16px!important}}
+
+/* Game selection: vertical stack, visible on phones without sideways scrolling */
+.galli-game-picker{display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:flex-start!important;overflow:visible!important;max-width:100%!important;min-height:0!important;padding:14px 12px 8px 4px!important;gap:11px!important}
+.galli-game-picker button{display:flex!important;flex:0 0 auto!important;justify-content:center!important;align-items:center!important;width:100%!important;min-height:43px!important;white-space:normal!important;font-size:13px!important;padding:11px 15px!important}
+@media(max-width:600px){.galli-game-picker{padding:16px 12px 8px 4px!important;gap:12px!important}.galli-game-picker button{min-height:46px!important}}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -1435,7 +1440,7 @@ const gameTitles={ttt:"❎ Tic-Tac-Toe",rps:"✊ Rock Paper Scissors",wyr:"🤔 
 let selectedGameType="ttt",activeExtraGame=null;
 function setGameType(type){
  if(!gameTitles[type])return;
- if((type==="ludo"||type==="snakes")&&!window.OG_PRO_TEST_MODE){showProNotice(type==="ludo"?"Ludo":"Snakes & Ladders");return;}
+ // Ludo and Snakes & Ladders are playable during beta; Pro billing is not yet implemented.
  selectedGameType=type;activeGameTitle.textContent=gameTitles[type];
  gameTypePicker.hidden=true;extraGameChoices.hidden=true;
  gameBoard.hidden=true;inviteGameBtn.hidden=false;

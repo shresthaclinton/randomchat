@@ -715,7 +715,7 @@ io.on("connection", (socket) => {
   });
   socket.on("galli-game-invite", ({type="ttt"}={}) => {
     if(!["ttt","rps","wyr","ludo","snakes"].includes(type))return;
-    if(["ludo","snakes"].includes(type)&&!proPreviewEnabled){socket.emit("galli-pro-required",{feature:type});return;}
+    // Allow beta gameplay until verified paid subscriptions are implemented.
     const p=gamePair(socket);
     if(!p) return;
     const old=games.get(p.key);
