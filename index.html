@@ -737,9 +737,9 @@ footer { line-height:1.8; }
 .og-ludo-center{background:transparent!important;border:0!important}
 .og-ludo-center-art{position:absolute;left:40%;top:40%;width:20%;height:20%;z-index:3;pointer-events:none}
 .og-ludo-base{position:absolute;width:35.5%;height:35.5%;z-index:2;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);place-items:center;border-radius:18%;border:5px solid white;box-shadow:inset 0 0 0 3px currentColor,0 0 0 2px #fff;pointer-events:none}
-.og-ludo-base.blue{top:2.2%;right:2.2%;color:#086bdc;background:#fff}.og-ludo-base.green{bottom:2.2%;left:2.2%;color:#079a28;background:#fff}
+.og-ludo-base.blue{top:2.2%;right:2.2%;color:#086bdc;background:#e9f3ff}.og-ludo-base.green{bottom:2.2%;left:2.2%;color:#079a28;background:#e5ffed}
 .og-ludo-base.red{top:2.2%;left:2.2%;color:#ed1515;background:#fff}.og-ludo-base.yellow{bottom:2.2%;right:2.2%;color:#f9d427;background:#fff}
-.og-ludo-base .base-dot{width:40%;aspect-ratio:1;border-radius:50%;background:currentColor}
+.og-ludo-base .base-dot{width:40%;aspect-ratio:1;border-radius:50%;background:currentColor;border:2px solid currentColor;box-shadow:inset 0 0 0 2px #fff,0 1px 3px #0004}
 .og-ludo-base .base-dot.active{box-shadow:0 0 0 3px white,0 1px 4px #3337}
 .og-ludo-token{position:relative;z-index:5;width:clamp(12px,3.6vw,20px);height:clamp(12px,3.6vw,20px);box-shadow:0 1px 3px #0008}
 .og-green-token{background:#008b31}.og-ludo-board .og-home-blue .og-ludo-token,.og-ludo-board .og-home-green .og-ludo-token{display:none}
@@ -753,7 +753,7 @@ footer { line-height:1.8; }
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 <style>
-.og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-yellow{background:#f6ca32}.og-letter-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.og-letter-grid button{padding:7px 0!important;min-width:0!important}.og-hang-word{text-align:center;font-size:24px;font-weight:800;letter-spacing:3px}.og-spin-wheel{width:220px;height:220px;border-radius:50%;background:conic-gradient(#fda4af 0 60deg,#fde68a 60deg 120deg,#86efac 120deg 180deg,#93c5fd 180deg 240deg,#c4b5fd 240deg 300deg,#fdba74 300deg 360deg);border:6px solid #fff;box-shadow:0 2px 12px #0003;position:relative;margin:12px auto;display:grid;place-items:center}.og-spin-wheel span{position:absolute;font-size:9px;font-weight:700;max-width:70px;text-align:center;color:#1f2937}.og-wheel-spinning{animation:ogspin 1.4s ease-out}@keyframes ogspin{to{transform:rotate(1080deg)}}.og-spin-result{text-align:center;font-weight:800}.og-draw-canvas{width:100%;max-width:420px;aspect-ratio:7/5;touch-action:none;background:white;border:2px solid #222;border-radius:8px;display:block;margin:auto}.og-draw-label{font-weight:700;text-align:center}.galli-game-picker{display:flex;flex-direction:column;gap:8px}
+.og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#1475f5}.og-letter-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.og-letter-grid button{padding:7px 0!important;min-width:0!important}.og-hang-word{text-align:center;font-size:24px;font-weight:800;letter-spacing:3px}.og-spin-wheel{width:220px;height:220px;border-radius:50%;background:conic-gradient(#fda4af 0 60deg,#fde68a 60deg 120deg,#86efac 120deg 180deg,#93c5fd 180deg 240deg,#c4b5fd 240deg 300deg,#fdba74 300deg 360deg);border:6px solid #fff;box-shadow:0 2px 12px #0003;position:relative;margin:12px auto;display:grid;place-items:center}.og-spin-wheel span{position:absolute;font-size:9px;font-weight:700;max-width:70px;text-align:center;color:#1f2937}.og-wheel-spinning{animation:ogspin 1.4s ease-out}@keyframes ogspin{to{transform:rotate(1080deg)}}.og-spin-result{text-align:center;font-weight:800}.og-draw-canvas{width:100%;max-width:420px;aspect-ratio:7/5;touch-action:none;background:white;border:2px solid #222;border-radius:8px;display:block;margin:auto}.og-draw-label{font-weight:700;text-align:center}.galli-game-picker{display:flex;flex-direction:column;gap:8px}
 </style>
 </head>
 
@@ -1546,13 +1546,13 @@ function ogFreeState(state){
   const board=ogEl('div',undefined,'og-connect-board');
   for(let r=0;r<6;r++)for(let c=0;c<7;c++){
    const cell=ogEl('button','', 'og-connect-cell');const v=state.board[r*7+c];
-   if(v!==null)cell.classList.add(v===0?'og-disc-red':'og-disc-yellow');
+   if(v!==null)cell.classList.add(v===0?'og-disc-red':'og-disc-blue');
    cell.disabled=!!state.finished||!turn||state.board[c]!==null;
    cell.setAttribute('aria-label','Column '+(c+1)+', row '+(r+1));
    cell.onclick=()=>socket.emit('galli-free-action',{column:c});board.appendChild(cell);
-  }extraGameChoices.appendChild(board);
+  }extraGameChoices.appendChild(ogEl('p','🔴 Red vs 🔵 Blue — take turns dropping discs','og-game-legend'));extraGameChoices.appendChild(board);
  }else if(state.type==='hangman'){
-  extraGameChoices.appendChild(ogEl('p',state.masked.split('').join(' '),'og-hang-word'));
+  extraGameChoices.appendChild(ogEl('p','💡 Hint: '+(state.category||'Common word'),'og-game-hint'));extraGameChoices.appendChild(ogEl('p',state.masked.split('').join(' '),'og-hang-word'));
   extraGameChoices.appendChild(ogEl('p','Wrong guesses: '+state.wrong+'/6 · Used: '+(state.used.join(', ')||'none')));
   if(state.finished&&state.word)extraGameChoices.appendChild(ogEl('p','Word: '+state.word));
   const letters=ogEl('div',undefined,'og-letter-grid');
@@ -1574,11 +1574,12 @@ function ogFreeState(state){
    canvas.onpointerdown=e=>{down=true;last=point(e);canvas.setPointerCapture(e.pointerId)};
    canvas.onpointermove=e=>{if(!down)return;const now=point(e);const seg=[...last,...now];ctx.beginPath();ctx.moveTo(last[0]*420,last[1]*300);ctx.lineTo(now[0]*420,now[1]*300);ctx.stroke();socket.emit('galli-free-action',{stroke:seg});last=now};
    canvas.onpointerup=()=>{down=false};canvas.onpointercancel=()=>{down=false};
-  }else if(state.drawer!==me&&!state.finished){const form=ogEl('form');const input=ogEl('input');input.placeholder='Guess the word';input.maxLength=30;input.required=true;const submit=ogEl('button','Guess');submit.type='submit';form.append(input,submit);form.onsubmit=e=>{e.preventDefault();socket.emit('galli-free-action',{guess:input.value.trim()});input.value=''};extraGameChoices.appendChild(form)}
+  }else if(state.drawer!==me&&!state.finished){const form=ogEl('form');const input=ogEl('input');input.placeholder='Guess the word';input.maxLength=30;input.required=true;const submit=ogEl('button','Guess');submit.type='submit';form.append(input,submit);form.onsubmit=e=>{e.preventDefault();const guess=input.value.trim();if(!guess)return;socket.emit('galli-free-action',{guess});input.value='';let feedback=extraGameChoices.querySelector('.og-guess-feedback');if(!feedback){feedback=ogEl('p','','og-guess-feedback');form.after(feedback)}feedback.textContent='Checking your guess…'};extraGameChoices.appendChild(form)}
   if(state.finished)extraGameChoices.appendChild(ogEl('p','Answer: '+state.word));
  }
 }
 socket.on('galli-free-state',ogFreeState);
+socket.on('galli-draw-guess-feedback',({correct,guess}={})=>{if(activeExtraGame?.type!=='draw')return;let feedback=extraGameChoices.querySelector('.og-guess-feedback');if(!feedback){feedback=ogEl('p','','og-guess-feedback');extraGameChoices.appendChild(feedback)}feedback.textContent=correct?'🎉 Correct!':'❌ '+String(guess||'That guess')+' — try again!';});
 socket.on('galli-draw-stroke',stroke=>{if(activeExtraGame?.type!=='draw')return;const canvas=extraGameChoices.querySelector('canvas.og-draw-canvas');if(!canvas||!Array.isArray(stroke))return;const ctx=canvas.getContext('2d');ctx.beginPath();ctx.moveTo(stroke[0]*420,stroke[1]*300);ctx.lineTo(stroke[2]*420,stroke[3]*300);ctx.stroke()});
 
 let ogAudioContext=null,ogMusicTimer=null,ogMusicEnabled=true,ogSelectedLudoToken=0,ogLastRollSeen='';
@@ -1706,13 +1707,13 @@ function renderBoardGame(state){
    });board.appendChild(cell);
   }
   // Decorative home trays and classic four-color central finish.
-  for(const color of ['red','blue','green','yellow']){const base=document.createElement('div');base.className='og-ludo-base '+color;for(let i=0;i<4;i++){const dot=document.createElement('span');dot.className='base-dot'+(['blue','green'].includes(color)?' active':'');if(color==='blue'||color==='green'){const p=color==='blue'?0:1;dot.style.opacity=state.tokens[p][i]===0?'1':'.23';dot.textContent=state.tokens[p][i]===0?String(i+1):'';dot.style.color='white';dot.style.textAlign='center';dot.style.fontWeight='bold';dot.style.fontSize='clamp(8px,2vw,12px)';dot.style.lineHeight='2.1'}base.appendChild(dot)}board.appendChild(base)}
+  for(const color of ['red','blue','green','yellow']){const base=document.createElement('div');base.className='og-ludo-base '+color;for(let i=0;i<4;i++){const dot=document.createElement('span');dot.className='base-dot'+(['blue','green'].includes(color)?' active':'');if(color==='blue'||color==='green'){const p=color==='blue'?0:1;dot.style.opacity=state.tokens[p][i]===0?'1':'.23';dot.textContent='';dot.setAttribute('aria-label',color+' gotti '+(i+1));dot.title=color+' gotti '+(i+1);dot.style.color='white';dot.style.textAlign='center';dot.style.fontWeight='bold';dot.style.fontSize='clamp(8px,2vw,12px)';dot.style.lineHeight='2.1'}base.appendChild(dot)}board.appendChild(base)}
   const center=document.createElementNS('http://www.w3.org/2000/svg','svg');center.setAttribute('viewBox','0 0 100 100');center.setAttribute('class','og-ludo-center-art');for(const [pts,color] of [['0,0 100,0 50,50','#086bdc'],['100,0 100,100 50,50','#f9d427'],['0,100 100,100 50,50','#079a28'],['0,0 0,100 50,50','#ed1515']]){const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');poly.setAttribute('points',pts);poly.setAttribute('fill',color);center.appendChild(poly)}board.appendChild(center);
   ogMakeDie(board,state.canRoll&&!state.finished,()=>socket.emit('galli-board-roll',{token:ogSelectedLudoToken}));
   extraGameChoices.appendChild(board);
   const key=document.createElement('p');key.className='og-board-legend';key.textContent='🔵 Blue vs 🟢 Green · Select a token, then roll the dice on the board';extraGameChoices.appendChild(key);
   if(state.canRoll&&!state.finished){const choices=document.createElement('div');choices.className='og-ludo-actions';state.tokens[state.you].forEach((pos,i)=>{
-   const b=document.createElement('button');b.textContent='Token '+(i+1)+(pos===0?' · Home':pos===57?' · Finished':'');b.disabled=pos===57;b.classList.toggle('selected',ogSelectedLudoToken===i);b.onclick=()=>{ogSelectedLudoToken=i;choices.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');b.blur()};choices.appendChild(b)});extraGameChoices.appendChild(choices)}
+   const b=document.createElement('button');b.textContent='Gotti '+(i+1)+(pos===0?' · Home':pos===57?' · Finished':'');b.disabled=pos===57;b.classList.toggle('selected',ogSelectedLudoToken===i);b.onclick=()=>{ogSelectedLudoToken=i;choices.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');b.blur()};choices.appendChild(b)});extraGameChoices.appendChild(choices)}
  }
  if(state.lastRoll){const d=document.createElement('p');d.textContent='🎲 Last roll: '+state.lastRoll;extraGameChoices.appendChild(d);}
 

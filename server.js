@@ -358,20 +358,20 @@ function icePathOverview() {
 
 // V4: transient game state, scoped to the currently matched pair.
 const games = new Map();
-const ogHangWords=['MOUNTAIN','KATHMANDU','GUITAR','CAMERA','ELEPHANT','SUNSHINE','RAINBOW','PIZZA','FOOTBALL','BUTTERFLY','MONKEY','BICYCLE'];
+const ogHangWords=[['MOUNTAIN','Nature / geography'],['KATHMANDU','City in Nepal'],['GUITAR','Musical instrument'],['CAMERA','Electronic device'],['ELEPHANT','Animal'],['SUNSHINE','Weather / nature'],['RAINBOW','Nature / sky'],['PIZZA','Food'],['FOOTBALL','Sport'],['BUTTERFLY','Insect'],['MONKEY','Animal'],['BICYCLE','Transport']];
 const ogSpinTasks=['Tell a joke','Sing for 10 seconds','Show a dance move','Share a fun fact','Do a funny impression','Ask a surprising question'];
 function ogNewFreeGame(g){
  g.finished=false;g.winner=null;g.turn=0;g.round=(g.round||0)+1;
  if(g.type==='connect4')g.board=Array(42).fill(null);
- if(g.type==='hangman'){g.word=ogHangWords[crypto.randomInt(ogHangWords.length)];g.used=[];g.wrong=0;}
+ if(g.type==='hangman'){const entry=ogHangWords[crypto.randomInt(ogHangWords.length)];g.word=entry[0];g.category=entry[1];g.used=[];g.wrong=0;}
  if(g.type==='spin')g.result='';
- if(g.type==='draw'){g.word=ogHangWords[crypto.randomInt(ogHangWords.length)].toLowerCase();g.strokes=[];g.drawer=(g.round-1)%2;}
+ if(g.type==='draw'){g.word=ogHangWords[crypto.randomInt(ogHangWords.length)][0].toLowerCase();g.strokes=[];g.drawer=(g.round-1)%2;}
 }
 function ogEmitFreeGame(g){
  [g.inviter,g.invitee].forEach((id,i)=>{
   const base={type:g.type,you:i,turn:g.turn,finished:g.finished,winner:g.winner};
   if(g.type==='connect4'){base.board=g.board;base.message=g.finished?(g.winner===null?'Draw!':g.winner===i?'You win!':'Partner wins!'):undefined;}
-  if(g.type==='hangman'){base.masked=g.word.split('').map(ch=>g.used.includes(ch)?ch:'_').join('');base.used=g.used;base.wrong=g.wrong;base.word=g.finished?g.word:undefined;base.message=g.finished?(g.winner===null?'Game over':g.winner===i?'You win!':'Partner wins!'):undefined;}
+  if(g.type==='hangman'){base.masked=g.word.split('').map(ch=>g.used.includes(ch)?ch:'_').join('');base.category=g.category;base.used=g.used;base.wrong=g.wrong;base.word=g.finished?g.word:undefined;base.message=g.finished?(g.winner===null?'Game over':g.winner===i?'You win!':'Partner wins!'):undefined;}
   if(g.type==='spin'){base.result=g.result;base.message=g.result?'Next spin: '+(g.turn===i?'yours':'partner’s'):'Take turns spinning';}
   if(g.type==='draw'){base.drawer=g.drawer;base.word=(g.drawer===i||g.finished)?g.word:undefined;base.strokes=g.strokes;base.message=g.finished?(g.winner===i?'Correct guess!':'Round finished'):undefined;}
   io.to(id).emit('galli-free-state',base);
@@ -834,7 +834,7 @@ io.on("connection", (socket) => {
     }else if(g.type==='draw'){
       if(me===g.drawer&&Array.isArray(action.stroke)&&action.stroke.length===4&&action.stroke.every(x=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=1)){
         if(g.strokes.length>=3500)return;g.strokes.push(action.stroke);io.to(g.drawer===0?g.invitee:g.inviter).emit('galli-draw-stroke',action.stroke);return;
-      }else if(me!==g.drawer&&typeof action.guess==='string'&&action.guess.trim().toLowerCase()===g.word){g.finished=true;g.winner=me;}
+      }else if(me!==g.drawer&&typeof action.guess==='string'){const guess=action.guess.trim().toLowerCase().slice(0,30);if(!guess)return;const correct=guess===g.word;socket.emit('galli-draw-guess-feedback',{correct,guess});if(correct){g.finished=true;g.winner=me;}else return;}
       else return;
     }
     ogEmitFreeGame(g);
