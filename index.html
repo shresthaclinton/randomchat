@@ -740,9 +740,13 @@ footer { line-height:1.8; }
 .og-ludo-base.blue{top:2.2%;right:2.2%;color:#086bdc;background:#e9f3ff}.og-ludo-base.green{bottom:2.2%;left:2.2%;color:#079a28;background:#e5ffed}
 .og-ludo-base.red{top:2.2%;left:2.2%;color:#ed1515;background:#fff}.og-ludo-base.yellow{bottom:2.2%;right:2.2%;color:#f9d427;background:#fff}
 .og-ludo-base .base-dot{width:40%;aspect-ratio:1;border-radius:50%;background:currentColor;border:2px solid currentColor;box-shadow:inset 0 0 0 2px #fff,0 1px 3px #0004}
-.og-ludo-base .base-dot.active{box-shadow:0 0 0 3px white,0 1px 4px #3337}
+ .og-ludo-base .base-dot.active{box-shadow:0 0 0 2px #fff,0 2px 5px #0007;cursor:pointer;pointer-events:auto;position:relative;z-index:8;opacity:1!important}
+.og-ludo-base .base-dot.active::after{content:"";position:absolute;inset:19%;border-radius:50%;background:radial-gradient(circle at 30% 22%,#ffffffc0,transparent 50%);pointer-events:none}
+.og-ludo-base .base-dot.moved{opacity:.28!important;cursor:default;box-shadow:none}
+.og-ludo-base.blue,.og-ludo-base.green{pointer-events:auto}
+.og-ludo-base .base-dot.selected{outline:3px solid #ffda27;outline-offset:2px;transform:scale(1.06)}
 .og-ludo-token{position:relative;z-index:5;width:clamp(12px,3.6vw,20px);height:clamp(12px,3.6vw,20px);box-shadow:0 1px 3px #0008}
-.og-green-token{background:#008b31}.og-ludo-board .og-home-blue .og-ludo-token,.og-ludo-board .og-home-green .og-ludo-token{display:none}
+.og-green-token{background:#008b31}/* Home gotti are represented by the four visible tray pieces, not hidden */
 .og-board-die{position:absolute;right:3%;bottom:3%;z-index:9;border:2px solid #fff!important;background:#fffc!important;color:#202020!important;box-shadow:0 3px 12px #0005;min-width:56px;min-height:56px;border-radius:14px!important;font-size:29px!important;cursor:pointer;touch-action:manipulation}
 .og-board-die:disabled{opacity:.5;cursor:default}.og-board-die.rolling{animation:og-dice-wiggle .48s ease-out}
 @keyframes og-dice-wiggle{0%{transform:rotate(0) scale(1)}25%{transform:rotate(18deg) scale(1.1)}50%{transform:rotate(-20deg)}75%{transform:rotate(12deg)}100%{transform:rotate(0)}}
@@ -1597,7 +1601,21 @@ function ogAudio(){try{ogAudioContext=ogAudioContext||new(window.AudioContext||w
 function ogNote(freq,when,duration,volume=.015,type='sine'){
  const c=ogAudio();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(freq,when);g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(volume,when+.025);g.gain.exponentialRampToValueAtTime(.0001,when+duration);o.connect(g).connect(c.destination);o.start(when);o.stop(when+duration+.02);
 }
-function ogDiceSound(){ogMusicStart();const c=ogAudio();if(!c)return;for(let i=0;i<9;i++)ogNote(260+(i%4)*67,c.currentTime+i*.045,.06,.026,'triangle')}
+function ogDiceSound(){
+ const c=ogAudio();if(!c)return;
+ // A short rattling dice sound, generated locally without an external audio file.
+ const count=11, sampleRate=c.sampleRate;
+ for(let i=0;i<count;i++){
+  const len=Math.floor(sampleRate*.055),buffer=c.createBuffer(1,len,sampleRate),samples=buffer.getChannelData(0);
+  for(let j=0;j<len;j++)samples[j]=(Math.random()*2-1)*Math.pow(1-j/len,2);
+  const source=c.createBufferSource(),gain=c.createGain(),filter=c.createBiquadFilter();
+  source.buffer=buffer;filter.type='bandpass';filter.frequency.value=900+(i%3)*420;filter.Q.value=.65;
+  const t=c.currentTime+.015+i*.053;
+  gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.22,t+.006);gain.gain.exponentialRampToValueAtTime(.0001,t+.054);
+  source.connect(filter);filter.connect(gain);gain.connect(c.destination);source.start(t);
+ }
+ ogMusicStart();
+}
 function ogMusicStart(){if(!ogMusicEnabled||ogMusicTimer)return;let step=0;const notes=[261.63,329.63,392,329.63,293.66,349.23,440,349.23,261.63,329.63,392,523.25,440,392,329.63,293.66];const play=()=>{if(!ogMusicEnabled||document.hidden)return;const c=ogAudio();if(c){ogNote(notes[step%notes.length],c.currentTime,.3,.007);if(step%4===0)ogNote(notes[step%notes.length]/2,c.currentTime,.55,.004)}step++};play();ogMusicTimer=setInterval(play,420)}
 function ogMusicStop(){if(ogMusicTimer){clearInterval(ogMusicTimer);ogMusicTimer=null}}
 function ogAudioControl(container){const wrap=document.createElement('div');wrap.className='og-game-audio';const btn=document.createElement('button');btn.type='button';btn.textContent=ogMusicEnabled?'♫ Music: On':'♫ Music: Off';btn.onclick=()=>{ogMusicEnabled=!ogMusicEnabled;if(ogMusicEnabled)ogMusicStart();else ogMusicStop();btn.textContent=ogMusicEnabled?'♫ Music: On':'♫ Music: Off';btn.blur()};wrap.appendChild(btn);container.appendChild(wrap)}
@@ -1713,11 +1731,30 @@ function renderBoardGame(state){
    if((x===6&&y===14)||(x===8&&y===0))cell.classList.add('og-ludo-start');
    for(let player=0;player<2;player++)state.tokens[player].forEach((pos,i)=>{
     const at=pos===0? (player===0?[[10,1],[13,1],[10,4],[13,4]][i]:[[1,10],[4,10],[1,13],[4,13]][i]):coords(player,pos);
-    if(at&&at[0]===x&&at[1]===y){const token=document.createElement('span');token.className='og-ludo-token '+(player===0?'og-blue-token':'og-green-token');token.textContent=String(i+1);token.title=(player===state.you?'Your':'Stranger’s')+' token '+(i+1);cell.appendChild(token)}
+    if(pos!==0&&at&&at[0]===x&&at[1]===y){const token=document.createElement('span');token.className='og-ludo-token '+(player===0?'og-blue-token':'og-green-token');token.textContent=String(i+1);token.title=(player===state.you?'Your':'Stranger’s')+' token '+(i+1);cell.appendChild(token)}
    });board.appendChild(cell);
   }
   // Decorative home trays and classic four-color central finish.
-  for(const color of ['red','blue','green','yellow']){const base=document.createElement('div');base.className='og-ludo-base '+color;for(let i=0;i<4;i++){const dot=document.createElement('span');dot.className='base-dot'+(['blue','green'].includes(color)?' active':'');if(color==='blue'||color==='green'){const p=color==='blue'?0:1;dot.style.opacity=state.tokens[p][i]===0?'1':'.23';dot.textContent='';dot.setAttribute('aria-label',color+' gotti '+(i+1));dot.title=color+' gotti '+(i+1);dot.style.color='white';dot.style.textAlign='center';dot.style.fontWeight='bold';dot.style.fontSize='clamp(8px,2vw,12px)';dot.style.lineHeight='2.1'}base.appendChild(dot)}board.appendChild(base)}
+  for(const color of ['red','blue','green','yellow']){
+   const base=document.createElement('div');base.className='og-ludo-base '+color;
+   for(let i=0;i<4;i++){
+    const dot=document.createElement('span');dot.className='base-dot';
+    if(color==='blue'||color==='green'){
+     const p=color==='blue'?0:1,home=state.tokens[p][i]===0;
+     dot.classList.add(home?'active':'moved');
+     if(home&&p===state.you&&state.canRoll&&!state.finished){
+      dot.setAttribute('role','button');dot.tabIndex=0;
+      if(ogSelectedLudoToken===i)dot.classList.add('selected');
+      const select=()=>{ogSelectedLudoToken=i;board.querySelectorAll('.base-dot.selected').forEach(d=>d.classList.remove('selected'));dot.classList.add('selected');extraGameChoices.querySelectorAll('.og-ludo-actions button').forEach((b,j)=>b.classList.toggle('selected',j===i));};
+      dot.addEventListener('click',select);dot.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select()}});
+     }
+     dot.title=color+' gotti '+(i+1)+(home?' at home':' on track');
+     dot.setAttribute('aria-label',dot.title);
+    }
+    base.appendChild(dot);
+   }
+   board.appendChild(base);
+  }
   const center=document.createElementNS('http://www.w3.org/2000/svg','svg');center.setAttribute('viewBox','0 0 100 100');center.setAttribute('class','og-ludo-center-art');for(const [pts,color] of [['0,0 100,0 50,50','#086bdc'],['100,0 100,100 50,50','#f9d427'],['0,100 100,100 50,50','#079a28'],['0,0 0,100 50,50','#ed1515']]){const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');poly.setAttribute('points',pts);poly.setAttribute('fill',color);center.appendChild(poly)}board.appendChild(center);
   ogMakeDie(board,state.canRoll&&!state.finished,()=>socket.emit('galli-board-roll',{token:ogSelectedLudoToken}));
   extraGameChoices.appendChild(board);
