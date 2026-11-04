@@ -753,7 +753,11 @@ footer { line-height:1.8; }
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 <style>
-.og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#1475f5}.og-letter-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.og-letter-grid button{padding:7px 0!important;min-width:0!important}.og-hang-word{text-align:center;font-size:24px;font-weight:800;letter-spacing:3px}.og-spin-wheel{width:220px;height:220px;border-radius:50%;background:conic-gradient(#fda4af 0 60deg,#fde68a 60deg 120deg,#86efac 120deg 180deg,#93c5fd 180deg 240deg,#c4b5fd 240deg 300deg,#fdba74 300deg 360deg);border:6px solid #fff;box-shadow:0 2px 12px #0003;position:relative;margin:12px auto;display:grid;place-items:center}.og-spin-wheel span{position:absolute;font-size:9px;font-weight:700;max-width:70px;text-align:center;color:#1f2937}.og-wheel-spinning{animation:ogspin 1.4s ease-out}@keyframes ogspin{to{transform:rotate(1080deg)}}.og-spin-result{text-align:center;font-weight:800}.og-draw-canvas{width:100%;max-width:420px;aspect-ratio:7/5;touch-action:none;background:white;border:2px solid #222;border-radius:8px;display:block;margin:auto}.og-draw-label{font-weight:700;text-align:center}.galli-game-picker{display:flex;flex-direction:column;gap:8px}
+.og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#1475f5}.og-connect-cell.og-drop-new{position:relative;background:white;overflow:visible;z-index:2}
+.og-connect-cell.og-drop-new::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--drop-color);border:1px solid rgba(0,0,0,.12);pointer-events:none;animation:ogConnectDrop .65s cubic-bezier(.22,.78,.35,1) both;will-change:transform}
+@keyframes ogConnectDrop{0%{transform:translateY(calc(-1 * var(--drop-rows) * (100% + 3px)))}72%{transform:translateY(3px)}88%{transform:translateY(-2px)}100%{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.og-connect-cell.og-drop-new::after{animation-duration:.01ms}}
+.og-letter-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.og-letter-grid button{padding:7px 0!important;min-width:0!important}.og-hang-word{text-align:center;font-size:24px;font-weight:800;letter-spacing:3px}.og-spin-wheel{width:220px;height:220px;border-radius:50%;background:conic-gradient(#fda4af 0 60deg,#fde68a 60deg 120deg,#86efac 120deg 180deg,#93c5fd 180deg 240deg,#c4b5fd 240deg 300deg,#fdba74 300deg 360deg);border:6px solid #fff;box-shadow:0 2px 12px #0003;position:relative;margin:12px auto;display:grid;place-items:center}.og-spin-wheel span{position:absolute;font-size:9px;font-weight:700;max-width:70px;text-align:center;color:#1f2937}.og-wheel-spinning{animation:ogspin 1.4s ease-out}@keyframes ogspin{to{transform:rotate(1080deg)}}.og-spin-result{text-align:center;font-weight:800}.og-draw-canvas{width:100%;max-width:420px;aspect-ratio:7/5;touch-action:none;background:white;border:2px solid #222;border-radius:8px;display:block;margin:auto}.og-draw-label{font-weight:700;text-align:center}.galli-game-picker{display:flex;flex-direction:column;gap:8px}
 </style>
 </head>
 
@@ -1501,6 +1505,7 @@ function showGamePicker(){
 gameTypePicker.querySelectorAll("[data-galli-game]").forEach(b=>b.addEventListener("click",()=>setGameType(b.dataset.galliGame)));
 function renderExtraGame(state){
  if(!partnerId)return;
+ const previousConnectBoard=activeExtraGame?.type==='connect4'&&state.type==='connect4' ? activeExtraGame.board : null;
  activeExtraGame=state;selectedGameType=state.type;
  activeGameTitle.textContent=gameTitles[state.type];
  gamePanel.hidden=false;
@@ -1547,7 +1552,11 @@ function ogFreeState(state){
   const board=ogEl('div',undefined,'og-connect-board');
   for(let r=0;r<6;r++)for(let c=0;c<7;c++){
    const cell=ogEl('button','', 'og-connect-cell');const v=state.board[r*7+c];
-   if(v!==null)cell.classList.add(v===0?'og-disc-red':'og-disc-blue');
+   if(v!==null){
+    const newDisc=Array.isArray(previousConnectBoard)&&previousConnectBoard.length===42&&previousConnectBoard[r*7+c]===null;
+    if(newDisc){cell.classList.add('og-drop-new');cell.style.setProperty('--drop-color',v===0?'#e53e3e':'#1475f5');cell.style.setProperty('--drop-rows',String(r+1));}
+    else cell.classList.add(v===0?'og-disc-red':'og-disc-blue');
+   }
    cell.disabled=!!state.finished||!turn||state.board[c]!==null;
    cell.setAttribute('aria-label','Column '+(c+1)+', row '+(r+1));
    cell.onclick=()=>socket.emit('galli-free-action',{column:c});board.appendChild(cell);
