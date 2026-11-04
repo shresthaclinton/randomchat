@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Online Galli | A new encounter around every corner</title>
-<meta name="description" content="Online Galli is an 18+ place for spontaneous one-to-one video conversations. A new encounter around every corner...">
+<title>Online Galli | A new meetup around every corner</title>
+<meta name="description" content="Online Galli is an 18+ place for spontaneous one-to-one video conversations. A new meetup around every corner...">
 <meta name="theme-color" content="#ffe247">
 
 <style>
@@ -680,6 +680,19 @@ footer { line-height:1.8; }
 .galli-pro-dialog p{font-size:14px;line-height:1.5}
 .galli-pro-dialog button{background:#ffdf54;color:#171717;border:0;border-radius:9px;padding:11px 30px;font-weight:900;cursor:pointer}
 #previousCornerBtn{background:#28202c;color:#ffdf54;border:1px solid #ffdf54;border-radius:9px;padding:10px;font-weight:800}
+
+/* Online Galli Pro layout refinement: tilted overlapping corner tags */
+.pro-locked,.galli-upload-label{position:relative!important;overflow:visible!important}
+.pro-corner-tag{position:absolute;z-index:4;right:-9px;top:-10px;transform:rotate(17deg);transform-origin:center;display:inline-block;padding:3px 6px;border-radius:4px;background:#ffd63f;color:#171717;border:1px solid #171717;box-shadow:0 2px 4px #0004;font-size:9px;line-height:1.1;font-weight:950;letter-spacing:.35px;white-space:nowrap;pointer-events:none}
+.galli-game-picker{display:flex!important;flex-wrap:nowrap!important;justify-content:flex-start!important;gap:7px!important;overflow-x:auto;overflow-y:visible;padding:13px 10px 9px 2px;margin:4px 0 8px;scrollbar-width:thin}
+.galli-game-picker button{position:relative;flex:0 0 auto;white-space:nowrap;font-size:11px!important;padding:8px 9px!important;min-height:35px}
+/* Keep Play Games compact and aligned with the control buttons when width allows */
+.controls{column-gap:8px!important;row-gap:9px!important}
+.controls>button{padding:12px 11px!important;white-space:nowrap;font-size:12px}
+.controls #previousCornerBtn{background:#fff4b3;color:#171717;border:2px solid #171717}
+.controls #gamesBtn{margin-left:0!important}
+@media(max-width:600px){.controls>button{flex:0 1 auto!important;padding:10px 8px!important;font-size:11px}.controls .galli-enter-wrap{min-width:130px;max-width:180px}.pro-corner-tag{font-size:8px;right:-6px;top:-9px}}
+
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -726,7 +739,7 @@ footer { line-height:1.8; }
 
 <section>
   <div id="galliIntroBanner">
-    <h1 class="tagline">A new encounter around every corner...</h1>
+    <h1 class="tagline">A new meetup around every corner...</h1>
     <p class="subtitle">Explore a virtual street and meet someone new. · Meet someone unexpected.</p>
   </div>
   <div id="galliMobileAdPosition" aria-label="Mobile advertising position" hidden></div>
@@ -761,7 +774,7 @@ footer { line-height:1.8; }
 
   <div class="v4-panel" id="gamePanel" hidden>
  <strong id="activeGameTitle">🎮 Games</strong>
- <div id="gameTypePicker" class="galli-game-picker"><button type="button" data-galli-game="ttt">❎ Tic-Tac-Toe</button><button type="button" data-galli-game="rps">✊ Rock Paper Scissors</button><button type="button" data-galli-game="wyr">🤔 Would You Rather?</button><button type="button" data-galli-game="ludo" class="pro-locked">🎲 Ludo 👑 PRO</button><button type="button" data-galli-game="snakes" class="pro-locked">🐍 Snakes & Ladders 👑 PRO</button></div>
+ <div id="gameTypePicker" class="galli-game-picker"><button type="button" data-galli-game="ttt">❎ Tic-Tac-Toe</button><button type="button" data-galli-game="rps">✊ Rock Paper Scissors</button><button type="button" data-galli-game="wyr">🤔 Would You Rather?</button><button type="button" data-galli-game="ludo" class="pro-locked">🎲 Ludo <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button><button type="button" data-galli-game="snakes" class="pro-locked">🐍 Snakes & Ladders <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button></div>
  <p id="gameMessage" aria-live="polite">Invite your stranger to play.</p>
  <div id="gameBoard" class="v4-board" role="group" aria-label="Tic-Tac-Toe board"></div>
  <div id="extraGameChoices" class="galli-game-choices" hidden></div>
@@ -807,7 +820,7 @@ footer { line-height:1.8; }
    <option>Janakpur Bolts</option><option>Kathmandu Gurkhas</option><option>Karnali Yaks</option>
    <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
   </select>
-  <label class="galli-upload-label" for="customBadgeUpload">📤 Update Custom Badge <span class="pro-pill">👑 PRO</span></label>
+  <label class="galli-upload-label" for="customBadgeUpload">📤 Update Custom Badge <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></label>
   <input id="customBadgeUpload" type="file" accept=".png,.jpg,.jpeg,.jfif,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp" aria-label="Upload custom image badge" /><small class="galli-badge-format-help" style="display:block;font-size:10px;opacity:.8">PNG · JPG/JPEG · JFIF · WebP · GIF (still) · BMP · max 5 MB</small>
   <div id="badgeEditPanel" hidden><div class="badge-preview-row"><div><small>Original</small><canvas id="badgeBefore" width="96" height="96"></canvas></div><div><small>Background removed</small><canvas id="badgeAfter" width="96" height="96"></canvas></div></div><label for="badgeTolerance">Removal strength <output id="badgeToleranceValue">32</output><input id="badgeTolerance" type="range" min="8" max="85" value="32" step="1"></label><label><input id="badgeKeepOriginal" type="checkbox"> Keep original background</label><button type="button" id="badgeApply">Apply badge</button></div>
   <button id="clearCustomBadge" type="button" class="galli-clear-badge" hidden>Remove badge</button>
@@ -826,8 +839,8 @@ footer { line-height:1.8; }
       <button class="start" id="startBtn">▶ Enter the Galli</button>
       <div id="status" role="status" aria-live="polite">Ready to enter Online Galli.</div>
     </div>
+    <button id="previousCornerBtn" type="button" class="pro-locked">↩ Previous <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button>
     <button class="next" id="nextBtn" disabled>⏭ Next Corner</button>
-    <button id="previousCornerBtn" type="button" class="pro-locked">↩ Previous Corner 👑 PRO</button>
     <button id="muteBtn" disabled>🎤 Mute</button>
     <button class="stop" id="stopBtn" disabled>🚪 Exit Galli</button>
     <button id="reportBtn" disabled>⚑ Report</button>
