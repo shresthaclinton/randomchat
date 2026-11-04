@@ -709,6 +709,20 @@ footer { line-height:1.8; }
 .galli-game-picker{display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:flex-start!important;overflow:visible!important;max-width:100%!important;min-height:0!important;padding:14px 12px 8px 4px!important;gap:11px!important}
 .galli-game-picker button{display:flex!important;flex:0 0 auto!important;justify-content:center!important;align-items:center!important;width:100%!important;min-height:43px!important;white-space:normal!important;font-size:13px!important;padding:11px 15px!important}
 @media(max-width:600px){.galli-game-picker{padding:16px 12px 8px 4px!important;gap:12px!important}.galli-game-picker button{min-height:46px!important}}
+
+/* True visual boards for the two-player board games */
+.og-snakes-wrap{position:relative;width:min(100%,420px);aspect-ratio:1;margin:8px auto}
+.og-snakes-wrap .og-board-grid{width:100%;height:100%;grid-template-rows:repeat(10,minmax(0,1fr));gap:1px}
+.og-snakes-wrap .og-board-cell{position:relative;display:flex;align-items:flex-start;justify-content:flex-start;padding:3px;min-height:0;font-size:clamp(9px,2.5vw,13px);font-weight:700}
+.og-snake-players{position:absolute;bottom:1px;right:1px;font-size:clamp(10px,2.7vw,15px);z-index:3}
+.og-snake-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2}
+.og-board-legend{font-size:12px;line-height:1.5;text-align:center;margin:7px auto;max-width:440px}
+.og-ludo-board{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));grid-template-rows:repeat(15,minmax(0,1fr));width:min(100%,420px);aspect-ratio:1;margin:8px auto;border:3px solid #333;background:#fff}
+.og-ludo-square{border:1px solid #777;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;gap:1px;flex-wrap:wrap}
+.og-home-blue{background:#83c5fa}.og-home-red{background:#f5a5a5}.og-home-green{background:#b8e7a5}.og-home-yellow{background:#f5e4a1}
+.og-ludo-path{background:#fff}.og-ludo-blue-lane{background:#63aaf4}.og-ludo-red-lane{background:#ed8b8b}.og-ludo-center{background:#f5cb58}.og-ludo-start{outline:2px solid #202020;outline-offset:-2px}
+.og-ludo-token{display:inline-flex;align-items:center;justify-content:center;width:clamp(12px,3.7vw,20px);height:clamp(12px,3.7vw,20px);border-radius:50%;color:white;font-size:10px;font-weight:800;border:1px solid #fff;box-shadow:0 1px 2px #555}
+.og-blue-token{background:#075fce}.og-red-token{background:#cc2736}.og-ludo-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.og-ludo-actions button{font-size:12px;padding:9px 5px}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -1497,26 +1511,59 @@ function renderBoardGame(state){
  info.textContent=state.finished?(state.winner===state.you?'You won! 🎉':'Stranger won!'):(state.canRoll?'Your turn — roll the dice':'Waiting for stranger to roll');
  extraGameChoices.appendChild(info);
  if(state.type==='snakes'){
-  const grid=document.createElement('div');grid.className='og-board-grid';
   const jumps={4:14,9:31,20:38,28:84,40:59,51:67,63:81,71:91,17:7,54:34,62:19,64:60,87:24,93:73,95:75,99:78};
-  for(let row=9;row>=0;row--){
-   const nums=Array.from({length:10},(_,i)=>row*10+(row%2===0?i+1:10-i));
+  const holder=document.createElement('div');holder.className='og-snakes-wrap';
+  const grid=document.createElement('div');grid.className='og-board-grid';
+  for(let row=9;row>=0;row--){const nums=Array.from({length:10},(_,i)=>row*10+(row%2===0?i+1:10-i));
    for(const n of nums){const cell=document.createElement('span');cell.className='og-board-cell';
-    cell.textContent=n+(jumps[n]?(jumps[n]>n?' 🪜':' 🐍'):'')+(state.positions[0]===n?' 🔵':'')+(state.positions[1]===n?' 🔴':'');
-    grid.appendChild(cell);}
-  }extraGameChoices.appendChild(grid);
+    const num=document.createElement('b');num.textContent=n;cell.appendChild(num);
+    if(state.positions[0]===n||state.positions[1]===n){const marker=document.createElement('span');marker.className='og-snake-players';marker.textContent=(state.positions[0]===n?'🔵':'')+(state.positions[1]===n?'🔴':'');cell.appendChild(marker)}
+    grid.appendChild(cell);
+   }
+  }
+  holder.appendChild(grid);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 1000 1000');svg.setAttribute('class','og-snake-overlay');svg.setAttribute('aria-label','Snakes and ladders connect numbered squares');
+  const xy=n=>{const r=Math.floor((n-1)/10),c=(n-1)%10;return {x:((r%2===0?c:9-c)+.5)*100,y:(9-r+.5)*100}};
+  const el=(name,attrs)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',name);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));svg.appendChild(e);return e};
+  for(const [fromStr,to] of Object.entries(jumps)){const from=+fromStr,a=xy(from),b=xy(to),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),nx=-dy/len*12,ny=dx/len*12;
+   if(to>from){for(const side of [-1,1])el('line',{x1:a.x+nx*side,y1:a.y+ny*side,x2:b.x+nx*side,y2:b.y+ny*side,stroke:'#76502c','stroke-width':8,'stroke-linecap':'round'});
+    for(let t=.12;t<.98;t+=.115)el('line',{x1:a.x+dx*t+nx,y1:a.y+dy*t+ny,x2:a.x+dx*t-nx,y2:a.y+dy*t-ny,stroke:'#d79c4e','stroke-width':8,'stroke-linecap':'round'});
+   }else{const cx=(a.x+b.x)/2+nx*3,cy=(a.y+b.y)/2+ny*3;
+    el('path',{d:`M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`,fill:'none',stroke:'#f7df7b','stroke-width':21,'stroke-linecap':'round'});
+    el('path',{d:`M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`,fill:'none',stroke:'#b33e4a','stroke-width':12,'stroke-linecap':'round','stroke-dasharray':'18 8'});
+    el('circle',{cx:b.x,cy:b.y,r:13,fill:'#b33e4a',stroke:'#fff','stroke-width':3});
+   }
+  }
+  holder.appendChild(svg);extraGameChoices.appendChild(holder);
+  const legend=document.createElement('p');legend.className='og-board-legend';legend.textContent='🪜 Climb from the bottom to the top of each ladder · 🐍 Slide from head to tail · 🔵 Blue / 🔴 Red';extraGameChoices.appendChild(legend);
  }else{
-  const board=document.createElement('div');board.className='og-ludo-track';
-  for(let player=0;player<2;player++){
-   const group=document.createElement('div');group.textContent=(player===state.you?'You':'Stranger')+' '+(player===0?'🔵':'🔴')+': ';
-   state.tokens[player].forEach((pos,i)=>{const b=document.createElement('button');b.textContent='●'+(i+1)+' ('+(pos===0?'Home':pos===57?'Done':pos+'/57')+')';
-    b.disabled=!(player===state.you&&state.canRoll&&!state.finished&&pos!==57);
-    b.onclick=()=>socket.emit('galli-board-roll',{token:i});group.appendChild(b);});board.appendChild(group);
-  }extraGameChoices.appendChild(board);
+  const path=[];
+  for(let y=14;y>=9;y--)path.push([6,y]);for(let x=5;x>=0;x--)path.push([x,8]);path.push([0,7],[0,6]);for(let x=1;x<=5;x++)path.push([x,6]);for(let y=5;y>=0;y--)path.push([6,y]);path.push([7,0],[8,0]);for(let y=1;y<=5;y++)path.push([8,y]);for(let x=9;x<=14;x++)path.push([x,6]);path.push([14,7],[14,8]);for(let x=13;x>=9;x--)path.push([x,8]);for(let y=9;y<=14;y++)path.push([8,y]);path.push([7,14]);
+  const board=document.createElement('div');board.className='og-ludo-board';
+  const coords=(player,pos)=>{if(pos===0)return null;if(pos===57)return [7,7];if(pos>=52)return [7,player===0?14-(pos-51):pos-51];return path[((player===0?0:26)+pos-1)%52]};
+  for(let y=0;y<15;y++)for(let x=0;x<15;x++){
+   const cell=document.createElement('div');cell.className='og-ludo-square';cell.style.gridColumn=x+1;cell.style.gridRow=y+1;
+   const home=(x<6&&y<6)?'green':(x>8&&y<6)?'red':(x<6&&y>8)?'blue':(x>8&&y>8)?'yellow':null;
+   const isPath=path.some(c=>c[0]===x&&c[1]===y);
+   if(home)cell.classList.add('og-home-'+home);
+   if(x>=6&&x<=8&&y>=6&&y<=8)cell.classList.add('og-ludo-center');
+   if(isPath)cell.classList.add('og-ludo-path');
+   if(x===7&&y>=9&&y<=13)cell.classList.add('og-ludo-blue-lane');
+   if(x===7&&y>=1&&y<=5)cell.classList.add('og-ludo-red-lane');
+   if((x===6&&y===14)||(x===8&&y===0))cell.classList.add('og-ludo-start');
+   for(let player=0;player<2;player++)state.tokens[player].forEach((pos,i)=>{
+    const at=pos===0? (player===0?[[1,10],[4,10],[1,13],[4,13]][i]:[[10,1],[13,1],[10,4],[13,4]][i]):coords(player,pos);
+    if(at&&at[0]===x&&at[1]===y){const token=document.createElement('span');token.className='og-ludo-token '+(player===0?'og-blue-token':'og-red-token');token.textContent=String(i+1);token.title=(player===state.you?'Your':'Stranger’s')+' token '+(i+1);cell.appendChild(token)}
+   });board.appendChild(cell);
+  }
+  extraGameChoices.appendChild(board);
+  const key=document.createElement('p');key.className='og-board-legend';key.textContent='🔵 Blue vs 🔴 Red · Roll 6 to leave home · Get all four tokens to the center to win';extraGameChoices.appendChild(key);
+  if(state.canRoll&&!state.finished){const choices=document.createElement('div');choices.className='og-ludo-actions';state.tokens[state.you].forEach((pos,i)=>{
+   const b=document.createElement('button');b.textContent='🎲 Roll for token '+(i+1)+(pos===0?' (Home)':pos===57?' (Finished)':'');b.disabled=pos===57;b.onclick=()=>socket.emit('galli-board-roll',{token:i});choices.appendChild(b)});extraGameChoices.appendChild(choices)}
  }
  if(state.lastRoll){const d=document.createElement('p');d.textContent='🎲 Last roll: '+state.lastRoll;extraGameChoices.appendChild(d);}
  if(state.type==='snakes'&&state.canRoll){const b=document.createElement('button');b.textContent='🎲 Roll Dice';b.onclick=()=>socket.emit('galli-board-roll',{});extraGameChoices.appendChild(b);}
- if(state.type==='ludo'&&state.canRoll){const p=document.createElement('p');p.textContent='Choose a token to roll and move. Roll 6 to leave home.';extraGameChoices.appendChild(p);}
+
  playAgainGameBtn.hidden=!state.finished;playAgainGameBtn.disabled=false;
  gameMessage.textContent='Two-player '+(state.type==='ludo'?'Ludo':'Snakes & Ladders');
 }
