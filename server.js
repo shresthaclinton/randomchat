@@ -196,6 +196,14 @@ const server = http.createServer(async (req, res) => {
     fs.createReadStream(path.join(__dirname, "admin.html")).pipe(res);
     return;
   }
+  if(url.pathname==='/api/owner/unlock'&&req.method==='POST'){
+    let body='';req.on('data',chunk=>{body+=chunk;if(body.length>2048)req.destroy();});
+    req.on('end',()=>{let provided='';try{provided=JSON.parse(body).password||'';}catch{}
+      const ok=safeSecretMatch(provided);
+      res.writeHead(ok?200:401,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+      res.end(JSON.stringify(ok?{ok:true,ticket:ownerTicket(),expiresInSeconds:7200}:{ok:false,error:'Incorrect admin password'}));
+    });return;
+  }
   if (url.pathname.startsWith("/api/admin/")) {
     const configured = process.env.ADMIN_DASHBOARD_TOKEN || "";
     const provided = req.headers["x-admin-token"];
@@ -351,7 +359,14 @@ function icePathOverview() {
 // V4: transient game state, scoped to the currently matched pair.
 const games = new Map();
 // Beta test access only. Production must use verified paid entitlements.
-const proPreviewEnabled = process.env.ONLINE_GALLI_PRO_TEST_MODE === 'true';
+// Owner entitlement: short-lived HMAC token derived from the existing dashboard secret.
+const proPreviewEnabled = false;
+function adminSecret(){const secret=process.env.ADMIN_DASHBOARD_TOKEN||'';return secret.length>=24?secret:null;}
+function safeSecretMatch(value){const secret=adminSecret();if(!secret||typeof value!=='string')return false;const a=Buffer.from(secret),b=Buffer.from(value);return a.length===b.length&&crypto.timingSafeEqual(a,b);}
+function ownerTicket(){const exp=Date.now()+2*60*60*1000;const payload=String(exp);const signature=crypto.createHmac('sha256',adminSecret()).update('onlinegalli-owner:'+payload).digest('hex');return payload+'.'+signature;}
+function validateOwnerTicket(ticket){if(typeof ticket!=='string'||ticket.length>160)return false;const parts=ticket.split('.');if(parts.length!==2||!/^[0-9]{13}$/.test(parts[0])||!/^[a-f0-9]{64}$/.test(parts[1]))return false;const exp=Number(parts[0]);if(exp<Date.now()||exp>Date.now()+2*60*60*1000)return false;const secret=adminSecret();if(!secret)return false;const expected=crypto.createHmac('sha256',secret).update('onlinegalli-owner:'+parts[0]).digest('hex');return crypto.timingSafeEqual(Buffer.from(expected),Buffer.from(parts[1]));}
+function hasPro(socket){return socket.data.owner===true || socket.data.proVerified===true;}
+
 const previousBySocket = new Map();
 const reconnectRequests = new Map();
 const snakesLadders = {4:14,9:31,20:38,28:84,40:59,51:67,63:81,71:91,17:7,54:34,62:19,64:60,87:24,93:73,95:75,99:78};
@@ -585,7 +600,10 @@ function leavePartner(socket) {
 io.on("connection", (socket) => {
   monitor.connections++;
   console.log("User connected:", socket.id);
-  socket.emit("galli-pro-preview-status",{enabled:proPreviewEnabled});
+  socket.data.owner=false;
+  socket.data.proVerified=false; // Paid subscription validation is not yet implemented.
+  socket.emit("galli-pro-preview-status",{enabled:false});
+  socket.on('galli-owner-auth',({ticket}={})=>{socket.data.owner=validateOwnerTicket(ticket);socket.emit('galli-owner-status',{unlocked:socket.data.owner});});
 
   socket.data.ready = false;
   socket.data.clientId = null;
@@ -685,7 +703,7 @@ io.on("connection", (socket) => {
 
 
   socket.on('galli-previous-request',()=>{
-    if(!proPreviewEnabled){socket.emit('galli-pro-required',{feature:'Previous'});return;}
+    if(!hasPro(socket)){socket.emit('galli-pro-required',{feature:'Previous'});return;}
     const prev=previousBySocket.get(socket.id);
     if(!prev||prev.expires<Date.now()){socket.emit('galli-previous-status','Previous partner is no longer available.');return;}
     const other=io.sockets.sockets.get(prev.otherId);
@@ -715,7 +733,9 @@ io.on("connection", (socket) => {
   });
   socket.on("galli-game-invite", ({type="ttt"}={}) => {
     if(!["ttt","rps","wyr","ludo","snakes"].includes(type))return;
-    // Allow beta gameplay until verified paid subscriptions are implemented.
+    if(['ludo','snakes'].includes(type)&&!hasPro(socket)){
+      socket.emit('galli-pro-required',{feature:type==='ludo'?'Ludo':'Snakes & Ladders'});return;
+    }
     const p=gamePair(socket);
     if(!p) return;
     const old=games.get(p.key);
@@ -775,7 +795,7 @@ io.on("connection", (socket) => {
     const p=gamePair(socket);if(!p)return;
     const g=games.get(p.key);if(!g||!['ludo','snakes'].includes(g.type)||g.status!=='playing'||g.finished)return;
     const player=socket.id===g.inviter?0:1;
-    if(player!==g.turn||!proPreviewEnabled)return;
+    if(player!==g.turn)return; // Both invited participants may play after an authorized Pro invitation.
     const roll=require('crypto').randomInt(1,7);g.lastRoll=roll;
     if(g.type==='snakes'){
       const target=g.positions[player]+roll;
@@ -827,7 +847,7 @@ io.on("connection", (socket) => {
   });
   socket.on("galli-custom-badge",({data}={})=>{
     // Custom uploads are Pro-only until a verified subscription entitlement system exists.
-    socket.emit("galli-pro-required",{feature:"custom-badge"});return;
+    if(!hasPro(socket)){socket.emit("galli-pro-required",{feature:"custom-badge"});return;}
     // Only small PNG data URLs; never write uploaded content to disk.
     if(typeof data!=="string"||!/^data:image\/png;base64,[A-Za-z0-9+/=]{1,65000}$/.test(data))return;
     if(rateLimited(reactionTimes,socket.id,4,60000))return;
