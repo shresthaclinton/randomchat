@@ -350,6 +350,24 @@ function icePathOverview() {
 
 // V4: transient game state, scoped to the currently matched pair.
 const games = new Map();
+// Beta test access only. Production must use verified paid entitlements.
+const proPreviewEnabled = process.env.ONLINE_GALLI_PRO_TEST_MODE === 'true';
+const previousBySocket = new Map();
+const reconnectRequests = new Map();
+const snakesLadders = {4:14,9:31,20:38,28:84,40:59,51:67,63:81,71:91,17:7,54:34,62:19,64:60,87:24,93:73,95:75,99:78};
+function emitBoardGame(key,g){
+ for(const id of [g.inviter,g.invitee]) io.to(id).emit('galli-board-state',{
+  type:g.type, you:id===g.inviter?0:1, turn:g.turn, positions:g.positions,
+  lastRoll:g.lastRoll, finished:g.finished, winner:g.winner,
+  tokens:g.tokens||null, canRoll:!g.finished&&g.turn===(id===g.inviter?0:1)
+ });
+}
+function beginBoardGame(key,g){
+ g.positions=[0,0];g.tokens=g.type==='ludo'?[[0,0,0,0],[0,0,0,0]]:null;
+ g.turn=0;g.lastRoll=null;g.finished=false;g.winner=null;
+ emitBoardGame(key,g);
+}
+
 const reactionTimes = new Map();
 const textTimes = new Map();
 // Original text-only supporter labels. No official team logos are distributed.
@@ -548,6 +566,9 @@ function leavePartner(socket) {
   clearGame(socket);
   partners.delete(socket.id);
   partners.delete(otherId);
+  previousBySocket.set(socket.id,{otherId,expires:Date.now()+120000});
+  previousBySocket.set(otherId,{otherId:socket.id,expires:Date.now()+120000});
+  reconnectRequests.delete(socket.id);reconnectRequests.delete(otherId);
 
   const other = io.sockets.sockets.get(otherId);
 
@@ -564,6 +585,7 @@ function leavePartner(socket) {
 io.on("connection", (socket) => {
   monitor.connections++;
   console.log("User connected:", socket.id);
+  socket.emit("galli-pro-preview-status",{enabled:proPreviewEnabled});
 
   socket.data.ready = false;
   socket.data.clientId = null;
@@ -662,11 +684,38 @@ io.on("connection", (socket) => {
   });
 
 
+  socket.on('galli-previous-request',()=>{
+    if(!proPreviewEnabled){socket.emit('galli-pro-required',{feature:'Previous'});return;}
+    const prev=previousBySocket.get(socket.id);
+    if(!prev||prev.expires<Date.now()){socket.emit('galli-previous-status','Previous partner is no longer available.');return;}
+    const other=io.sockets.sockets.get(prev.otherId);
+    if(!other||partners.has(socket.id)||partners.has(other.id)||!other.data.ready){socket.emit('galli-previous-status','Previous partner is unavailable.');return;}
+    if(previousBySocket.get(other.id)?.otherId!==socket.id){socket.emit('galli-previous-status','Previous partner is unavailable.');return;}
+    reconnectRequests.set(other.id,{from:socket.id,expires:Date.now()+30000});
+    other.emit('galli-previous-invite');socket.emit('galli-previous-status','Waiting for the other person to agree...');
+  });
+  socket.on('galli-previous-response',({accept}={})=>{
+    const request=reconnectRequests.get(socket.id);reconnectRequests.delete(socket.id);
+    if(!request||request.expires<Date.now())return;
+    const from=io.sockets.sockets.get(request.from);
+    if(!from)return;
+    if(accept!==true){from.emit('galli-previous-status','Previous partner declined.');return;}
+    if(partners.has(socket.id)||partners.has(from.id)||!socket.data.ready||!from.data.ready||!eligible(socket,from))return;
+    // Remove both from the random queue, then match directly via the normal signaling events.
+    removeWaiting(socket.id);removeWaiting(from.id);
+    partners.set(socket.id,from.id);partners.set(from.id,socket.id);
+    const started=Date.now();const chatKey=pairKey(socket.id,from.id);chatStarts.set(chatKey,started);monitor.matches++;
+    const session={id:crypto.randomUUID(),started,a:socket.data.clientId,b:from.data.clientId};analyticsSessions.set(chatKey,session);
+    persistAnalytics(`INSERT INTO analytics_chats(id, started_at, client_a, client_b) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO NOTHING`,[session.id,new Date(started),session.a,session.b]);
+    from.emit('matched',{partnerId:socket.id,initiator:true});
+    socket.emit('matched',{partnerId:from.id,initiator:false});
+    if(socket.data.supporterTeam)from.emit('galli-badge-peer',{team:socket.data.supporterTeam});
+    if(from.data.supporterTeam)socket.emit('galli-badge-peer',{team:from.data.supporterTeam});
+    previousBySocket.delete(socket.id);previousBySocket.delete(from.id);
+  });
   socket.on("galli-game-invite", ({type="ttt"}={}) => {
-    if(["ludo","snakes"].includes(type)){
-      socket.emit("galli-pro-required",{feature:type});return;
-    }
-    if(!["ttt","rps","wyr"].includes(type))return;
+    if(!["ttt","rps","wyr","ludo","snakes"].includes(type))return;
+    if(["ludo","snakes"].includes(type)&&!proPreviewEnabled){socket.emit("galli-pro-required",{feature:type});return;}
     const p=gamePair(socket);
     if(!p) return;
     const old=games.get(p.key);
@@ -685,6 +734,7 @@ io.on("connection", (socket) => {
       return;
     }
     g.status="playing";
+    if(["ludo","snakes"].includes(g.type)){beginBoardGame(p.key,g);return;}
     if(g.type!=="ttt"){
       g.choices={};g.round=0;g.questionIndex=0;
       sendExtraGameState(p.key,g);
@@ -698,7 +748,9 @@ io.on("connection", (socket) => {
     const p=gamePair(socket);if(!p)return;
     const g=games.get(p.key);
     // A replay is allowed only after the current match has finished.
-    if(!g || g.status!=="playing" || (g.type==="ttt" ? (!g.winner && !g.draw) : Object.keys(g.choices||{}).length!==2))return;
+    if(!g || g.status!=="playing")return;
+    if(["ludo","snakes"].includes(g.type)){if(g.finished)beginBoardGame(p.key,g);return;}
+    if(g.type==="ttt" ? (!g.winner && !g.draw) : Object.keys(g.choices||{}).length!==2)return;
     if(g.type!=="ttt"){
       g.choices={};g.round=(g.round||0)+1;
       if(g.type==="wyr")g.questionIndex=(g.questionIndex+1)%wouldRatherQuestions.length;
@@ -718,6 +770,29 @@ io.on("connection", (socket) => {
     else if(g.board.every(Boolean))g.draw=true;
     else g.turn=g.turn==="X"?"O":"X";
     for(const id of [socket.id,p.other])io.to(id).emit("galli-game-state",{board:g.board,turn:g.turn,you:g.players[id],winner:g.winner,draw:g.draw});
+  });
+  socket.on('galli-board-roll',({token}={})=>{
+    const p=gamePair(socket);if(!p)return;
+    const g=games.get(p.key);if(!g||!['ludo','snakes'].includes(g.type)||g.status!=='playing'||g.finished)return;
+    const player=socket.id===g.inviter?0:1;
+    if(player!==g.turn||!proPreviewEnabled)return;
+    const roll=require('crypto').randomInt(1,7);g.lastRoll=roll;
+    if(g.type==='snakes'){
+      const target=g.positions[player]+roll;
+      if(target<=100)g.positions[player]=snakesLadders[target]||target;
+      if(g.positions[player]===100){g.finished=true;g.winner=player;}
+    }else{
+      if(!Number.isInteger(token)||token<0||token>3)return;
+      const current=g.tokens[player][token];
+      if(current===0 && roll!==6)return;
+      if(current===57)return;
+      const next=current===0?1:Math.min(57,current+roll);
+      if(current+roll>57 && current!==0)return;
+      g.tokens[player][token]=next;
+      if(g.tokens[player].every(x=>x===57)){g.finished=true;g.winner=player;}
+    }
+    if(!g.finished && roll!==6)g.turn=1-player;
+    emitBoardGame(p.key,g);
   });
   socket.on("galli-extra-game-choice", ({choice}={}) => {
     const p=gamePair(socket);if(!p)return;

@@ -693,6 +693,17 @@ footer { line-height:1.8; }
 .controls #gamesBtn{margin-left:0!important}
 @media(max-width:600px){.controls>button{flex:0 1 auto!important;padding:10px 8px!important;font-size:11px}.controls .galli-enter-wrap{min-width:130px;max-width:180px}.pro-corner-tag{font-size:8px;right:-6px;top:-9px}}
 
+
+/* V5.7.14: mobile controls and five game choices always accessible */
+.controls{display:flex!important;flex-wrap:wrap!important;overflow:visible!important}
+.controls #previousCornerBtn{display:inline-flex!important;visibility:visible!important;align-items:center;justify-content:center;position:relative!important;min-height:44px!important}
+.galli-game-picker{overflow-x:auto!important;overflow-y:auto!important;max-width:100%!important;min-height:62px!important}
+.galli-game-picker button{display:inline-flex!important;visibility:visible!important;align-items:center;position:relative!important}
+.og-board-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:1px;width:100%;font-size:8px}
+.og-board-cell{padding:3px 0;min-height:20px;text-align:center;background:#fff2ba;color:#201920;border-radius:2px}
+.og-board-cell:nth-child(odd){background:#e2f0e6}
+.og-ludo-track{display:grid;gap:8px}.og-ludo-track>div{display:flex;flex-wrap:wrap;gap:4px}.og-ludo-track button{font-size:11px;padding:5px}
+@media(max-width:600px){.controls .galli-enter-wrap{flex:1 1 100%!important;max-width:none!important}.controls #previousCornerBtn{order:1!important;flex:1 1 28%!important}.controls #nextBtn{order:2!important;flex:1 1 28%!important}.controls #gamesBtn{order:3!important;flex:1 1 28%!important}.controls #muteBtn{order:4!important}.controls #stopBtn{order:5!important}.controls #reportBtn{order:6!important}.controls #blockBtn{order:7!important}.galli-game-picker{padding-top:16px!important}}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -845,7 +856,7 @@ footer { line-height:1.8; }
     <button class="stop" id="stopBtn" disabled>🚪 Exit Galli</button>
     <button id="reportBtn" disabled>⚑ Report</button>
     <button id="blockBtn" disabled>🚫 Block User</button>
-    <button id="gamesBtn" disabled aria-label="Play Games: choose from three games">🎮 Play Games ▸</button>
+    <button id="gamesBtn" disabled aria-label="Play Games: choose from five games">🎮 Play Games ▸</button>
   </div>
   <div id="galliMobileBottomAds" aria-label="Advertising and safety information"></div>
 
@@ -1404,18 +1415,27 @@ const activeGameTitle=document.getElementById("activeGameTitle");
 const gameTypePicker=document.getElementById("gameTypePicker");
 const extraGameChoices=document.getElementById("extraGameChoices");
 // Pro is not sold or activated in this build: do not simulate paid access.
+window.OG_PRO_TEST_MODE=false;
 function showProNotice(feature){
  const notice=document.getElementById("galliProNotice");
  document.getElementById("galliProFeature").textContent=feature;
  notice.hidden=false;
 }
 document.getElementById("galliProClose").addEventListener("click",()=>document.getElementById("galliProNotice").hidden=true);
-document.getElementById("previousCornerBtn").addEventListener("click",()=>showProNotice("Previous Corner"));
+document.getElementById("previousCornerBtn").addEventListener("click",()=>{
+ if(!window.OG_PRO_TEST_MODE){showProNotice("Previous");return;}
+ socket.emit('galli-previous-request');
+});
+socket.on('galli-previous-status',message=>status(message));
+socket.on('galli-previous-invite',()=>{
+ const accept=confirm('Your previous chat partner wants to reconnect. Accept?');
+ socket.emit('galli-previous-response',{accept});
+});
 const gameTitles={ttt:"❎ Tic-Tac-Toe",rps:"✊ Rock Paper Scissors",wyr:"🤔 Would You Rather?",ludo:"🎲 Ludo 👑 PRO",snakes:"🐍 Snakes & Ladders 👑 PRO"};
 let selectedGameType="ttt",activeExtraGame=null;
 function setGameType(type){
  if(!gameTitles[type])return;
- if(type==="ludo"||type==="snakes"){showProNotice(type==="ludo"?"Ludo":"Snakes & Ladders");return;}
+ if((type==="ludo"||type==="snakes")&&!window.OG_PRO_TEST_MODE){showProNotice(type==="ludo"?"Ludo":"Snakes & Ladders");return;}
  selectedGameType=type;activeGameTitle.textContent=gameTitles[type];
  gameTypePicker.hidden=true;extraGameChoices.hidden=true;
  gameBoard.hidden=true;inviteGameBtn.hidden=false;
@@ -1460,7 +1480,44 @@ function renderExtraGame(state){
  }
 }
 socket.on("galli-extra-game-state",renderExtraGame);
+function renderBoardGame(state){
+ if(!partnerId)return;
+ activeExtraGame={type:state.type,finished:state.finished};gameState=null;
+ gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);
+ gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
+ inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ activeGameTitle.textContent=gameTitles[state.type];extraGameChoices.replaceChildren();
+ const info=document.createElement('p');info.className='galli-question';
+ info.textContent=state.finished?(state.winner===state.you?'You won! 🎉':'Stranger won!'):(state.canRoll?'Your turn — roll the dice':'Waiting for stranger to roll');
+ extraGameChoices.appendChild(info);
+ if(state.type==='snakes'){
+  const grid=document.createElement('div');grid.className='og-board-grid';
+  const jumps={4:14,9:31,20:38,28:84,40:59,51:67,63:81,71:91,17:7,54:34,62:19,64:60,87:24,93:73,95:75,99:78};
+  for(let row=9;row>=0;row--){
+   const nums=Array.from({length:10},(_,i)=>row*10+(row%2===0?i+1:10-i));
+   for(const n of nums){const cell=document.createElement('span');cell.className='og-board-cell';
+    cell.textContent=n+(jumps[n]?(jumps[n]>n?' 🪜':' 🐍'):'')+(state.positions[0]===n?' 🔵':'')+(state.positions[1]===n?' 🔴':'');
+    grid.appendChild(cell);}
+  }extraGameChoices.appendChild(grid);
+ }else{
+  const board=document.createElement('div');board.className='og-ludo-track';
+  for(let player=0;player<2;player++){
+   const group=document.createElement('div');group.textContent=(player===state.you?'You':'Stranger')+' '+(player===0?'🔵':'🔴')+': ';
+   state.tokens[player].forEach((pos,i)=>{const b=document.createElement('button');b.textContent='●'+(i+1)+' ('+(pos===0?'Home':pos===57?'Done':pos+'/57')+')';
+    b.disabled=!(player===state.you&&state.canRoll&&!state.finished&&pos!==57);
+    b.onclick=()=>socket.emit('galli-board-roll',{token:i});group.appendChild(b);});board.appendChild(group);
+  }extraGameChoices.appendChild(board);
+ }
+ if(state.lastRoll){const d=document.createElement('p');d.textContent='🎲 Last roll: '+state.lastRoll;extraGameChoices.appendChild(d);}
+ if(state.type==='snakes'&&state.canRoll){const b=document.createElement('button');b.textContent='🎲 Roll Dice';b.onclick=()=>socket.emit('galli-board-roll',{});extraGameChoices.appendChild(b);}
+ if(state.type==='ludo'&&state.canRoll){const p=document.createElement('p');p.textContent='Choose a token to roll and move. Roll 6 to leave home.';extraGameChoices.appendChild(p);}
+ playAgainGameBtn.hidden=!state.finished;playAgainGameBtn.disabled=false;
+ gameMessage.textContent='Two-player '+(state.type==='ludo'?'Ludo':'Snakes & Ladders');
+}
+socket.on('galli-board-state',renderBoardGame);
+
 socket.on("galli-pro-required",({feature}={})=>showProNotice(feature||"Pro feature"));
+socket.on('galli-pro-preview-status',({enabled})=>{window.OG_PRO_TEST_MODE=!!enabled;});
 
 const gameBoard=document.getElementById("gameBoard");
 const inviteGameBtn=document.getElementById("inviteGameBtn");
