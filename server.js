@@ -814,14 +814,14 @@ io.on("connection", (socket) => {
       if(!Number.isInteger(token)||token<0||token>3)return;
       const current=g.tokens[player][token];
       if(current===57)return;
-      if(current===0 && roll!==6)return;
+      if(current===0 && roll!==6){g.turn=1-player;emitBoardGame(p.key,g);return;}
       if(current===57)return;
       const next=current===0?1:current+roll;
       if(current+roll>57 && current!==0)return;
       g.tokens[player][token]=next;
       // Capture an opposing token on the shared 52-square track (not in home lanes).
-      if(next>=1&&next<=51){const square=((player===0?0:26)+next-1)%52;
-       g.tokens[1-player]=g.tokens[1-player].map(pos=>pos>=1&&pos<=51&&(((1-player===0?0:26)+pos-1)%52)===square?0:pos);
+      if(next>=1&&next<=51){const square=((player===0?26:0)+next-1)%52;
+       g.tokens[1-player]=g.tokens[1-player].map(pos=>pos>=1&&pos<=51&&(((1-player===0?26:0)+pos-1)%52)===square?0:pos);
       }
       if(g.tokens[player].every(x=>x===57)){g.finished=true;g.winner=player;}
     }

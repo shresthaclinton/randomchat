@@ -728,6 +728,28 @@ footer { line-height:1.8; }
 .og-snake-overlay{overflow:hidden!important}
 #extraGameChoices{overflow-anchor:none}
 @media(max-width:600px){.og-snakes-wrap{width:min(100%,380px)}#gamePanel{overflow-anchor:none}}
+
+/* Reference-inspired classic Ludo board, blue/green are the only active teams */
+.og-ludo-board{position:relative;border:5px solid #b68d3c;border-radius:9%;overflow:hidden;box-shadow:0 3px 12px #0003;isolation:isolate}
+.og-ludo-square{border:1px solid #b4b4b4;z-index:1}
+.og-home-red{background:#ed1515}.og-home-blue{background:#086bdc}.og-home-green{background:#079a28}.og-home-yellow{background:#f9d427}
+.og-ludo-green-lane{background:#00a336!important}.og-ludo-blue-lane{background:#0876e8!important}
+.og-ludo-center{background:transparent!important;border:0!important}
+.og-ludo-center-art{position:absolute;left:40%;top:40%;width:20%;height:20%;z-index:3;pointer-events:none}
+.og-ludo-base{position:absolute;width:35.5%;height:35.5%;z-index:2;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);place-items:center;border-radius:18%;border:5px solid white;box-shadow:inset 0 0 0 3px currentColor,0 0 0 2px #fff;pointer-events:none}
+.og-ludo-base.blue{top:2.2%;right:2.2%;color:#086bdc;background:#fff}.og-ludo-base.green{bottom:2.2%;left:2.2%;color:#079a28;background:#fff}
+.og-ludo-base.red{top:2.2%;left:2.2%;color:#ed1515;background:#fff}.og-ludo-base.yellow{bottom:2.2%;right:2.2%;color:#f9d427;background:#fff}
+.og-ludo-base .base-dot{width:40%;aspect-ratio:1;border-radius:50%;background:currentColor}
+.og-ludo-base .base-dot.active{box-shadow:0 0 0 3px white,0 1px 4px #3337}
+.og-ludo-token{position:relative;z-index:5;width:clamp(12px,3.6vw,20px);height:clamp(12px,3.6vw,20px);box-shadow:0 1px 3px #0008}
+.og-green-token{background:#008b31}.og-ludo-board .og-home-blue .og-ludo-token,.og-ludo-board .og-home-green .og-ludo-token{display:none}
+.og-board-die{position:absolute;right:3%;bottom:3%;z-index:9;border:2px solid #fff!important;background:#fffc!important;color:#202020!important;box-shadow:0 3px 12px #0005;min-width:56px;min-height:56px;border-radius:14px!important;font-size:29px!important;cursor:pointer;touch-action:manipulation}
+.og-board-die:disabled{opacity:.5;cursor:default}.og-board-die.rolling{animation:og-dice-wiggle .48s ease-out}
+@keyframes og-dice-wiggle{0%{transform:rotate(0) scale(1)}25%{transform:rotate(18deg) scale(1.1)}50%{transform:rotate(-20deg)}75%{transform:rotate(12deg)}100%{transform:rotate(0)}}
+.og-ludo-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}.og-ludo-actions button{flex:0 0 auto;border-radius:999px!important;padding:7px 12px!important}
+.og-ludo-actions button.selected{outline:3px solid #ffb900;outline-offset:1px}
+.og-game-audio{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;margin:3px auto 7px}.og-game-audio button{font-size:12px!important;padding:6px 12px!important}
+
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -1505,6 +1527,16 @@ function renderExtraGame(state){
  }
 }
 socket.on("galli-extra-game-state",renderExtraGame);
+let ogAudioContext=null,ogMusicTimer=null,ogMusicEnabled=true,ogSelectedLudoToken=0,ogLastRollSeen='';
+function ogAudio(){try{ogAudioContext=ogAudioContext||new(window.AudioContext||window.webkitAudioContext)();if(ogAudioContext.state==='suspended')ogAudioContext.resume();return ogAudioContext}catch(e){return null}}
+function ogNote(freq,when,duration,volume=.015,type='sine'){
+ const c=ogAudio();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(freq,when);g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(volume,when+.025);g.gain.exponentialRampToValueAtTime(.0001,when+duration);o.connect(g).connect(c.destination);o.start(when);o.stop(when+duration+.02);
+}
+function ogDiceSound(){ogMusicStart();const c=ogAudio();if(!c)return;for(let i=0;i<9;i++)ogNote(260+(i%4)*67,c.currentTime+i*.045,.06,.026,'triangle')}
+function ogMusicStart(){if(!ogMusicEnabled||ogMusicTimer)return;let step=0;const notes=[261.63,329.63,392,329.63,293.66,349.23,440,349.23,261.63,329.63,392,523.25,440,392,329.63,293.66];const play=()=>{if(!ogMusicEnabled||document.hidden)return;const c=ogAudio();if(c){ogNote(notes[step%notes.length],c.currentTime,.3,.007);if(step%4===0)ogNote(notes[step%notes.length]/2,c.currentTime,.55,.004)}step++};play();ogMusicTimer=setInterval(play,420)}
+function ogMusicStop(){if(ogMusicTimer){clearInterval(ogMusicTimer);ogMusicTimer=null}}
+function ogAudioControl(container){const wrap=document.createElement('div');wrap.className='og-game-audio';const btn=document.createElement('button');btn.type='button';btn.textContent=ogMusicEnabled?'♫ Music: On':'♫ Music: Off';btn.onclick=()=>{ogMusicEnabled=!ogMusicEnabled;if(ogMusicEnabled)ogMusicStart();else ogMusicStop();btn.textContent=ogMusicEnabled?'♫ Music: On':'♫ Music: Off';btn.blur()};wrap.appendChild(btn);container.appendChild(wrap)}
+function ogMakeDie(container,enabled,click){const b=document.createElement('button');b.type='button';b.className='og-board-die';b.textContent='⚄';b.title='Roll the dice';b.setAttribute('aria-label','Roll the dice');b.disabled=!enabled;b.onclick=()=>{ogDiceSound();b.classList.add('rolling');b.blur();click()};container.appendChild(b)}
 let ogPreviousSnakeState=null;
 let ogSnakeAnimationFrame=0;
 function renderBoardGame(state){
@@ -1515,10 +1547,11 @@ function renderBoardGame(state){
 
  if(!partnerId)return;
  activeExtraGame={type:state.type,finished:state.finished};gameState=null;
- gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);
+ gamePanel.hidden=false;
  gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
  inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
  activeGameTitle.textContent=gameTitles[state.type];extraGameChoices.replaceChildren();
+ ogAudioControl(extraGameChoices);
  const info=document.createElement('p');info.className='galli-question';
  info.textContent=state.finished?(state.winner===state.you?'You won! 🎉':'Stranger won!'):(state.canRoll?'Your turn — roll the dice':'Waiting for stranger to roll');
  extraGameChoices.appendChild(info);
@@ -1561,7 +1594,7 @@ function renderBoardGame(state){
     svg.appendChild(head);
    }
   }
-  holder.appendChild(svg);extraGameChoices.appendChild(holder);
+  holder.appendChild(svg);ogMakeDie(holder,state.canRoll&&!state.finished,()=>socket.emit('galli-board-roll',{}));extraGameChoices.appendChild(holder);
   // Animate the exact jump from its starting square to its destination at a readable pace.
   if(ogPriorPositions){
    for(let player=0;player<2;player++){
@@ -1597,34 +1630,38 @@ function renderBoardGame(state){
    }
   }
   ogPreviousSnakeState={you:state.you,positions:[...state.positions]};
-  const legend=document.createElement('p');legend.className='og-board-legend';legend.textContent='🪜 Climb from the bottom to the top of each ladder · 🐍 Slide from head to tail · 🔵 Blue / 🔴 Red';extraGameChoices.appendChild(legend);
+
  }else{
   const path=[];
   for(let y=14;y>=9;y--)path.push([6,y]);for(let x=5;x>=0;x--)path.push([x,8]);path.push([0,7],[0,6]);for(let x=1;x<=5;x++)path.push([x,6]);for(let y=5;y>=0;y--)path.push([6,y]);path.push([7,0],[8,0]);for(let y=1;y<=5;y++)path.push([8,y]);for(let x=9;x<=14;x++)path.push([x,6]);path.push([14,7],[14,8]);for(let x=13;x>=9;x--)path.push([x,8]);for(let y=9;y<=14;y++)path.push([8,y]);path.push([7,14]);
   const board=document.createElement('div');board.className='og-ludo-board';
-  const coords=(player,pos)=>{if(pos===0)return null;if(pos===57)return [7,7];if(pos>=52)return [7,player===0?14-(pos-51):pos-51];return path[((player===0?0:26)+pos-1)%52]};
+  const coords=(player,pos)=>{if(pos===0)return null;if(pos===57)return [7,7];if(pos>=52)return [7,player===0?pos-51:14-(pos-51)];return path[((player===0?26:0)+pos-1)%52]};
   for(let y=0;y<15;y++)for(let x=0;x<15;x++){
    const cell=document.createElement('div');cell.className='og-ludo-square';cell.style.gridColumn=x+1;cell.style.gridRow=y+1;
-   const home=(x<6&&y<6)?'green':(x>8&&y<6)?'red':(x<6&&y>8)?'blue':(x>8&&y>8)?'yellow':null;
+   const home=(x<6&&y<6)?'red':(x>8&&y<6)?'blue':(x<6&&y>8)?'green':(x>8&&y>8)?'yellow':null;
    const isPath=path.some(c=>c[0]===x&&c[1]===y);
    if(home)cell.classList.add('og-home-'+home);
    if(x>=6&&x<=8&&y>=6&&y<=8)cell.classList.add('og-ludo-center');
    if(isPath)cell.classList.add('og-ludo-path');
-   if(x===7&&y>=9&&y<=13)cell.classList.add('og-ludo-blue-lane');
-   if(x===7&&y>=1&&y<=5)cell.classList.add('og-ludo-red-lane');
+   if(x===7&&y>=9&&y<=13)cell.classList.add('og-ludo-green-lane');
+   if(x===7&&y>=1&&y<=5)cell.classList.add('og-ludo-blue-lane');
    if((x===6&&y===14)||(x===8&&y===0))cell.classList.add('og-ludo-start');
    for(let player=0;player<2;player++)state.tokens[player].forEach((pos,i)=>{
-    const at=pos===0? (player===0?[[1,10],[4,10],[1,13],[4,13]][i]:[[10,1],[13,1],[10,4],[13,4]][i]):coords(player,pos);
-    if(at&&at[0]===x&&at[1]===y){const token=document.createElement('span');token.className='og-ludo-token '+(player===0?'og-blue-token':'og-red-token');token.textContent=String(i+1);token.title=(player===state.you?'Your':'Stranger’s')+' token '+(i+1);cell.appendChild(token)}
+    const at=pos===0? (player===0?[[10,1],[13,1],[10,4],[13,4]][i]:[[1,10],[4,10],[1,13],[4,13]][i]):coords(player,pos);
+    if(at&&at[0]===x&&at[1]===y){const token=document.createElement('span');token.className='og-ludo-token '+(player===0?'og-blue-token':'og-green-token');token.textContent=String(i+1);token.title=(player===state.you?'Your':'Stranger’s')+' token '+(i+1);cell.appendChild(token)}
    });board.appendChild(cell);
   }
+  // Decorative home trays and classic four-color central finish.
+  for(const color of ['red','blue','green','yellow']){const base=document.createElement('div');base.className='og-ludo-base '+color;for(let i=0;i<4;i++){const dot=document.createElement('span');dot.className='base-dot'+(['blue','green'].includes(color)?' active':'');if(color==='blue'||color==='green'){const p=color==='blue'?0:1;dot.style.opacity=state.tokens[p][i]===0?'1':'.23';dot.textContent=state.tokens[p][i]===0?String(i+1):'';dot.style.color='white';dot.style.textAlign='center';dot.style.fontWeight='bold';dot.style.fontSize='clamp(8px,2vw,12px)';dot.style.lineHeight='2.1'}base.appendChild(dot)}board.appendChild(base)}
+  const center=document.createElementNS('http://www.w3.org/2000/svg','svg');center.setAttribute('viewBox','0 0 100 100');center.setAttribute('class','og-ludo-center-art');for(const [pts,color] of [['0,0 100,0 50,50','#086bdc'],['100,0 100,100 50,50','#f9d427'],['0,100 100,100 50,50','#079a28'],['0,0 0,100 50,50','#ed1515']]){const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');poly.setAttribute('points',pts);poly.setAttribute('fill',color);center.appendChild(poly)}board.appendChild(center);
+  ogMakeDie(board,state.canRoll&&!state.finished,()=>socket.emit('galli-board-roll',{token:ogSelectedLudoToken}));
   extraGameChoices.appendChild(board);
-  const key=document.createElement('p');key.className='og-board-legend';key.textContent='🔵 Blue vs 🔴 Red · Roll 6 to leave home · Get all four tokens to the center to win';extraGameChoices.appendChild(key);
+  const key=document.createElement('p');key.className='og-board-legend';key.textContent='🔵 Blue vs 🟢 Green · Select a token, then roll the dice on the board';extraGameChoices.appendChild(key);
   if(state.canRoll&&!state.finished){const choices=document.createElement('div');choices.className='og-ludo-actions';state.tokens[state.you].forEach((pos,i)=>{
-   const b=document.createElement('button');b.textContent='🎲 Roll for token '+(i+1)+(pos===0?' (Home)':pos===57?' (Finished)':'');b.disabled=pos===57;b.onclick=()=>socket.emit('galli-board-roll',{token:i});choices.appendChild(b)});extraGameChoices.appendChild(choices)}
+   const b=document.createElement('button');b.textContent='Token '+(i+1)+(pos===0?' · Home':pos===57?' · Finished':'');b.disabled=pos===57;b.classList.toggle('selected',ogSelectedLudoToken===i);b.onclick=()=>{ogSelectedLudoToken=i;choices.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');b.blur()};choices.appendChild(b)});extraGameChoices.appendChild(choices)}
  }
  if(state.lastRoll){const d=document.createElement('p');d.textContent='🎲 Last roll: '+state.lastRoll;extraGameChoices.appendChild(d);}
- if(state.type==='snakes'&&state.canRoll){const b=document.createElement('button');b.textContent='🎲 Roll Dice';b.onclick=()=>{b.blur();socket.emit('galli-board-roll',{});};extraGameChoices.appendChild(b);}
+
 
  playAgainGameBtn.hidden=!state.finished;playAgainGameBtn.disabled=false;
  gameMessage.textContent='Two-player '+(state.type==='ludo'?'Ludo':'Snakes & Ladders');
@@ -1665,17 +1702,17 @@ socket.on("galli-game-invite",({type="ttt"}={})=>{
  selectedGameType=gameTitles[type]?type:"ttt";activeGameTitle.textContent=gameTitles[selectedGameType];gameTypePicker.hidden=true;extraGameChoices.hidden=true;
  if(!partnerId)return;
  gameBoard.hidden=true;
- gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);reactionPanel.hidden=true;inviteGameBtn.hidden=true;
+ gamePanel.hidden=false;reactionPanel.hidden=true;inviteGameBtn.hidden=true;
  acceptGameBtn.hidden=false;declineGameBtn.hidden=false;
  gameMessage.textContent=`Your partner invited you to play ${gameTitles[selectedGameType].replace(/^[^ ]+ /,"")}.`;
 });
 socket.on("galli-game-pending",()=>{gameMessage.textContent="Waiting for your partner to accept...";});
-socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);showGamePicker();gameMessage.textContent="Your partner declined. Choose a game to invite again.";});
-socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);showGamePicker();gameMessage.textContent="Game ended. Choose another game.";});
+socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;showGamePicker();gameMessage.textContent="Your partner declined. Choose a game to invite again.";});
+socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;showGamePicker();gameMessage.textContent="Game ended. Choose another game.";});
 socket.on("galli-game-state",state=>{
  if(!partnerId)return;
  gameBoard.hidden=false;extraGameChoices.hidden=true;gameTypePicker.hidden=true;activeGameTitle.textContent=gameTitles.ttt;activeExtraGame=null;
- gameState=state;gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);inviteGameBtn.hidden=true;
+ gameState=state;gamePanel.hidden=false;inviteGameBtn.hidden=true;
  acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
  gameMessage.textContent=state.winner?(`${state.winner} WINS! 🎉`):state.draw?"IT'S A DRAW!":state.turn===state.you?"Your turn":"Partner's turn";
  gamePanel.classList.toggle("game-finished",!!state.winner||!!state.draw);
