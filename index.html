@@ -1466,9 +1466,10 @@ const extraGameChoices=document.getElementById("extraGameChoices");
 // Pro is not sold or activated in this build: do not simulate paid access.
 window.OG_PRO_TEST_MODE=false;
 let ownerUnlocked=false;
-// Owner access is granted after a successful login at /admin in this browser tab.
-socket.on('galli-owner-status',({unlocked})=>{ownerUnlocked=!!unlocked;if(!ownerUnlocked)sessionStorage.removeItem('ogOwnerTicket');});
-socket.on('connect',()=>{const ticket=sessionStorage.getItem('ogOwnerTicket');if(ticket)socket.emit('galli-owner-auth',{ticket});});
+// Owner access is granted after successful login at /admin on this same origin/browser profile.
+socket.on('galli-owner-status',({unlocked})=>{ownerUnlocked=!!unlocked;if(!ownerUnlocked)localStorage.removeItem('ogOwnerTicket');});
+socket.on('connect',()=>{const ticket=localStorage.getItem('ogOwnerTicket');if(ticket)socket.emit('galli-owner-auth',{ticket});});
+window.addEventListener('storage',e=>{if(e.key==='ogOwnerTicket'){const ticket=localStorage.getItem('ogOwnerTicket');if(socket.connected)socket.emit('galli-owner-auth',{ticket:ticket||''});if(!ticket)ownerUnlocked=false;}});
 function showProNotice(feature){
  const notice=document.getElementById("galliProNotice");
  document.getElementById("galliProFeature").textContent=feature;
