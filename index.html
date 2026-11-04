@@ -723,6 +723,11 @@ footer { line-height:1.8; }
 .og-ludo-path{background:#fff}.og-ludo-blue-lane{background:#63aaf4}.og-ludo-red-lane{background:#ed8b8b}.og-ludo-center{background:#f5cb58}.og-ludo-start{outline:2px solid #202020;outline-offset:-2px}
 .og-ludo-token{display:inline-flex;align-items:center;justify-content:center;width:clamp(12px,3.7vw,20px);height:clamp(12px,3.7vw,20px);border-radius:50%;color:white;font-size:10px;font-weight:800;border:1px solid #fff;box-shadow:0 1px 2px #555}
 .og-blue-token{background:#075fce}.og-red-token{background:#cc2736}.og-ludo-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.og-ludo-actions button{font-size:12px;padding:9px 5px}
+/* Prevent mobile viewport jumping during dice rolls and board updates. */
+.og-snakes-wrap{overflow:hidden;contain:layout paint;touch-action:pan-y}
+.og-snake-overlay{overflow:hidden!important}
+#extraGameChoices{overflow-anchor:none}
+@media(max-width:600px){.og-snakes-wrap{width:min(100%,380px)}#gamePanel{overflow-anchor:none}}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -1472,7 +1477,7 @@ function renderExtraGame(state){
  if(!partnerId)return;
  activeExtraGame=state;selectedGameType=state.type;
  activeGameTitle.textContent=gameTitles[state.type];
- gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);
+ gamePanel.hidden=false;
  gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
  inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
  extraGameChoices.replaceChildren();
@@ -1500,7 +1505,14 @@ function renderExtraGame(state){
  }
 }
 socket.on("galli-extra-game-state",renderExtraGame);
+let ogPreviousSnakeState=null;
+let ogSnakeAnimationFrame=0;
 function renderBoardGame(state){
+ const ogScrollBefore=window.scrollY;
+ const ogIsSnakeUpdate=state.type==='snakes' && ogPreviousSnakeState && ogPreviousSnakeState.you===state.you;
+ const ogPriorPositions=ogIsSnakeUpdate?[...ogPreviousSnakeState.positions]:null;
+ if(ogSnakeAnimationFrame){cancelAnimationFrame(ogSnakeAnimationFrame);ogSnakeAnimationFrame=0;}
+
  if(!partnerId)return;
  activeExtraGame={type:state.type,finished:state.finished};gameState=null;
  gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);
@@ -1528,13 +1540,63 @@ function renderBoardGame(state){
   for(const [fromStr,to] of Object.entries(jumps)){const from=+fromStr,a=xy(from),b=xy(to),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),nx=-dy/len*12,ny=dx/len*12;
    if(to>from){for(const side of [-1,1])el('line',{x1:a.x+nx*side,y1:a.y+ny*side,x2:b.x+nx*side,y2:b.y+ny*side,stroke:'#76502c','stroke-width':8,'stroke-linecap':'round'});
     for(let t=.12;t<.98;t+=.115)el('line',{x1:a.x+dx*t+nx,y1:a.y+dy*t+ny,x2:a.x+dx*t-nx,y2:a.y+dy*t-ny,stroke:'#d79c4e','stroke-width':8,'stroke-linecap':'round'});
-   }else{const cx=(a.x+b.x)/2+nx*3,cy=(a.y+b.y)/2+ny*3;
-    el('path',{d:`M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`,fill:'none',stroke:'#f7df7b','stroke-width':21,'stroke-linecap':'round'});
-    el('path',{d:`M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`,fill:'none',stroke:'#b33e4a','stroke-width':12,'stroke-linecap':'round','stroke-dasharray':'18 8'});
-    el('circle',{cx:b.x,cy:b.y,r:13,fill:'#b33e4a',stroke:'#fff','stroke-width':3});
+   }else{
+    // Head at the higher square, tapered curving body ending at the lower square.
+    const bend=35*(from%2?1:-1), px=-dy/len,py=dx/len;
+    const c1={x:a.x+dx*.28+px*bend,y:a.y+dy*.28+py*bend};
+    const c2={x:a.x+dx*.72-px*bend,y:a.y+dy*.72-py*bend};
+    const curve=`M ${a.x} ${a.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${b.x} ${b.y}`;
+    // Body outline and belly, with repeating scales, rather than a rope.
+    el('path',{d:curve,fill:'none',stroke:'#173f2e','stroke-width':29,'stroke-linecap':'round'});
+    el('path',{d:curve,fill:'none',stroke:from%2?'#42a66d':'#e49c3f','stroke-width':23,'stroke-linecap':'round'});
+    el('path',{d:curve,fill:'none',stroke:from%2?'#a4d98b':'#ffe0a0','stroke-width':5,'stroke-linecap':'round','stroke-dasharray':'6 20',opacity:.9});
+    const headAngle=Math.atan2(dy,dx)*180/Math.PI;
+    const head=document.createElementNS('http://www.w3.org/2000/svg','g');head.setAttribute('transform',`translate(${a.x} ${a.y}) rotate(${headAngle})`);
+    const addHead=(name,attrs)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',name);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));head.appendChild(e);return e};
+    addHead('ellipse',{cx:0,cy:0,rx:27,ry:21,fill:from%2?'#42a66d':'#e49c3f',stroke:'#173f2e','stroke-width':4});
+    addHead('ellipse',{cx:19,cy:0,rx:18,ry:13,fill:from%2?'#60be7c':'#f0b557'});
+    for(const ey of [-12,12]){addHead('circle',{cx:3,cy:ey,r:6,fill:'#fff'});addHead('circle',{cx:5,cy:ey,r:3,fill:'#151b14'});}
+    addHead('circle',{cx:30,cy:-5,r:2.5,fill:'#263a22'});addHead('circle',{cx:30,cy:5,r:2.5,fill:'#263a22'});
+    addHead('path',{d:'M 35 0 L 49 0 M 49 0 L 57 -6 M 49 0 L 57 6',fill:'none',stroke:'#dd3c59','stroke-width':3,'stroke-linecap':'round'});
+    svg.appendChild(head);
    }
   }
   holder.appendChild(svg);extraGameChoices.appendChild(holder);
+  // Animate the exact jump from its starting square to its destination at a readable pace.
+  if(ogPriorPositions){
+   for(let player=0;player<2;player++){
+    const before=ogPriorPositions[player],after=state.positions[player];
+    if(before===after)continue;
+    const rolled=state.lastRoll||0,landing=before+rolled;
+    if(jumps[landing]!==after || landing===after)continue;
+    const start=xy(landing),end=xy(after),duration=1900;
+    const token=document.createElementNS('http://www.w3.org/2000/svg','g');
+    const disk=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    disk.setAttribute('r','23');disk.setAttribute('fill',player===0?'#1267d9':'#d63248');disk.setAttribute('stroke','#fff');disk.setAttribute('stroke-width','5');token.appendChild(disk);
+    const label=document.createElementNS('http://www.w3.org/2000/svg','text');label.textContent=player===0?'B':'R';label.setAttribute('text-anchor','middle');label.setAttribute('dominant-baseline','central');label.setAttribute('font-size','22');label.setAttribute('font-weight','800');label.setAttribute('fill','#fff');token.appendChild(label);
+    svg.appendChild(token);
+    // Hide the destination marker while the animated token is moving.
+    for(const cell of grid.children){const number=cell.querySelector('b');if(number&&+number.textContent===after){const marker=cell.querySelector('.og-snake-players');if(marker)marker.style.opacity='0';}}
+    const began=performance.now();
+    const bend=35*(landing%2?1:-1);
+    const dx=end.x-start.x,dy=end.y-start.y,dist=Math.hypot(dx,dy)||1;
+    const nx=-dy/dist,ny=dx/dist;
+    const frame=now=>{
+     if(!token.isConnected)return;
+     const t=Math.min(1,(now-began)/duration);
+     let x,y;
+     if(after<landing){const p0=start,p1={x:start.x+dx*.28+nx*bend,y:start.y+dy*.28+ny*bend},p2={x:start.x+dx*.72-nx*bend,y:start.y+dy*.72-ny*bend},p3=end,u=1-t;
+      x=u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x;
+      y=u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y;
+     }else{x=start.x+dx*t;y=start.y+dy*t;}
+     token.setAttribute('transform',`translate(${x} ${y})`);
+     if(t<1)ogSnakeAnimationFrame=requestAnimationFrame(frame);
+     else{token.remove();for(const cell of grid.children){const number=cell.querySelector('b');if(number&&+number.textContent===after){const marker=cell.querySelector('.og-snake-players');if(marker)marker.style.opacity='1';}}}
+    };
+    ogSnakeAnimationFrame=requestAnimationFrame(frame);
+   }
+  }
+  ogPreviousSnakeState={you:state.you,positions:[...state.positions]};
   const legend=document.createElement('p');legend.className='og-board-legend';legend.textContent='🪜 Climb from the bottom to the top of each ladder · 🐍 Slide from head to tail · 🔵 Blue / 🔴 Red';extraGameChoices.appendChild(legend);
  }else{
   const path=[];
@@ -1562,10 +1624,12 @@ function renderBoardGame(state){
    const b=document.createElement('button');b.textContent='🎲 Roll for token '+(i+1)+(pos===0?' (Home)':pos===57?' (Finished)':'');b.disabled=pos===57;b.onclick=()=>socket.emit('galli-board-roll',{token:i});choices.appendChild(b)});extraGameChoices.appendChild(choices)}
  }
  if(state.lastRoll){const d=document.createElement('p');d.textContent='🎲 Last roll: '+state.lastRoll;extraGameChoices.appendChild(d);}
- if(state.type==='snakes'&&state.canRoll){const b=document.createElement('button');b.textContent='🎲 Roll Dice';b.onclick=()=>socket.emit('galli-board-roll',{});extraGameChoices.appendChild(b);}
+ if(state.type==='snakes'&&state.canRoll){const b=document.createElement('button');b.textContent='🎲 Roll Dice';b.onclick=()=>{b.blur();socket.emit('galli-board-roll',{});};extraGameChoices.appendChild(b);}
 
  playAgainGameBtn.hidden=!state.finished;playAgainGameBtn.disabled=false;
  gameMessage.textContent='Two-player '+(state.type==='ludo'?'Ludo':'Snakes & Ladders');
+ // Rebuilding the controls must not scroll the mobile viewport to the top.
+ requestAnimationFrame(()=>{if(Math.abs(window.scrollY-ogScrollBefore)>2)window.scrollTo({top:ogScrollBefore,behavior:'instant'});});
 }
 socket.on('galli-board-state',renderBoardGame);
 
@@ -1584,7 +1648,7 @@ let gameState=null, reactionsMuted=false, toastTimeout=null;
 gameBoard.hidden=true;
 function resetV4() {
   gameBoard.hidden=true;
-  gameState=null;activeExtraGame=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;extraGameChoices.hidden=true;gameTypePicker.hidden=false;activeGameTitle.textContent="🎮 Choose a game";
+  gameState=null;activeExtraGame=null;ogPreviousSnakeState=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;extraGameChoices.hidden=true;gameTypePicker.hidden=false;activeGameTitle.textContent="🎮 Choose a game";
   playAgainGameBtn.hidden=true;
   gameBoard.replaceChildren();gameMessage.textContent="Invite your stranger to play.";
   inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
