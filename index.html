@@ -752,6 +752,9 @@ footer { line-height:1.8; }
 
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
+<style>
+.og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-yellow{background:#f6ca32}.og-letter-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.og-letter-grid button{padding:7px 0!important;min-width:0!important}.og-hang-word{text-align:center;font-size:24px;font-weight:800;letter-spacing:3px}.og-spin-wheel{width:220px;height:220px;border-radius:50%;background:conic-gradient(#fda4af 0 60deg,#fde68a 60deg 120deg,#86efac 120deg 180deg,#93c5fd 180deg 240deg,#c4b5fd 240deg 300deg,#fdba74 300deg 360deg);border:6px solid #fff;box-shadow:0 2px 12px #0003;position:relative;margin:12px auto;display:grid;place-items:center}.og-spin-wheel span{position:absolute;font-size:9px;font-weight:700;max-width:70px;text-align:center;color:#1f2937}.og-wheel-spinning{animation:ogspin 1.4s ease-out}@keyframes ogspin{to{transform:rotate(1080deg)}}.og-spin-result{text-align:center;font-weight:800}.og-draw-canvas{width:100%;max-width:420px;aspect-ratio:7/5;touch-action:none;background:white;border:2px solid #222;border-radius:8px;display:block;margin:auto}.og-draw-label{font-weight:700;text-align:center}.galli-game-picker{display:flex;flex-direction:column;gap:8px}
+</style>
 </head>
 
 <body>
@@ -831,7 +834,7 @@ footer { line-height:1.8; }
 
   <div class="v4-panel" id="gamePanel" hidden>
  <strong id="activeGameTitle">🎮 Games</strong>
- <div id="gameTypePicker" class="galli-game-picker"><button type="button" data-galli-game="ttt">❎ Tic-Tac-Toe</button><button type="button" data-galli-game="rps">✊ Rock Paper Scissors</button><button type="button" data-galli-game="wyr">🤔 Would You Rather?</button><button type="button" data-galli-game="ludo" class="pro-locked">🎲 Ludo <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button><button type="button" data-galli-game="snakes" class="pro-locked">🐍 Snakes & Ladders <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button></div>
+ <div id="gameTypePicker" class="galli-game-picker"><button type="button" data-galli-game="ttt">❎ Tic-Tac-Toe</button><button type="button" data-galli-game="rps">✊ Rock Paper Scissors</button><button type="button" data-galli-game="wyr">🤔 Would You Rather?</button><button type="button" data-galli-game="ludo" class="pro-locked">🎲 Ludo <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button><button type="button" data-galli-game="snakes" class="pro-locked">🐍 Snakes & Ladders <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button><button type="button" data-galli-game="spin">🎡 Spin the Wheel</button><button type="button" data-galli-game="draw">🎨 Draw & Guess</button><button type="button" data-galli-game="connect4">🔴 Connect Four</button><button type="button" data-galli-game="hangman">🔤 Hangman</button></div>
  <p id="gameMessage" aria-live="polite">Invite your stranger to play.</p>
  <div id="gameBoard" class="v4-board" role="group" aria-label="Tic-Tac-Toe board"></div>
  <div id="extraGameChoices" class="galli-game-choices" hidden></div>
@@ -1478,7 +1481,7 @@ document.getElementById("previousCornerBtn").addEventListener("click",()=>{
 });
 socket.on('galli-previous-status',message=>status(message));
 
-const gameTitles={ttt:"❎ Tic-Tac-Toe",rps:"✊ Rock Paper Scissors",wyr:"🤔 Would You Rather?",ludo:"🎲 Ludo 👑 PRO",snakes:"🐍 Snakes & Ladders 👑 PRO"};
+const gameTitles={ttt:"❎ Tic-Tac-Toe",rps:"✊ Rock Paper Scissors",wyr:"🤔 Would You Rather?",ludo:"🎲 Ludo 👑 PRO",snakes:"🐍 Snakes & Ladders 👑 PRO",spin:"🎡 Spin the Wheel",draw:"🎨 Draw & Guess",connect4:"🔴 Connect Four",hangman:"🔤 Hangman"};
 let selectedGameType="ttt",activeExtraGame=null;
 function setGameType(type){
  if(!gameTitles[type])return;
@@ -1527,6 +1530,57 @@ function renderExtraGame(state){
  }
 }
 socket.on("galli-extra-game-state",renderExtraGame);
+// Four free, server-synchronized games.
+function ogEl(tag,txt,cls){const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e}
+function ogFreeState(state){
+ if(!partnerId)return;
+ activeExtraGame={type:state.type,finished:!!state.finished};selectedGameType=state.type;
+ activeGameTitle.textContent=gameTitles[state.type];gamePanel.hidden=false;
+ gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
+ inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ extraGameChoices.replaceChildren();gamePanel.classList.toggle('game-finished',!!state.finished);
+ playAgainGameBtn.hidden=!state.finished;playAgainGameBtn.disabled=false;
+ const me=state.you,turn=state.turn===me;
+ gameMessage.textContent=state.message||(state.finished?'Round complete':turn?'Your turn':'Partner’s turn');
+ if(state.type==='connect4'){
+  const board=ogEl('div',undefined,'og-connect-board');
+  for(let r=0;r<6;r++)for(let c=0;c<7;c++){
+   const cell=ogEl('button','', 'og-connect-cell');const v=state.board[r*7+c];
+   if(v!==null)cell.classList.add(v===0?'og-disc-red':'og-disc-yellow');
+   cell.disabled=!!state.finished||!turn||state.board[c]!==null;
+   cell.setAttribute('aria-label','Column '+(c+1)+', row '+(r+1));
+   cell.onclick=()=>socket.emit('galli-free-action',{column:c});board.appendChild(cell);
+  }extraGameChoices.appendChild(board);
+ }else if(state.type==='hangman'){
+  extraGameChoices.appendChild(ogEl('p',state.masked.split('').join(' '),'og-hang-word'));
+  extraGameChoices.appendChild(ogEl('p','Wrong guesses: '+state.wrong+'/6 · Used: '+(state.used.join(', ')||'none')));
+  if(state.finished&&state.word)extraGameChoices.appendChild(ogEl('p','Word: '+state.word));
+  const letters=ogEl('div',undefined,'og-letter-grid');
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter=>{const b=ogEl('button',letter);b.disabled=state.finished||!turn||state.used.includes(letter);b.onclick=()=>socket.emit('galli-free-action',{letter});letters.appendChild(b)});
+  extraGameChoices.appendChild(letters);
+ }else if(state.type==='spin'){
+  const wheel=ogEl('div',undefined,'og-spin-wheel');
+  const sectors=['Tell a joke','Sing 10 seconds','Show a dance move','Fun fact','Funny impression','Ask a question'];
+  sectors.forEach((label,i)=>{const el=ogEl('span',label);el.style.transform=`rotate(${i*60}deg) translateY(-77px) rotate(${-i*60}deg)`;wheel.appendChild(el)});
+  extraGameChoices.appendChild(wheel);
+  if(state.result)extraGameChoices.appendChild(ogEl('p','🎯 '+state.result,'og-spin-result'));
+  const b=ogEl('button','🎡 Spin the Wheel');b.disabled=!turn;b.onclick=()=>{b.disabled=true;wheel.classList.add('og-wheel-spinning');socket.emit('galli-free-action',{spin:true})};extraGameChoices.appendChild(b);
+ }else if(state.type==='draw'){
+  const label=ogEl('p',state.drawer===me?'Draw this word: '+state.word:'Guess the drawing!','og-draw-label');extraGameChoices.appendChild(label);
+  const canvas=ogEl('canvas');canvas.width=420;canvas.height=300;canvas.className='og-draw-canvas';extraGameChoices.appendChild(canvas);
+  const ctx=canvas.getContext('2d');ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=4;ctx.strokeStyle='#202020';ctx.fillStyle='#fff';ctx.fillRect(0,0,420,300);
+  for(const stroke of state.strokes){ctx.beginPath();ctx.moveTo(stroke[0]*420,stroke[1]*300);ctx.lineTo(stroke[2]*420,stroke[3]*300);ctx.stroke()}
+  if(state.drawer===me&&!state.finished){let down=false,last=null;const point=e=>{const rect=canvas.getBoundingClientRect();return [Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height))]};
+   canvas.onpointerdown=e=>{down=true;last=point(e);canvas.setPointerCapture(e.pointerId)};
+   canvas.onpointermove=e=>{if(!down)return;const now=point(e);const seg=[...last,...now];ctx.beginPath();ctx.moveTo(last[0]*420,last[1]*300);ctx.lineTo(now[0]*420,now[1]*300);ctx.stroke();socket.emit('galli-free-action',{stroke:seg});last=now};
+   canvas.onpointerup=()=>{down=false};canvas.onpointercancel=()=>{down=false};
+  }else if(state.drawer!==me&&!state.finished){const form=ogEl('form');const input=ogEl('input');input.placeholder='Guess the word';input.maxLength=30;input.required=true;const submit=ogEl('button','Guess');submit.type='submit';form.append(input,submit);form.onsubmit=e=>{e.preventDefault();socket.emit('galli-free-action',{guess:input.value.trim()});input.value=''};extraGameChoices.appendChild(form)}
+  if(state.finished)extraGameChoices.appendChild(ogEl('p','Answer: '+state.word));
+ }
+}
+socket.on('galli-free-state',ogFreeState);
+socket.on('galli-draw-stroke',stroke=>{if(activeExtraGame?.type!=='draw')return;const canvas=extraGameChoices.querySelector('canvas.og-draw-canvas');if(!canvas||!Array.isArray(stroke))return;const ctx=canvas.getContext('2d');ctx.beginPath();ctx.moveTo(stroke[0]*420,stroke[1]*300);ctx.lineTo(stroke[2]*420,stroke[3]*300);ctx.stroke()});
+
 let ogAudioContext=null,ogMusicTimer=null,ogMusicEnabled=true,ogSelectedLudoToken=0,ogLastRollSeen='';
 function ogAudio(){try{ogAudioContext=ogAudioContext||new(window.AudioContext||window.webkitAudioContext)();if(ogAudioContext.state==='suspended')ogAudioContext.resume();return ogAudioContext}catch(e){return null}}
 function ogNote(freq,when,duration,volume=.015,type='sine'){

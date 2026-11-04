@@ -358,6 +358,26 @@ function icePathOverview() {
 
 // V4: transient game state, scoped to the currently matched pair.
 const games = new Map();
+const ogHangWords=['MOUNTAIN','KATHMANDU','GUITAR','CAMERA','ELEPHANT','SUNSHINE','RAINBOW','PIZZA','FOOTBALL','BUTTERFLY','MONKEY','BICYCLE'];
+const ogSpinTasks=['Tell a joke','Sing for 10 seconds','Show a dance move','Share a fun fact','Do a funny impression','Ask a surprising question'];
+function ogNewFreeGame(g){
+ g.finished=false;g.winner=null;g.turn=0;g.round=(g.round||0)+1;
+ if(g.type==='connect4')g.board=Array(42).fill(null);
+ if(g.type==='hangman'){g.word=ogHangWords[crypto.randomInt(ogHangWords.length)];g.used=[];g.wrong=0;}
+ if(g.type==='spin')g.result='';
+ if(g.type==='draw'){g.word=ogHangWords[crypto.randomInt(ogHangWords.length)].toLowerCase();g.strokes=[];g.drawer=(g.round-1)%2;}
+}
+function ogEmitFreeGame(g){
+ [g.inviter,g.invitee].forEach((id,i)=>{
+  const base={type:g.type,you:i,turn:g.turn,finished:g.finished,winner:g.winner};
+  if(g.type==='connect4'){base.board=g.board;base.message=g.finished?(g.winner===null?'Draw!':g.winner===i?'You win!':'Partner wins!'):undefined;}
+  if(g.type==='hangman'){base.masked=g.word.split('').map(ch=>g.used.includes(ch)?ch:'_').join('');base.used=g.used;base.wrong=g.wrong;base.word=g.finished?g.word:undefined;base.message=g.finished?(g.winner===null?'Game over':g.winner===i?'You win!':'Partner wins!'):undefined;}
+  if(g.type==='spin'){base.result=g.result;base.message=g.result?'Next spin: '+(g.turn===i?'yours':'partner’s'):'Take turns spinning';}
+  if(g.type==='draw'){base.drawer=g.drawer;base.word=(g.drawer===i||g.finished)?g.word:undefined;base.strokes=g.strokes;base.message=g.finished?(g.winner===i?'Correct guess!':'Round finished'):undefined;}
+  io.to(id).emit('galli-free-state',base);
+ });
+}
+
 // Beta test access only. Production must use verified paid entitlements.
 // Owner entitlement: short-lived HMAC token derived from the existing dashboard secret.
 const proPreviewEnabled = false;
@@ -741,7 +761,7 @@ io.on("connection", (socket) => {
     socket.emit('galli-previous-status','Reconnected to previous partner.');
   });
   socket.on("galli-game-invite", ({type="ttt"}={}) => {
-    if(!["ttt","rps","wyr","ludo","snakes"].includes(type))return;
+    if(!["ttt","rps","wyr","ludo","snakes","spin","draw","connect4","hangman"].includes(type))return;
     if(['ludo','snakes'].includes(type)&&!hasPro(socket)){
       socket.emit('galli-pro-required',{feature:type==='ludo'?'Ludo':'Snakes & Ladders'});return;
     }
@@ -764,6 +784,7 @@ io.on("connection", (socket) => {
     }
     g.status="playing";
     if(["ludo","snakes"].includes(g.type)){beginBoardGame(p.key,g);return;}
+    if(["spin","draw","connect4","hangman"].includes(g.type)){ogNewFreeGame(g);ogEmitFreeGame(g);return;}
     if(g.type!=="ttt"){
       g.choices={};g.round=0;g.questionIndex=0;
       sendExtraGameState(p.key,g);
@@ -779,6 +800,7 @@ io.on("connection", (socket) => {
     // A replay is allowed only after the current match has finished.
     if(!g || g.status!=="playing")return;
     if(["ludo","snakes"].includes(g.type)){if(g.finished)beginBoardGame(p.key,g);return;}
+    if(["spin","draw","connect4","hangman"].includes(g.type)){if(g.finished||g.type==="spin"){ogNewFreeGame(g);ogEmitFreeGame(g);}return;}
     if(g.type==="ttt" ? (!g.winner && !g.draw) : Object.keys(g.choices||{}).length!==2)return;
     if(g.type!=="ttt"){
       g.choices={};g.round=(g.round||0)+1;
@@ -789,6 +811,33 @@ io.on("connection", (socket) => {
     for(const id of [socket.id,p.other]) {
       io.to(id).emit("galli-game-state",{board:g.board,turn:g.turn,you:g.players[id],winner:null,draw:false});
     }
+  });
+  socket.on('galli-free-action',(action={})=>{
+    const p=gamePair(socket);if(!p)return;
+    const g=games.get(p.key);if(!g||g.status!=='playing'||!['spin','draw','connect4','hangman'].includes(g.type)||g.finished)return;
+    const me=socket.id===g.inviter?0:1;
+    if(g.type==='connect4'){
+      if(g.turn!==me||!Number.isInteger(action.column)||action.column<0||action.column>6)return;
+      let r=5;while(r>=0&&g.board[r*7+action.column]!==null)r--;if(r<0)return;
+      g.board[r*7+action.column]=me;
+      const win=()=>{for(let y=0;y<6;y++)for(let x=0;x<7;x++)for(const [dy,dx] of [[0,1],[1,0],[1,1],[1,-1]]){
+        if(Array.from({length:4},(_,k)=>[y+k*dy,x+k*dx]).every(([a,b])=>a>=0&&a<6&&b>=0&&b<7&&g.board[a*7+b]===me))return true;
+      }return false;};
+      if(win()){g.finished=true;g.winner=me;}else if(g.board.every(x=>x!==null)){g.finished=true;}else g.turn=1-me;
+    }else if(g.type==='hangman'){
+      if(g.turn!==me||typeof action.letter!=='string'||!/^[A-Z]$/.test(action.letter)||g.used.includes(action.letter))return;
+      g.used.push(action.letter);if(!g.word.includes(action.letter))g.wrong++;
+      if(g.word.split('').every(ch=>g.used.includes(ch))){g.finished=true;g.winner=me;}
+      else if(g.wrong>=6){g.finished=true;g.winner=null;}else g.turn=1-me;
+    }else if(g.type==='spin'){
+      if(g.turn!==me||action.spin!==true)return;g.result=ogSpinTasks[crypto.randomInt(ogSpinTasks.length)];g.turn=1-me;
+    }else if(g.type==='draw'){
+      if(me===g.drawer&&Array.isArray(action.stroke)&&action.stroke.length===4&&action.stroke.every(x=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=1)){
+        if(g.strokes.length>=3500)return;g.strokes.push(action.stroke);io.to(g.drawer===0?g.invitee:g.inviter).emit('galli-draw-stroke',action.stroke);return;
+      }else if(me!==g.drawer&&typeof action.guess==='string'&&action.guess.trim().toLowerCase()===g.word){g.finished=true;g.winner=me;}
+      else return;
+    }
+    ogEmitFreeGame(g);
   });
   socket.on("galli-game-move", ({index}={}) => {
     const p=gamePair(socket);if(!p)return;
