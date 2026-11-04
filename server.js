@@ -707,7 +707,7 @@ io.on("connection", (socket) => {
     const prev=previousBySocket.get(socket.id);
     if(!prev||prev.expires<Date.now()){socket.emit('galli-previous-status','Previous partner is no longer available.');return;}
     const other=io.sockets.sockets.get(prev.otherId);
-    if(!other||partners.has(socket.id)||partners.has(other.id)||!other.data.ready){socket.emit('galli-previous-status','Previous partner is unavailable.');return;}
+    if(!other||!socket.data.ready||!other.data.ready){socket.emit('galli-previous-status','Previous partner is unavailable.');return;}
     if(previousBySocket.get(other.id)?.otherId!==socket.id){socket.emit('galli-previous-status','Previous partner is unavailable.');return;}
     reconnectRequests.set(other.id,{from:socket.id,expires:Date.now()+30000});
     other.emit('galli-previous-invite');socket.emit('galli-previous-status','Waiting for the other person to agree...');
@@ -718,9 +718,18 @@ io.on("connection", (socket) => {
     const from=io.sockets.sockets.get(request.from);
     if(!from)return;
     if(accept!==true){from.emit('galli-previous-status','Previous partner declined.');return;}
-    if(partners.has(socket.id)||partners.has(from.id)||!socket.data.ready||!from.data.ready||!eligible(socket,from))return;
-    // Remove both from the random queue, then match directly via the normal signaling events.
+    if(!socket.data.ready||!from.data.ready||!eligible(socket,from)){from.emit('galli-previous-status','Reconnection is no longer available.');return;}
+    // A participant may already have been automatically matched to someone new.
+    // Only after mutual consent, detach both from their current chats and pair them.
+    // Temporarily disable matchmaking so leavePartner cannot immediately requeue them.
+    socket.data.ready=false;from.data.ready=false;
+    leavePartner(socket);leavePartner(from);
     removeWaiting(socket.id);removeWaiting(from.id);
+    socket.data.ready=true;from.data.ready=true;
+    // If either disconnected during the transition, do not pair stale sockets.
+    if(!socket.connected||!from.connected||!eligible(socket,from)){
+      from.emit('galli-previous-status','Reconnection could not be completed.');return;
+    }
     partners.set(socket.id,from.id);partners.set(from.id,socket.id);
     const started=Date.now();const chatKey=pairKey(socket.id,from.id);chatStarts.set(chatKey,started);monitor.matches++;
     const session={id:crypto.randomUUID(),started,a:socket.data.clientId,b:from.data.clientId};analyticsSessions.set(chatKey,session);

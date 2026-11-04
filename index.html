@@ -1780,6 +1780,15 @@ function renderBadgePreview(){
 }
 badgeTolerance.addEventListener('input',renderBadgePreview);
 badgeKeepOriginal.addEventListener('change',renderBadgePreview);
+// Prevent free visitors from opening the operating system file picker.
+// The server separately verifies entitlement before accepting any badge data.
+const customBadgeLabel=document.querySelector('label[for="customBadgeUpload"]');
+if(customBadgeLabel)customBadgeLabel.addEventListener('click',(event)=>{
+ if(!ownerUnlocked){event.preventDefault();event.stopPropagation();showProNotice('Update Custom Badge');}
+});
+customBadgeUpload.addEventListener('click',(event)=>{
+ if(!ownerUnlocked){event.preventDefault();showProNotice('Update Custom Badge');}
+});
 customBadgeUpload.addEventListener("change",async()=>{
  if(!ownerUnlocked){showProNotice("Update Custom Badge");customBadgeUpload.value="";return;}
  const file=customBadgeUpload.files&&customBadgeUpload.files[0];
