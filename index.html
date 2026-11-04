@@ -1467,7 +1467,7 @@ const extraGameChoices=document.getElementById("extraGameChoices");
 window.OG_PRO_TEST_MODE=false;
 let ownerUnlocked=false;
 // Owner access is granted after successful login at /admin on this same origin/browser profile.
-socket.on('galli-owner-status',({unlocked})=>{ownerUnlocked=!!unlocked;if(!ownerUnlocked)localStorage.removeItem('ogOwnerTicket');});
+socket.on('galli-owner-status',({unlocked})=>{ownerUnlocked=!!unlocked;if(!ownerUnlocked){console.warn('Online Galli: Pro unlock rejected. Reopen /admin on the SAME hostname, log in, then refresh this page.');}});
 socket.on('connect',()=>{const ticket=localStorage.getItem('ogOwnerTicket');if(ticket)socket.emit('galli-owner-auth',{ticket});});
 window.addEventListener('storage',e=>{if(e.key==='ogOwnerTicket'){const ticket=localStorage.getItem('ogOwnerTicket');if(socket.connected)socket.emit('galli-owner-auth',{ticket:ticket||''});if(!ticket)ownerUnlocked=false;}});
 function showProNotice(feature){
