@@ -702,43 +702,43 @@ io.on("connection", (socket) => {
   });
 
 
+  // One-click Previous: immediately reconnect if the former partner is still available.
+  // Never require a reciprocal button press, and never interrupt the former partner's new chat.
   socket.on('galli-previous-request',()=>{
     if(!hasPro(socket)){socket.emit('galli-pro-required',{feature:'Previous'});return;}
     const prev=previousBySocket.get(socket.id);
-    if(!prev||prev.expires<Date.now()){socket.emit('galli-previous-status','Previous partner is no longer available.');return;}
-    const other=io.sockets.sockets.get(prev.otherId);
-    if(!other||!socket.data.ready||!other.data.ready){socket.emit('galli-previous-status','Previous partner is unavailable.');return;}
-    if(previousBySocket.get(other.id)?.otherId!==socket.id){socket.emit('galli-previous-status','Previous partner is unavailable.');return;}
-    reconnectRequests.set(other.id,{from:socket.id,expires:Date.now()+30000});
-    other.emit('galli-previous-invite');socket.emit('galli-previous-status','Waiting for the other person to agree...');
-  });
-  socket.on('galli-previous-response',({accept}={})=>{
-    const request=reconnectRequests.get(socket.id);reconnectRequests.delete(socket.id);
-    if(!request||request.expires<Date.now())return;
-    const from=io.sockets.sockets.get(request.from);
-    if(!from)return;
-    if(accept!==true){from.emit('galli-previous-status','Previous partner declined.');return;}
-    if(!socket.data.ready||!from.data.ready||!eligible(socket,from)){from.emit('galli-previous-status','Reconnection is no longer available.');return;}
-    // A participant may already have been automatically matched to someone new.
-    // Only after mutual consent, detach both from their current chats and pair them.
-    // Temporarily disable matchmaking so leavePartner cannot immediately requeue them.
-    socket.data.ready=false;from.data.ready=false;
-    leavePartner(socket);leavePartner(from);
-    removeWaiting(socket.id);removeWaiting(from.id);
-    socket.data.ready=true;from.data.ready=true;
-    // If either disconnected during the transition, do not pair stale sockets.
-    if(!socket.connected||!from.connected||!eligible(socket,from)){
-      from.emit('galli-previous-status','Reconnection could not be completed.');return;
+    if(!prev || prev.expires<Date.now()){
+      socket.emit('galli-previous-status','Previous partner is no longer available.');return;
     }
-    partners.set(socket.id,from.id);partners.set(from.id,socket.id);
-    const started=Date.now();const chatKey=pairKey(socket.id,from.id);chatStarts.set(chatKey,started);monitor.matches++;
-    const session={id:crypto.randomUUID(),started,a:socket.data.clientId,b:from.data.clientId};analyticsSessions.set(chatKey,session);
-    persistAnalytics(`INSERT INTO analytics_chats(id, started_at, client_a, client_b) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO NOTHING`,[session.id,new Date(started),session.a,session.b]);
-    from.emit('matched',{partnerId:socket.id,initiator:true});
-    socket.emit('matched',{partnerId:from.id,initiator:false});
-    if(socket.data.supporterTeam)from.emit('galli-badge-peer',{team:socket.data.supporterTeam});
-    if(from.data.supporterTeam)socket.emit('galli-badge-peer',{team:from.data.supporterTeam});
-    previousBySocket.delete(socket.id);previousBySocket.delete(from.id);
+    const other=io.sockets.sockets.get(prev.otherId);
+    if(!other || !other.connected || !socket.data.ready || !other.data.ready ||
+       partners.has(other.id) || !eligible(socket,other)){
+      socket.emit('galli-previous-status','Previous partner is unavailable.');return;
+    }
+    // The requesting user may already have been matched by Next Corner.
+    // Release that new chat, but retain the originally requested previous partner.
+    if(partners.has(socket.id)) leavePartner(socket);
+    if(!socket.connected || !other.connected || partners.has(socket.id) ||
+       partners.has(other.id) || !eligible(socket,other)){
+      socket.emit('galli-previous-status','Previous partner is unavailable.');return;
+    }
+    removeWaiting(socket.id);removeWaiting(other.id);
+    partners.set(socket.id,other.id);partners.set(other.id,socket.id);
+    const started=Date.now(),chatKey=pairKey(socket.id,other.id);
+    chatStarts.set(chatKey,started);monitor.matches++;
+    const session={id:crypto.randomUUID(),started,a:socket.data.clientId,b:other.data.clientId};
+    analyticsSessions.set(chatKey,session);
+    persistAnalytics(`INSERT INTO analytics_chats(id, started_at, client_a, client_b) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO NOTHING`,
+      [session.id,new Date(started),session.a,session.b]);
+    socket.emit('matched',{partnerId:other.id,initiator:true});
+    other.emit('matched',{partnerId:socket.id,initiator:false});
+    if(other.data.customBadge)socket.emit('galli-custom-badge-peer',{data:other.data.customBadge});
+    else socket.emit('galli-badge-peer',{team:other.data.supporterTeam||''});
+    if(socket.data.customBadge)other.emit('galli-custom-badge-peer',{data:socket.data.customBadge});
+    else other.emit('galli-badge-peer',{team:socket.data.supporterTeam||''});
+    previousBySocket.delete(socket.id);previousBySocket.delete(other.id);
+    reconnectRequests.delete(socket.id);reconnectRequests.delete(other.id);
+    socket.emit('galli-previous-status','Reconnected to previous partner.');
   });
   socket.on("galli-game-invite", ({type="ttt"}={}) => {
     if(!["ttt","rps","wyr","ludo","snakes"].includes(type))return;

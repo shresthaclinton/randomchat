@@ -709,8 +709,6 @@ footer { line-height:1.8; }
 .galli-game-picker{display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:flex-start!important;overflow:visible!important;max-width:100%!important;min-height:0!important;padding:14px 12px 8px 4px!important;gap:11px!important}
 .galli-game-picker button{display:flex!important;flex:0 0 auto!important;justify-content:center!important;align-items:center!important;width:100%!important;min-height:43px!important;white-space:normal!important;font-size:13px!important;padding:11px 15px!important}
 @media(max-width:600px){.galli-game-picker{padding:16px 12px 8px 4px!important;gap:12px!important}.galli-game-picker button{min-height:46px!important}}
-#ownerUnlockBtn{background:#171717;color:#ffe26b;border:1px solid #ffe26b;border-radius:9px;padding:9px;font-weight:700}
-#ownerUnlockBtn.owner-active{background:#155d37;color:#fff}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 </head>
@@ -857,7 +855,6 @@ footer { line-height:1.8; }
       <button class="start" id="startBtn">▶ Enter the Galli</button>
       <div id="status" role="status" aria-live="polite">Ready to enter Online Galli.</div>
     </div>
-    <button id="ownerUnlockBtn" type="button" title="Owner access">🔑 Owner</button>
     <button id="previousCornerBtn" type="button" class="pro-locked">↩ Previous <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button>
     <button class="next" id="nextBtn" disabled>⏭ Next Corner</button>
     <button id="muteBtn" disabled>🎤 Mute</button>
@@ -1424,21 +1421,9 @@ const gameTypePicker=document.getElementById("gameTypePicker");
 const extraGameChoices=document.getElementById("extraGameChoices");
 // Pro is not sold or activated in this build: do not simulate paid access.
 window.OG_PRO_TEST_MODE=false;
-const ownerUnlockBtn=document.getElementById('ownerUnlockBtn');
 let ownerUnlocked=false;
-function updateOwnerUI(){ownerUnlockBtn.textContent=ownerUnlocked?'👑 Owner Active':'🔑 Owner';ownerUnlockBtn.classList.toggle('owner-active',ownerUnlocked);}
-ownerUnlockBtn.addEventListener('click',async()=>{
- if(ownerUnlocked){alert('Owner features are unlocked for this session.');return;}
- const password=prompt('Enter your existing Online Galli admin dashboard password to unlock Pro features on this device:');
- if(!password)return;
- try{
-  const response=await fetch('/api/owner/unlock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password}),cache:'no-store'});
-  const data=await response.json();if(!response.ok||!data.ticket){alert('Incorrect password or owner access unavailable.');return;}
-  sessionStorage.setItem('ogOwnerTicket',data.ticket);
-  socket.emit('galli-owner-auth',{ticket:data.ticket});
- }catch{alert('Unable to verify owner access.');}
-});
-socket.on('galli-owner-status',({unlocked})=>{ownerUnlocked=!!unlocked;updateOwnerUI();if(!ownerUnlocked)sessionStorage.removeItem('ogOwnerTicket');});
+// Owner access is granted after a successful login at /admin in this browser tab.
+socket.on('galli-owner-status',({unlocked})=>{ownerUnlocked=!!unlocked;if(!ownerUnlocked)sessionStorage.removeItem('ogOwnerTicket');});
 socket.on('connect',()=>{const ticket=sessionStorage.getItem('ogOwnerTicket');if(ticket)socket.emit('galli-owner-auth',{ticket});});
 function showProNotice(feature){
  const notice=document.getElementById("galliProNotice");
@@ -1451,10 +1436,7 @@ document.getElementById("previousCornerBtn").addEventListener("click",()=>{
  socket.emit('galli-previous-request');
 });
 socket.on('galli-previous-status',message=>status(message));
-socket.on('galli-previous-invite',()=>{
- const accept=confirm('Your previous chat partner wants to reconnect. Accept?');
- socket.emit('galli-previous-response',{accept});
-});
+
 const gameTitles={ttt:"❎ Tic-Tac-Toe",rps:"✊ Rock Paper Scissors",wyr:"🤔 Would You Rather?",ludo:"🎲 Ludo 👑 PRO",snakes:"🐍 Snakes & Ladders 👑 PRO"};
 let selectedGameType="ttt",activeExtraGame=null;
 function setGameType(type){
