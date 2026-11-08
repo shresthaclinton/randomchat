@@ -13,6 +13,15 @@ if (!process.env.DATABASE_URL) {
 }
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5,
   ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: true } : undefined });
+function requestIp(req) {
+  const forwarded = req.headers["x-forwarded-for"];
+  const value = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+  const first = typeof value === "string" && value.split(",")[0].trim();
+  return (first || req.socket.remoteAddress || "unknown").slice(0, 80);
+}
+function developerResetEnabled() {
+  return process.env.NODE_ENV !== "production" || process.env.ENABLE_DEVELOPER_RESET === "true";
+}
 async function initializeDatabase() {
   await pool.query(`CREATE TABLE IF NOT EXISTS moderation_reports (
     id BIGSERIAL PRIMARY KEY, time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -79,6 +88,34 @@ function fetchMeteredIce() {
 // Create the website server
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
+
+  // Health: process is alive. No database access.
+  if (req.method === "GET" && url.pathname === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+    res.end(JSON.stringify({ status: "ok", uptime: process.uptime(), timestamp: new Date().toISOString() }));
+    return;
+  }
+
+  // Readiness: PostgreSQL connectivity via SELECT 1.
+  // query_timeout is handled by pg: it rejects the promise, cancels the query,
+  // and returns the client to the pool. No unmanaged queries are left behind.
+  if (req.method === "GET" && url.pathname === "/ready") {
+    pool.query({ text: "SELECT 1", query_timeout: 2500 })
+      .then(() => {
+        if (res.headersSent) return;
+        res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+        res.end(JSON.stringify({ status: "ready" }));
+      })
+      .catch(error => {
+        console.error("READY_CHECK_FAILED", error && error.message ? error.message : error);
+        if (!res.headersSent) {
+          res.writeHead(503, { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+          res.end(JSON.stringify({ status: "not ready" }));
+        }
+      });
+    return;
+  }
+
   // Serve only bundled photorealistic face-effect images.
   if (req.method === "GET" && /^\/assets\/face-effects\/[a-z-]+\.png$/.test(url.pathname)) {
     const fileName = url.pathname.slice("/assets/face-effects/".length);
@@ -154,16 +191,31 @@ const server = http.createServer((req, res) => {
 
   // Private developer reset. The secret is stored only in Render environment variables.
   if (url.pathname === "/developer-reset" && req.method === "GET") {
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+    if (!developerResetEnabled()) {
+      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" });
+      res.end("Not found");
+      return;
+    }
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'", "X-Robots-Tag": "noindex, nofollow" });
     res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>RandomChat developer reset</title><style>body{font:16px system-ui;background:#10131b;color:white;max-width:480px;margin:8vh auto;padding:20px}input,button{font:inherit;padding:14px;border-radius:8px;width:100%;box-sizing:border-box;margin-top:12px}button{background:#18a86b;color:white;border:0;cursor:pointer}</style></head><body><h2>Developer testing reset</h2><p>Private testing only. This clears temporary server blocks and the blocked list on <strong>this browser</strong>. Repeat on each test device.</p><form id="form"><input id="secret" type="password" autocomplete="off" placeholder="Developer reset secret" required><button>Reset testing blocks</button></form><p id="result" role="status"></p><script>document.getElementById('form').onsubmit=async(e)=>{e.preventDefault();const result=document.getElementById('result');result.textContent='Resetting…';try{const response=await fetch('/api/developer/reset-blocks',{method:'POST',headers:{'Content-Type':'application/json','X-Developer-Reset-Token':document.getElementById('secret').value},body:'{}'});if(!response.ok)throw Error(response.status===401?'Incorrect password or reset not configured':'Reset failed');localStorage.removeItem('randomchat-blocked-ids');result.textContent='Reset complete on this browser. Refresh RandomChat. Repeat on your other test devices.';document.getElementById('secret').value='';}catch(err){result.textContent=err.message;}};</script></body></html>`);
     return;
   }
   if (url.pathname === "/api/developer/reset-blocks" && req.method === "POST") {
+    if (!developerResetEnabled()) {
+      res.writeHead(404, { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" });
+      res.end(JSON.stringify({ ok: false }));
+      return;
+    }
     const configured = process.env.DEVELOPER_RESET_TOKEN || "";
     const provided = req.headers["x-developer-reset-token"] || "";
     const a = Buffer.from(configured);
     const b = Buffer.from(typeof provided === "string" ? provided : "");
     if (a.length < 24 || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      if (rateLimited(developerResetAuthTimes, requestIp(req), 8, 15 * 60_000)) {
+        res.writeHead(429, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+        res.end(JSON.stringify({ ok: false }));
+        return;
+      }
       res.writeHead(401, { "Content-Type": "application/json", "Cache-Control": "no-store" });
       res.end(JSON.stringify({ ok: false }));
       return;
@@ -182,7 +234,7 @@ const server = http.createServer((req, res) => {
   }
   // Private beta admin panel: separate secret from developer reset.
   if (url.pathname === "/admin" && req.method === "GET") {
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'" });
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'", "X-Robots-Tag": "noindex, nofollow" });
     fs.createReadStream(path.join(__dirname, "admin.html")).pipe(res);
     return;
   }
@@ -192,6 +244,11 @@ const server = http.createServer((req, res) => {
     const a = Buffer.from(configured);
     const b = Buffer.from(typeof provided === "string" ? provided : "");
     if (a.length < 24 || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      if (rateLimited(adminAuthTimes, requestIp(req), 10, 15 * 60_000)) {
+        res.writeHead(429, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+        res.end(JSON.stringify({ ok: false, error: "Too many authentication attempts. Try later." }));
+        return;
+      }
       res.writeHead(401, { "Content-Type": "application/json", "Cache-Control": "no-store" });
       res.end(JSON.stringify({ ok: false, error: "Invalid admin token or not configured" }));
       return;
@@ -258,13 +315,15 @@ const server = http.createServer((req, res) => {
     return;
   }
   if (req.method === "GET" && url.pathname === "/robots.txt") {
-    const body = "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /developer/\nSitemap: https://randomchat-2yl.onrender.com/sitemap.xml\n";
+    const base = (process.env.PUBLIC_BASE_URL || "https://onlinegalli.com").replace(/\/$/, "");
+    const body = "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /developer/\nDisallow: /developer-reset\nSitemap: " + base + "/sitemap.xml\n";
     res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" });
     res.end(body);
     return;
   }
   if (req.method === "GET" && url.pathname === "/sitemap.xml") {
-    const urls = ["/", "/privacy", "/terms", "/guidelines"].map(route => `  <url><loc>https://randomchat-2yl.onrender.com${route}</loc></url>`).join("\n");
+    const base = (process.env.PUBLIC_BASE_URL || "https://onlinegalli.com").replace(/\/$/, "");
+    const urls = ["/", "/privacy", "/terms", "/guidelines"].map(route => `  <url><loc>${base}${route}</loc></url>`).join("\n");
     const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
     res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" });
     res.end(body);
@@ -386,6 +445,8 @@ const reports = [];
 const bannedIds = new Map(); // Temporary bans: in-memory beta version.
 const reportTimes = new Map();
 const skipTimes = new Map();
+const adminAuthTimes = new Map();
+const developerResetAuthTimes = new Map();
 const recentPartners = new Map();
 const blockedPairs = new Set();
 const allowedReasons = new Set(["nudity", "harassment", "hate", "spam", "underage", "other"]);
