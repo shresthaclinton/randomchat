@@ -496,6 +496,13 @@ footer { line-height:1.8; }
 .galli-face-effects select{background:#fff;color:#111;border-radius:8px;padding:8px;max-width:185px}
 #faceStickerStatus{font-size:12px;color:#f7d96b;font-weight:400}
 #faceStickerPreview{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;transform:scaleX(-1);object-fit:fill}
+.galli-sticker-picker{position:relative;display:inline-block}
+.galli-sticker-picker select{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+#faceStickerButton{background:#fff;color:#111;border:0;border-radius:8px;padding:8px 10px;font-weight:700;max-width:160px;text-align:left}
+.galli-sticker-menu{position:absolute;left:0;top:calc(100% + 4px);z-index:40;min-width:190px;background:#fff;color:#111;border-radius:8px;box-shadow:0 8px 24px #0005;padding:4px;display:flex;flex-direction:column}
+.galli-sticker-menu button{background:#fff;color:#111;border:0;border-radius:6px;padding:8px 10px;text-align:left;font-weight:600}
+.galli-sticker-menu button:hover,.galli-sticker-menu button:focus{background:#ffe247}
+
 @media(max-width:600px){.galli-face-effects{gap:5px;font-size:12px}.galli-face-effects select{max-width:155px}}
 
 /* Shoe cursor and wide treaded footsteps. Desktop mouse only. */
@@ -868,16 +875,29 @@ footer { line-height:1.8; }
   <button type="button" id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
  <div class="galli-face-effects" aria-label="Face stickers">
  <label for="faceStickerSelect">🎭 Face Stickers</label>
- <select id="faceStickerSelect" aria-label="Choose a face sticker">
-  <option value="none">Off</option>
-  <option value="thug">🕶️ Thug Life</option>
-  <option value="chaplin">🎩 Charlie Chaplin</option>
-  <option value="aviator">🕶️ Aviator Sunglasses</option>
-  <option value="wayfarer">🕶️ Wayfarer Classic</option>
-  <option value="shelby">🧢 Thomas Shelby Cap</option>
-  <option value="steampunk">🥽 Steampunk Round Glasses</option>
-  <option value="realistic-moustache">🥸 Realistic Moustache</option>
- </select>
+ <div class="galli-sticker-picker" id="faceStickerPicker">
+  <button type="button" id="faceStickerButton" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose a face sticker">Off</button>
+  <div class="galli-sticker-menu" id="faceStickerMenu" role="listbox" hidden>
+   <button type="button" data-value="none" role="option">Off</button>
+   <button type="button" data-value="thug" role="option">🕶️ Thug Life</button>
+   <button type="button" data-value="chaplin" role="option">🎩 Charlie Chaplin</button>
+   <button type="button" data-value="aviator" role="option">🕶️ Aviator Sunglasses</button>
+   <button type="button" data-value="wayfarer" role="option">🕶️ Wayfarer Classic</button>
+   <button type="button" data-value="shelby" role="option">🧢 Thomas Shelby Cap</button>
+   <button type="button" data-value="steampunk" role="option">🥽 Steampunk Round Glasses</button>
+   <button type="button" data-value="realistic-moustache" role="option">🥸 Realistic Moustache</button>
+  </div>
+  <select id="faceStickerSelect" aria-hidden="true" tabindex="-1">
+   <option value="none">Off</option>
+   <option value="thug">Thug Life</option>
+   <option value="chaplin">Charlie Chaplin</option>
+   <option value="aviator">Aviator Sunglasses</option>
+   <option value="wayfarer">Wayfarer Classic</option>
+   <option value="shelby">Thomas Shelby Cap</option>
+   <option value="steampunk">Steampunk Round Glasses</option>
+   <option value="realistic-moustache">Realistic Moustache</option>
+  </select>
+ </div>
  <span id="faceStickerStatus" role="status" aria-live="polite"></span>
 </div>
  <div class="galli-social-tabs">
@@ -2090,6 +2110,15 @@ window.addEventListener("pagehide", () => {
 // Face stickers: locally composited on the outgoing video track so the partner sees them.
 // FaceMesh is loaded on demand only when a sticker is selected.
 const stickerSelect=document.getElementById("faceStickerSelect");
+const faceStickerButton=document.getElementById("faceStickerButton");
+const faceStickerMenu=document.getElementById("faceStickerMenu");
+function stickerMenuClose(){faceStickerMenu.hidden=true;faceStickerButton.setAttribute("aria-expanded","false");}
+function stickerMenuLabel(value){const b=faceStickerMenu.querySelector('[data-value="'+value+'"]');return b?b.textContent:"Off";}
+faceStickerButton.addEventListener("click",()=>{const open=faceStickerMenu.hidden;stickerMenuClose();if(open){faceStickerMenu.hidden=false;faceStickerButton.setAttribute("aria-expanded","true");}});
+faceStickerMenu.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;stickerSelect.value=b.dataset.value;faceStickerButton.textContent=b.textContent;stickerMenuClose();stickerSelect.dispatchEvent(new Event("change"));});
+document.addEventListener("click",e=>{if(!e.target.closest("#faceStickerPicker"))stickerMenuClose();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")stickerMenuClose();});
+
 const stickerStatus=document.getElementById("faceStickerStatus");
 const stickerPreview=document.getElementById("faceStickerPreview");
 const stickerPreviewCtx=stickerPreview.getContext("2d");
@@ -2226,7 +2255,7 @@ async function stickerEnable(){
   stickerMessage("Sticker on · visible to your partner");
  }catch(e){
   stickerMessage("Face tracking unavailable. Try again later.");
-  stickerSelect.value="none";stickerDisable();
+  stickerSelect.value="none";if(faceStickerButton)faceStickerButton.textContent="Off";stickerDisable();
  }
 }
 function stickerDisable(){
