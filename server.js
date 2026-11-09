@@ -11,7 +11,22 @@ if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is missing. Configure a PostgreSQL database in Render.");
   process.exit(1);
 }
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5,
+// Neon (and pg-connection-string) warn when sslmode is require/prefer/verify-ca.
+// Those modes are currently treated as verify-full. Rewrite to verify-full so
+// the warning stops and certificate hostname checks stay strict.
+function normalizeDatabaseUrl(raw) {
+  try {
+    const url = new URL(raw);
+    const mode = (url.searchParams.get("sslmode") || "").toLowerCase();
+    if (mode === "require" || mode === "prefer" || mode === "verify-ca") {
+      url.searchParams.set("sslmode", "verify-full");
+    }
+    return url.toString();
+  } catch {
+    return raw;
+  }
+}
+const pool = new Pool({ connectionString: normalizeDatabaseUrl(process.env.DATABASE_URL), max: 5,
   ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: true } : undefined });
 function requestIp(req) {
   const forwarded = req.headers["x-forwarded-for"];
