@@ -1829,7 +1829,19 @@ function resetV4() {
   inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
   gamesBtn.disabled=!partnerId;
 }
-gamesBtn.onclick=()=>{const opening=gamePanel.hidden;gamePanel.hidden=!opening;requestAnimationFrame(positionGameAtVideoSeam);reactionPanel.hidden=true;if(opening&&!gameState&&!activeExtraGame)showGamePicker();};
+gamesBtn.onclick=()=>{
+  const opening=gamePanel.hidden;
+  gamePanel.hidden=!opening;
+  requestAnimationFrame(positionGameAtVideoSeam);
+  reactionPanel.hidden=true;
+  if(opening&&!gameState&&!activeExtraGame){
+    showGamePicker();
+  } else if(!opening && (gameState||activeExtraGame)){
+    // Closing an active game — notify partner so their panel also closes
+    socket.emit("galli-game-close");
+    resetV4();
+  }
+};
 
 inviteGameBtn.onclick=()=>{if(!partnerId)return;socket.emit("galli-game-invite",{type:selectedGameType});gameMessage.textContent="Waiting for your partner to accept...";inviteGameBtn.hidden=true;};
 acceptGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:true});acceptGameBtn.hidden=true;declineGameBtn.hidden=true;};
@@ -1862,7 +1874,7 @@ socket.on("galli-game-invite",({type="ttt"}={})=>{
 });
 socket.on("galli-game-pending",()=>{gameMessage.textContent="Waiting for your partner to accept...";});
 socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;showGamePicker();gameMessage.textContent="Your partner declined. Choose a game to invite again.";});
-socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;showGamePicker();gameMessage.textContent="Game ended. Choose another game.";});
+socket.on("galli-game-ended",()=>{resetV4();gameMessage.textContent="Game closed.";});
 socket.on("galli-game-state",state=>{
  if(!partnerId)return;
  gameBoard.hidden=false;extraGameChoices.hidden=true;gameTypePicker.hidden=true;activeGameTitle.textContent=gameTitles.ttt;activeExtraGame=null;
