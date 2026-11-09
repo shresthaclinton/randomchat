@@ -1528,7 +1528,6 @@ function showGamePicker(){
 gameTypePicker.querySelectorAll("[data-galli-game]").forEach(b=>b.addEventListener("click",()=>setGameType(b.dataset.galliGame)));
 function renderExtraGame(state){
  if(!partnerId)return;
- const previousConnectBoard=activeExtraGame?.type==='connect4'&&state.type==='connect4' ? activeExtraGame.board : null;
  activeExtraGame=state;selectedGameType=state.type;
  activeGameTitle.textContent=gameTitles[state.type];
  gamePanel.hidden=false;
@@ -1563,7 +1562,9 @@ socket.on("galli-extra-game-state",renderExtraGame);
 function ogEl(tag,txt,cls){const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e}
 function ogFreeState(state){
  if(!partnerId)return;
- activeExtraGame={type:state.type,finished:!!state.finished};selectedGameType=state.type;
+ const previousConnectBoard=activeExtraGame?.type==='connect4'&&state.type==='connect4'&&Array.isArray(activeExtraGame.board)
+  ? [...activeExtraGame.board] : null;
+ activeExtraGame={...state,board:Array.isArray(state.board)?[...state.board]:state.board,finished:!!state.finished};selectedGameType=state.type;
  activeGameTitle.textContent=gameTitles[state.type];gamePanel.hidden=false;
  gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
  inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
