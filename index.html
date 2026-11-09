@@ -803,8 +803,7 @@ footer { line-height:1.8; }
   <option value="wayfarer">🕶️ Wayfarer Classic</option>
   <option value="shelby">🧢 Thomas Shelby Cap</option>
   <option value="steampunk">🥽 Steampunk Round Glasses</option>
-  <option value="prithvi">🥸 Prithvi Narayan Shah Moustache</option>
-  <option value="cowboy">🤠 Cowboy Hat</option>
+  <option value="realistic-moustache">🥸 Realistic Moustache</option>
  </select>
  <span id="faceStickerStatus" role="status" aria-live="polite"></span>
 </div>
@@ -1778,8 +1777,8 @@ function stickerResize(){
 }
 // Photo-derived transparent accessory artwork with landmark positioning.
 const faceArt={};
-for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","prithvi","cowboy"]){
- const image=new Image();image.src="/assets/face-effects/"+name+".png?v=5710";faceArt[name]=image;
+for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","realistic-moustache"]){
+ const image=new Image();image.src="/assets/face-effects/"+name+".png?v=5711";faceArt[name]=image;
 }
 let smoothFace=null;
 function stickerAsset(ctx,name,x,y,width,height){
@@ -1810,10 +1809,9 @@ function stickerDraw(ctx,face,mode,w,h){
   stickerAsset(ctx,"chaplin-moustache",-s*.23,lipY-s*.31,s*.46,s*.22);
  }
  if(mode==="shelby")stickerAsset(ctx,"shelby",-s*1.47,headY-s*.95,s*2.94,s*1.39);
- if(mode==="cowboy")stickerAsset(ctx,"cowboy",-s*1.50,headY-s*.95,s*3.00,s*1.55);
- if(mode==="prithvi"){
+ if(mode==="realistic-moustache"){
   const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
-  stickerAsset(ctx,"prithvi",-s*.66,lipY-s*.38,s*1.32,s*.51);
+  stickerAsset(ctx,"realistic-moustache",-s*.72,lipY-s*.42,s*1.44,s*.55);
  }
  ctx.restore();
 }
