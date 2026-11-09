@@ -1,19 +1,11 @@
 
 <!DOCTYPE html>
-<html lang="en-NP">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Random Video Chat in Nepal | Online Galli</title>
-<meta name="description" content="Meet new people in Nepal with Online Galli, a free 18+ random video chat. Start a spontaneous face-to-face conversation, then move on whenever you like.">
-<meta name="robots" content="index, follow, max-image-preview:large">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Online Galli">
-<meta property="og:title" content="Random Video Chat in Nepal | Online Galli">
-<meta property="og:description" content="A free 18+ place to meet new people in Nepal through spontaneous one-to-one video chats.">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Random Video Chat in Nepal | Online Galli">
-<meta name="twitter:description" content="Meet new people in Nepal through spontaneous one-to-one video chats. Online Galli is for adults 18+.">
+<title>Online Galli | A new meetup around every corner</title>
+<meta name="description" content="Online Galli is an 18+ place for spontaneous one-to-one video conversations. A new meetup around every corner...">
 <meta name="theme-color" content="#ffe247">
 
 <style>
@@ -41,15 +33,6 @@ header {
 .online { color: #171717; font-size: 13px; font-weight: 700; }
 .tagline { margin: 0 0 18px; font-size: clamp(22px, 4vw, 38px); font-weight: 900; letter-spacing: -1px; }
 .subtitle { margin: -9px 0 20px; color: #39331a; }
-
-.seo-content { max-width: 980px; margin: 28px auto 10px; padding: 26px 24px; border: 2px solid #171717; border-radius: 14px; background: #fff5b6; line-height: 1.65; }
-.seo-content h2 { margin: 0 0 10px; font-size: clamp(21px, 3vw, 28px); }
-.seo-content h3 { margin: 22px 0 8px; font-size: 18px; }
-.seo-content p { margin: 8px 0; }
-.seo-content details { padding: 12px 0; border-top: 1px solid #8b7b2c; }
-.seo-content summary { cursor: pointer; font-weight: 800; }
-.seo-content details p { margin: 8px 0 0; }
-@media(max-width:600px){.seo-content{margin:20px 12px;padding:18px 16px}}
 
 .container {
   max-width: 1400px;
@@ -688,8 +671,98 @@ footer { line-height:1.8; }
 #badgeEditPanel[hidden]{display:none!important}.badge-preview-row{display:flex;gap:12px;justify-content:space-around;margin-bottom:8px}
 .badge-preview-row>div{display:grid;gap:4px;text-align:center}.badge-preview-row canvas{width:96px;height:96px;object-fit:contain;border:1px solid #777;border-radius:5px;background-color:#eee;background-image:linear-gradient(45deg,#bbb 25%,transparent 25%),linear-gradient(-45deg,#bbb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#bbb 75%),linear-gradient(-45deg,transparent 75%,#bbb 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
 #badgeEditPanel label{display:block;margin:8px 0}#badgeTolerance{width:100%;accent-color:#ffe247}#badgeApply{background:#ffe247;border:0;border-radius:6px;padding:8px 12px;font-weight:800;cursor:pointer}
+
+.pro-pill{display:inline-block;background:#ffdf54;color:#151515;border-radius:12px;padding:2px 6px;font-size:10px;font-weight:900}
+.pro-locked{position:relative}
+.galli-pro-overlay[hidden]{display:none!important}
+.galli-pro-overlay{position:fixed;inset:0;z-index:999999;background:#000b;display:grid;place-items:center;padding:20px}
+.galli-pro-dialog{background:#211b2b;color:#fff;border:2px solid #ffdd52;border-radius:18px;padding:22px;max-width:360px;text-align:center;box-shadow:0 20px 60px #0008}
+.galli-pro-dialog p{font-size:14px;line-height:1.5}
+.galli-pro-dialog button{background:#ffdf54;color:#171717;border:0;border-radius:9px;padding:11px 30px;font-weight:900;cursor:pointer}
+#previousCornerBtn{background:#28202c;color:#ffdf54;border:1px solid #ffdf54;border-radius:9px;padding:10px;font-weight:800}
+
+/* Online Galli Pro layout refinement: tilted overlapping corner tags */
+.pro-locked,.galli-upload-label{position:relative!important;overflow:visible!important}
+.pro-corner-tag{position:absolute;z-index:4;right:-9px;top:-10px;transform:rotate(17deg);transform-origin:center;display:inline-block;padding:3px 6px;border-radius:4px;background:#ffd63f;color:#171717;border:1px solid #171717;box-shadow:0 2px 4px #0004;font-size:9px;line-height:1.1;font-weight:950;letter-spacing:.35px;white-space:nowrap;pointer-events:none}
+.galli-game-picker{display:flex!important;flex-wrap:nowrap!important;justify-content:flex-start!important;gap:7px!important;overflow-x:auto;overflow-y:visible;padding:13px 10px 9px 2px;margin:4px 0 8px;scrollbar-width:thin}
+.galli-game-picker button{position:relative;flex:0 0 auto;white-space:nowrap;font-size:11px!important;padding:8px 9px!important;min-height:35px}
+/* Keep Play Games compact and aligned with the control buttons when width allows */
+.controls{column-gap:8px!important;row-gap:9px!important}
+.controls>button{padding:12px 11px!important;white-space:nowrap;font-size:12px}
+.controls #previousCornerBtn{background:#fff4b3;color:#171717;border:2px solid #171717}
+.controls #gamesBtn{margin-left:0!important}
+@media(max-width:600px){.controls>button{flex:0 1 auto!important;padding:10px 8px!important;font-size:11px}.controls .galli-enter-wrap{min-width:130px;max-width:180px}.pro-corner-tag{font-size:8px;right:-6px;top:-9px}}
+
+
+/* V5.7.14: mobile controls and five game choices always accessible */
+.controls{display:flex!important;flex-wrap:wrap!important;overflow:visible!important}
+.controls #previousCornerBtn{display:inline-flex!important;visibility:visible!important;align-items:center;justify-content:center;position:relative!important;min-height:44px!important}
+.galli-game-picker{overflow-x:auto!important;overflow-y:auto!important;max-width:100%!important;min-height:62px!important}
+.galli-game-picker button{display:inline-flex!important;visibility:visible!important;align-items:center;position:relative!important}
+.og-board-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:1px;width:100%;font-size:8px}
+.og-board-cell{padding:3px 0;min-height:20px;text-align:center;background:#fff2ba;color:#201920;border-radius:2px}
+.og-board-cell:nth-child(odd){background:#e2f0e6}
+.og-ludo-track{display:grid;gap:8px}.og-ludo-track>div{display:flex;flex-wrap:wrap;gap:4px}.og-ludo-track button{font-size:11px;padding:5px}
+@media(max-width:600px){.controls .galli-enter-wrap{flex:1 1 100%!important;max-width:none!important}.controls #previousCornerBtn{order:1!important;flex:1 1 28%!important}.controls #nextBtn{order:2!important;flex:1 1 28%!important}.controls #gamesBtn{order:3!important;flex:1 1 28%!important}.controls #muteBtn{order:4!important}.controls #stopBtn{order:5!important}.controls #reportBtn{order:6!important}.controls #blockBtn{order:7!important}.galli-game-picker{padding-top:16px!important}}
+
+/* Game selection: vertical stack, visible on phones without sideways scrolling */
+.galli-game-picker{display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:flex-start!important;overflow:visible!important;max-width:100%!important;min-height:0!important;padding:14px 12px 8px 4px!important;gap:11px!important}
+.galli-game-picker button{display:flex!important;flex:0 0 auto!important;justify-content:center!important;align-items:center!important;width:100%!important;min-height:43px!important;white-space:normal!important;font-size:13px!important;padding:11px 15px!important}
+@media(max-width:600px){.galli-game-picker{padding:16px 12px 8px 4px!important;gap:12px!important}.galli-game-picker button{min-height:46px!important}}
+
+/* True visual boards for the two-player board games */
+.og-snakes-wrap{position:relative;width:min(100%,420px);aspect-ratio:1;margin:8px auto}
+.og-snakes-wrap .og-board-grid{width:100%;height:100%;grid-template-rows:repeat(10,minmax(0,1fr));gap:1px}
+.og-snakes-wrap .og-board-cell{position:relative;display:flex;align-items:flex-start;justify-content:flex-start;padding:3px;min-height:0;font-size:clamp(9px,2.5vw,13px);font-weight:700}
+.og-snake-players{position:absolute;bottom:1px;right:1px;font-size:clamp(10px,2.7vw,15px);z-index:3}
+.og-snake-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2}
+.og-board-legend{font-size:12px;line-height:1.5;text-align:center;margin:7px auto;max-width:440px}
+.og-ludo-board{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));grid-template-rows:repeat(15,minmax(0,1fr));width:min(100%,420px);aspect-ratio:1;margin:8px auto;border:3px solid #333;background:#fff}
+.og-ludo-square{border:1px solid #777;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;gap:1px;flex-wrap:wrap}
+.og-home-blue{background:#83c5fa}.og-home-red{background:#f5a5a5}.og-home-green{background:#b8e7a5}.og-home-yellow{background:#f5e4a1}
+.og-ludo-path{background:#fff}.og-ludo-blue-lane{background:#63aaf4}.og-ludo-red-lane{background:#ed8b8b}.og-ludo-center{background:#f5cb58}.og-ludo-start{outline:2px solid #202020;outline-offset:-2px}
+.og-ludo-token{display:inline-flex;align-items:center;justify-content:center;width:clamp(12px,3.7vw,20px);height:clamp(12px,3.7vw,20px);border-radius:50%;color:white;font-size:10px;font-weight:800;border:1px solid #fff;box-shadow:0 1px 2px #555}
+.og-blue-token{background:#075fce}.og-red-token{background:#cc2736}.og-ludo-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.og-ludo-actions button{font-size:12px;padding:9px 5px}
+/* Prevent mobile viewport jumping during dice rolls and board updates. */
+.og-snakes-wrap{overflow:hidden;contain:layout paint;touch-action:pan-y}
+.og-snake-overlay{overflow:hidden!important}
+#extraGameChoices{overflow-anchor:none}
+@media(max-width:600px){.og-snakes-wrap{width:min(100%,380px)}#gamePanel{overflow-anchor:none}}
+
+/* Reference-inspired classic Ludo board, blue/green are the only active teams */
+.og-ludo-board{position:relative;border:5px solid #b68d3c;border-radius:9%;overflow:hidden;box-shadow:0 3px 12px #0003;isolation:isolate}
+.og-ludo-square{border:1px solid #b4b4b4;z-index:1}
+.og-home-red{background:#ed1515}.og-home-blue{background:#086bdc}.og-home-green{background:#079a28}.og-home-yellow{background:#f9d427}
+.og-ludo-green-lane{background:#00a336!important}.og-ludo-blue-lane{background:#0876e8!important}
+.og-ludo-center{background:transparent!important;border:0!important}
+.og-ludo-center-art{position:absolute;left:40%;top:40%;width:20%;height:20%;z-index:3;pointer-events:none}
+.og-ludo-base{position:absolute;width:35.5%;height:35.5%;z-index:2;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);place-items:center;border-radius:18%;border:5px solid white;box-shadow:inset 0 0 0 3px currentColor,0 0 0 2px #fff;pointer-events:none}
+.og-ludo-base.blue{top:2.2%;right:2.2%;color:#086bdc;background:#e9f3ff}.og-ludo-base.green{bottom:2.2%;left:2.2%;color:#079a28;background:#e5ffed}
+.og-ludo-base.red{top:2.2%;left:2.2%;color:#ed1515;background:#fff}.og-ludo-base.yellow{bottom:2.2%;right:2.2%;color:#f9d427;background:#fff}
+.og-ludo-base .base-dot{width:40%;aspect-ratio:1;border-radius:50%;background:currentColor;border:2px solid currentColor;box-shadow:inset 0 0 0 2px #fff,0 1px 3px #0004}
+ .og-ludo-base .base-dot.active{box-shadow:0 0 0 2px #fff,0 2px 5px #0007;cursor:pointer;pointer-events:auto;position:relative;z-index:8;opacity:1!important}
+.og-ludo-base .base-dot.active::after{content:"";position:absolute;inset:19%;border-radius:50%;background:radial-gradient(circle at 30% 22%,#ffffffc0,transparent 50%);pointer-events:none}
+.og-ludo-base .base-dot.moved{opacity:.28!important;cursor:default;box-shadow:none}
+.og-ludo-base.blue,.og-ludo-base.green{pointer-events:auto}
+.og-ludo-base .base-dot.selected{outline:3px solid #ffda27;outline-offset:2px;transform:scale(1.06)}
+.og-ludo-token{position:relative;z-index:5;width:clamp(12px,3.6vw,20px);height:clamp(12px,3.6vw,20px);box-shadow:0 1px 3px #0008}
+.og-green-token{background:#008b31}/* Home gotti are represented by the four visible tray pieces, not hidden */
+.og-board-die{position:absolute;right:3%;bottom:3%;z-index:9;border:2px solid #fff!important;background:#fffc!important;color:#202020!important;box-shadow:0 3px 12px #0005;min-width:56px;min-height:56px;border-radius:14px!important;font-size:29px!important;cursor:pointer;touch-action:manipulation}
+.og-board-die:disabled{opacity:.5;cursor:default}.og-board-die.rolling{animation:og-dice-wiggle .48s ease-out}
+@keyframes og-dice-wiggle{0%{transform:rotate(0) scale(1)}25%{transform:rotate(18deg) scale(1.1)}50%{transform:rotate(-20deg)}75%{transform:rotate(12deg)}100%{transform:rotate(0)}}
+.og-ludo-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}.og-ludo-actions button{flex:0 0 auto;border-radius:999px!important;padding:7px 12px!important}
+.og-ludo-actions button.selected{outline:3px solid #ffb900;outline-offset:1px}
+.og-game-audio{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;margin:3px auto 7px}.og-game-audio button{font-size:12px!important;padding:6px 12px!important}
+
 </style>
-<meta name="online-galli-build" content="v5.7.12-seo-starter"/>
+<meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
+<style>
+.og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#1475f5}.og-connect-cell.og-drop-new{position:relative;background:white;overflow:visible;z-index:2}
+.og-connect-cell.og-drop-new::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--drop-color);border:1px solid rgba(0,0,0,.12);pointer-events:none;animation:ogConnectDrop .65s cubic-bezier(.22,.78,.35,1) both;will-change:transform}
+@keyframes ogConnectDrop{0%{transform:translateY(calc(-1 * var(--drop-rows) * (100% + 3px)))}72%{transform:translateY(3px)}88%{transform:translateY(-2px)}100%{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.og-connect-cell.og-drop-new::after{animation-duration:.01ms}}
+.og-letter-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.og-letter-grid button{padding:7px 0!important;min-width:0!important}.og-hang-word{text-align:center;font-size:24px;font-weight:800;letter-spacing:3px}.og-spin-wheel{width:220px;height:220px;border-radius:50%;background:conic-gradient(#fda4af 0 60deg,#fde68a 60deg 120deg,#86efac 120deg 180deg,#93c5fd 180deg 240deg,#c4b5fd 240deg 300deg,#fdba74 300deg 360deg);border:6px solid #fff;box-shadow:0 2px 12px #0003;position:relative;margin:12px auto;display:grid;place-items:center}.og-spin-wheel span{position:absolute;font-size:9px;font-weight:700;max-width:70px;text-align:center;color:#1f2937}.og-wheel-spinning{animation:ogspin 1.4s ease-out}@keyframes ogspin{to{transform:rotate(1080deg)}}.og-spin-result{text-align:center;font-weight:800}.og-draw-canvas{width:100%;max-width:420px;aspect-ratio:7/5;touch-action:none;background:white;border:2px solid #222;border-radius:8px;display:block;margin:auto}.og-draw-label{font-weight:700;text-align:center}.galli-game-picker{display:flex;flex-direction:column;gap:8px}
+</style>
 </head>
 
 <body>
@@ -734,8 +807,8 @@ footer { line-height:1.8; }
 
 <section>
   <div id="galliIntroBanner">
-    <h1 class="tagline">Random video chat in Nepal</h1>
-    <p class="subtitle">Meet someone new, face to face. Online Galli is an 18+ space for spontaneous conversations.</p>
+    <h1 class="tagline">A new meetup around every corner...</h1>
+    <p class="subtitle">Explore a virtual street and meet someone new. · Meet someone unexpected.</p>
   </div>
   <div id="galliMobileAdPosition" aria-label="Mobile advertising position" hidden></div>
   <div class="videos" id="videoStage">
@@ -769,7 +842,7 @@ footer { line-height:1.8; }
 
   <div class="v4-panel" id="gamePanel" hidden>
  <strong id="activeGameTitle">🎮 Games</strong>
- <div id="gameTypePicker" class="galli-game-picker"><button type="button" data-galli-game="ttt">❎ Tic-Tac-Toe</button><button type="button" data-galli-game="rps">✊ Rock Paper Scissors</button><button type="button" data-galli-game="wyr">🤔 Would You Rather?</button></div>
+ <div id="gameTypePicker" class="galli-game-picker"><button type="button" data-galli-game="ttt">❎ Tic-Tac-Toe</button><button type="button" data-galli-game="rps">✊ Rock Paper Scissors</button><button type="button" data-galli-game="wyr">🤔 Would You Rather?</button><button type="button" data-galli-game="ludo" class="pro-locked">🎲 Ludo <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button><button type="button" data-galli-game="snakes" class="pro-locked">🐍 Snakes & Ladders <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button><button type="button" data-galli-game="spin">🎡 Spin the Wheel</button><button type="button" data-galli-game="draw">🎨 Draw & Guess</button><button type="button" data-galli-game="connect4">🔴 Connect Four</button><button type="button" data-galli-game="hangman">🔤 Hangman</button></div>
  <p id="gameMessage" aria-live="polite">Invite your stranger to play.</p>
  <div id="gameBoard" class="v4-board" role="group" aria-label="Tic-Tac-Toe board"></div>
  <div id="extraGameChoices" class="galli-game-choices" hidden></div>
@@ -814,7 +887,7 @@ footer { line-height:1.8; }
    <option>Janakpur Bolts</option><option>Kathmandu Gurkhas</option><option>Karnali Yaks</option>
    <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
   </select>
-  <label class="galli-upload-label" for="customBadgeUpload">📤 Upload custom badge</label>
+  <label class="galli-upload-label" for="customBadgeUpload">📤 Update Custom Badge <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></label>
   <input id="customBadgeUpload" type="file" accept=".png,.jpg,.jpeg,.jfif,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp" aria-label="Upload custom image badge" /><small class="galli-badge-format-help" style="display:block;font-size:10px;opacity:.8">PNG · JPG/JPEG · JFIF · WebP · GIF (still) · BMP · max 5 MB</small>
   <div id="badgeEditPanel" hidden><div class="badge-preview-row"><div><small>Original</small><canvas id="badgeBefore" width="96" height="96"></canvas></div><div><small>Background removed</small><canvas id="badgeAfter" width="96" height="96"></canvas></div></div><label for="badgeTolerance">Removal strength <output id="badgeToleranceValue">32</output><input id="badgeTolerance" type="range" min="8" max="85" value="32" step="1"></label><label><input id="badgeKeepOriginal" type="checkbox"> Keep original background</label><button type="button" id="badgeApply">Apply badge</button></div>
   <button id="clearCustomBadge" type="button" class="galli-clear-badge" hidden>Remove badge</button>
@@ -824,17 +897,22 @@ footer { line-height:1.8; }
  <div id="textChatNotice" class="galli-chat-notice" role="status"></div>
 </section>
 
+<div id="galliProNotice" class="galli-pro-overlay" hidden role="dialog" aria-modal="true" aria-label="Pro feature">
+ <div class="galli-pro-dialog"><div style="font-size:32px">👑</div><h3><span id="galliProFeature">Feature</span> — PRO</h3>
+ <p>This feature is reserved for Online Galli Pro. Subscription activation is coming soon. Free video chat and existing games remain available.</p>
+ <button type="button" id="galliProClose">Got it</button></div></div>
 <div class="controls">
     <div class="galli-enter-wrap">
       <button class="start" id="startBtn">▶ Enter the Galli</button>
       <div id="status" role="status" aria-live="polite">Ready to enter Online Galli.</div>
     </div>
+    <button id="previousCornerBtn" type="button" class="pro-locked">↩ Previous <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button>
     <button class="next" id="nextBtn" disabled>⏭ Next Corner</button>
     <button id="muteBtn" disabled>🎤 Mute</button>
     <button class="stop" id="stopBtn" disabled>🚪 Exit Galli</button>
     <button id="reportBtn" disabled>⚑ Report</button>
     <button id="blockBtn" disabled>🚫 Block User</button>
-    <button id="gamesBtn" disabled aria-label="Play Games: choose from three games">🎮 Play Games ▸</button>
+    <button id="gamesBtn" disabled aria-label="Play Games: choose from five games">🎮 Play Games ▸</button>
   </div>
   <div id="galliMobileBottomAds" aria-label="Advertising and safety information"></div>
 
@@ -867,17 +945,6 @@ footer { line-height:1.8; }
 </aside>
 
 </main>
-
-<section class="seo-content" aria-labelledby="about-galli">
-  <h2 id="about-galli">Meet new people in Nepal on Online Galli</h2>
-  <p>Online Galli is a free random video chat for adults aged 18 and over. Start a one-to-one conversation with someone new, say hello, and decide for yourself when to continue or move on. You do not need to build a public profile to enter.</p>
-  <p>Use the controls to start, skip to another person, or disconnect. Your camera and microphone are requested only after you choose to enter. Be respectful, protect your personal information, and use Report or Block if a conversation makes you uncomfortable.</p>
-  <h3>Online Galli questions</h3>
-  <details><summary>Is Online Galli free?</summary><p>Yes. The core video chat is free to use during the beta.</p></details>
-  <details><summary>Who can use Online Galli?</summary><p>Online Galli is for adults aged 18 and over. Do not enter if you are under 18.</p></details>
-  <details><summary>When does Online Galli use my camera and microphone?</summary><p>Your browser asks for camera and microphone access only after you choose to enter the chat. You can deny access in your browser settings.</p></details>
-  <details><summary>Can I leave or meet someone else?</summary><p>Yes. Use Next to move on to another conversation, or disconnect to leave the chat.</p></details>
-</section>
 
 <footer>Online Galli © 2026 · 18+ beta · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/guidelines">Community Guidelines</a> · Be respectful. Stay safe.</footer>
 
@@ -1039,10 +1106,9 @@ async function publishIcePath(pc, expectedGeneration) {
     const remote = stats.get(selected.remoteCandidateId);
     if (!local || !remote) return;
     const path = local.candidateType === 'relay' || remote.candidateType === 'relay' ? 'turn' : 'p2p';
-    if (path !== lastIcePath) {
-      lastIcePath = path;
-      socket.emit('galli-ice-path', { path });
-    }
+    // Heartbeat every 5s: server expires ICE reports after 20s.
+    lastIcePath = path;
+    if (socket.connected) socket.emit('galli-ice-path', { path });
   } catch (error) { console.debug('ICE path statistics unavailable', error); }
 }
 function startIcePathMonitor(pc, expectedGeneration) {
@@ -1404,10 +1470,30 @@ const gameMessage=document.getElementById("gameMessage");
 const activeGameTitle=document.getElementById("activeGameTitle");
 const gameTypePicker=document.getElementById("gameTypePicker");
 const extraGameChoices=document.getElementById("extraGameChoices");
-const gameTitles={ttt:"❎ Tic-Tac-Toe",rps:"✊ Rock Paper Scissors",wyr:"🤔 Would You Rather?"};
+// Pro is not sold or activated in this build: do not simulate paid access.
+window.OG_PRO_TEST_MODE=false;
+let ownerUnlocked=false;
+// Owner access is granted after successful login at /admin on this same origin/browser profile.
+socket.on('galli-owner-status',({unlocked})=>{ownerUnlocked=!!unlocked;if(!ownerUnlocked){console.warn('Online Galli: Pro unlock rejected. Reopen /admin on the SAME hostname, log in, then refresh this page.');}});
+socket.on('connect',()=>{const ticket=localStorage.getItem('ogOwnerTicket');if(ticket)socket.emit('galli-owner-auth',{ticket});});
+window.addEventListener('storage',e=>{if(e.key==='ogOwnerTicket'){const ticket=localStorage.getItem('ogOwnerTicket');if(socket.connected)socket.emit('galli-owner-auth',{ticket:ticket||''});if(!ticket)ownerUnlocked=false;}});
+function showProNotice(feature){
+ const notice=document.getElementById("galliProNotice");
+ document.getElementById("galliProFeature").textContent=feature;
+ notice.hidden=false;
+}
+document.getElementById("galliProClose").addEventListener("click",()=>document.getElementById("galliProNotice").hidden=true);
+document.getElementById("previousCornerBtn").addEventListener("click",()=>{
+ if(!ownerUnlocked){showProNotice("Previous");return;}
+ socket.emit('galli-previous-request');
+});
+socket.on('galli-previous-status',message=>status(message));
+
+const gameTitles={ttt:"❎ Tic-Tac-Toe",rps:"✊ Rock Paper Scissors",wyr:"🤔 Would You Rather?",ludo:"🎲 Ludo 👑 PRO",snakes:"🐍 Snakes & Ladders 👑 PRO",spin:"🎡 Spin the Wheel",draw:"🎨 Draw & Guess",connect4:"🔴 Connect Four",hangman:"🔤 Hangman"};
 let selectedGameType="ttt",activeExtraGame=null;
 function setGameType(type){
  if(!gameTitles[type])return;
+ if(["ludo","snakes"].includes(type)&&!ownerUnlocked){showProNotice(gameTitles[type]);return;}
  selectedGameType=type;activeGameTitle.textContent=gameTitles[type];
  gameTypePicker.hidden=true;extraGameChoices.hidden=true;
  gameBoard.hidden=true;inviteGameBtn.hidden=false;
@@ -1422,9 +1508,10 @@ function showGamePicker(){
 gameTypePicker.querySelectorAll("[data-galli-game]").forEach(b=>b.addEventListener("click",()=>setGameType(b.dataset.galliGame)));
 function renderExtraGame(state){
  if(!partnerId)return;
+ const previousConnectBoard=activeExtraGame?.type==='connect4'&&state.type==='connect4' ? activeExtraGame.board : null;
  activeExtraGame=state;selectedGameType=state.type;
  activeGameTitle.textContent=gameTitles[state.type];
- gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);
+ gamePanel.hidden=false;
  gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
  inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
  extraGameChoices.replaceChildren();
@@ -1452,6 +1539,240 @@ function renderExtraGame(state){
  }
 }
 socket.on("galli-extra-game-state",renderExtraGame);
+// Four free, server-synchronized games.
+function ogEl(tag,txt,cls){const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e}
+function ogFreeState(state){
+ if(!partnerId)return;
+ activeExtraGame={type:state.type,finished:!!state.finished};selectedGameType=state.type;
+ activeGameTitle.textContent=gameTitles[state.type];gamePanel.hidden=false;
+ gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
+ inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ extraGameChoices.replaceChildren();gamePanel.classList.toggle('game-finished',!!state.finished);
+ playAgainGameBtn.hidden=!state.finished;playAgainGameBtn.disabled=false;
+ const me=state.you,turn=state.turn===me;
+ gameMessage.textContent=state.message||(state.finished?'Round complete':turn?'Your turn':'Partner’s turn');
+ if(state.type==='connect4'){
+  const board=ogEl('div',undefined,'og-connect-board');
+  for(let r=0;r<6;r++)for(let c=0;c<7;c++){
+   const cell=ogEl('button','', 'og-connect-cell');const v=state.board[r*7+c];
+   if(v!==null){
+    const newDisc=Array.isArray(previousConnectBoard)&&previousConnectBoard.length===42&&previousConnectBoard[r*7+c]===null;
+    if(newDisc){cell.classList.add('og-drop-new');cell.style.setProperty('--drop-color',v===0?'#e53e3e':'#1475f5');cell.style.setProperty('--drop-rows',String(r+1));}
+    else cell.classList.add(v===0?'og-disc-red':'og-disc-blue');
+   }
+   cell.disabled=!!state.finished||!turn||state.board[c]!==null;
+   cell.setAttribute('aria-label','Column '+(c+1)+', row '+(r+1));
+   cell.onclick=()=>socket.emit('galli-free-action',{column:c});board.appendChild(cell);
+  }extraGameChoices.appendChild(ogEl('p','🔴 Red vs 🔵 Blue — take turns dropping discs','og-game-legend'));extraGameChoices.appendChild(board);
+ }else if(state.type==='hangman'){
+  extraGameChoices.appendChild(ogEl('p','💡 Hint: '+(state.category||'Common word'),'og-game-hint'));extraGameChoices.appendChild(ogEl('p',state.masked.split('').join(' '),'og-hang-word'));
+  extraGameChoices.appendChild(ogEl('p','Wrong guesses: '+state.wrong+'/6 · Used: '+(state.used.join(', ')||'none')));
+  if(state.finished&&state.word)extraGameChoices.appendChild(ogEl('p','Word: '+state.word));
+  const letters=ogEl('div',undefined,'og-letter-grid');
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter=>{const b=ogEl('button',letter);b.disabled=state.finished||!turn||state.used.includes(letter);b.onclick=()=>socket.emit('galli-free-action',{letter});letters.appendChild(b)});
+  extraGameChoices.appendChild(letters);
+ }else if(state.type==='spin'){
+  const wheel=ogEl('div',undefined,'og-spin-wheel');
+  const sectors=['Tell a joke','Sing 10 seconds','Show a dance move','Fun fact','Funny impression','Ask a question'];
+  sectors.forEach((label,i)=>{const el=ogEl('span',label);el.style.transform=`rotate(${i*60}deg) translateY(-77px) rotate(${-i*60}deg)`;wheel.appendChild(el)});
+  extraGameChoices.appendChild(wheel);
+  if(state.result)extraGameChoices.appendChild(ogEl('p','🎯 '+state.result,'og-spin-result'));
+  const b=ogEl('button','🎡 Spin the Wheel');b.disabled=!turn;b.onclick=()=>{b.disabled=true;wheel.classList.add('og-wheel-spinning');socket.emit('galli-free-action',{spin:true})};extraGameChoices.appendChild(b);
+ }else if(state.type==='draw'){
+  const label=ogEl('p',state.drawer===me?'Draw this word: '+state.word:'Guess the drawing!','og-draw-label');extraGameChoices.appendChild(label);
+  const canvas=ogEl('canvas');canvas.width=420;canvas.height=300;canvas.className='og-draw-canvas';extraGameChoices.appendChild(canvas);
+  const ctx=canvas.getContext('2d');ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=4;ctx.strokeStyle='#202020';ctx.fillStyle='#fff';ctx.fillRect(0,0,420,300);
+  for(const stroke of state.strokes){ctx.beginPath();ctx.moveTo(stroke[0]*420,stroke[1]*300);ctx.lineTo(stroke[2]*420,stroke[3]*300);ctx.stroke()}
+  if(state.drawer===me&&!state.finished){let down=false,last=null;const point=e=>{const rect=canvas.getBoundingClientRect();return [Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height))]};
+   canvas.onpointerdown=e=>{down=true;last=point(e);canvas.setPointerCapture(e.pointerId)};
+   canvas.onpointermove=e=>{if(!down)return;const now=point(e);const seg=[...last,...now];ctx.beginPath();ctx.moveTo(last[0]*420,last[1]*300);ctx.lineTo(now[0]*420,now[1]*300);ctx.stroke();socket.emit('galli-free-action',{stroke:seg});last=now};
+   canvas.onpointerup=()=>{down=false};canvas.onpointercancel=()=>{down=false};
+  }else if(state.drawer!==me&&!state.finished){const form=ogEl('form');const input=ogEl('input');input.placeholder='Guess the word';input.maxLength=30;input.required=true;const submit=ogEl('button','Guess');submit.type='submit';form.append(input,submit);form.onsubmit=e=>{e.preventDefault();const guess=input.value.trim();if(!guess)return;socket.emit('galli-free-action',{guess});input.value='';let feedback=extraGameChoices.querySelector('.og-guess-feedback');if(!feedback){feedback=ogEl('p','','og-guess-feedback');form.after(feedback)}feedback.textContent='Checking your guess…'};extraGameChoices.appendChild(form)}
+  if(state.finished)extraGameChoices.appendChild(ogEl('p','Answer: '+state.word));
+ }
+}
+socket.on('galli-free-state',ogFreeState);
+socket.on('galli-draw-guess-feedback',({correct,guess}={})=>{if(activeExtraGame?.type!=='draw')return;let feedback=extraGameChoices.querySelector('.og-guess-feedback');if(!feedback){feedback=ogEl('p','','og-guess-feedback');extraGameChoices.appendChild(feedback)}feedback.textContent=correct?'🎉 Correct!':'❌ '+String(guess||'That guess')+' — try again!';});
+socket.on('galli-draw-stroke',stroke=>{if(activeExtraGame?.type!=='draw')return;const canvas=extraGameChoices.querySelector('canvas.og-draw-canvas');if(!canvas||!Array.isArray(stroke))return;const ctx=canvas.getContext('2d');ctx.beginPath();ctx.moveTo(stroke[0]*420,stroke[1]*300);ctx.lineTo(stroke[2]*420,stroke[3]*300);ctx.stroke()});
+
+let ogAudioContext=null,ogMusicTimer=null,ogMusicEnabled=true,ogSelectedLudoToken=0,ogLastRollSeen='';
+function ogAudio(){try{ogAudioContext=ogAudioContext||new(window.AudioContext||window.webkitAudioContext)();if(ogAudioContext.state==='suspended')ogAudioContext.resume();return ogAudioContext}catch(e){return null}}
+function ogNote(freq,when,duration,volume=.015,type='sine'){
+ const c=ogAudio();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(freq,when);g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(volume,when+.025);g.gain.exponentialRampToValueAtTime(.0001,when+duration);o.connect(g).connect(c.destination);o.start(when);o.stop(when+duration+.02);
+}
+function ogDiceSound(){
+ const c=ogAudio();if(!c)return;
+ // A short rattling dice sound, generated locally without an external audio file.
+ const count=11, sampleRate=c.sampleRate;
+ for(let i=0;i<count;i++){
+  const len=Math.floor(sampleRate*.055),buffer=c.createBuffer(1,len,sampleRate),samples=buffer.getChannelData(0);
+  for(let j=0;j<len;j++)samples[j]=(Math.random()*2-1)*Math.pow(1-j/len,2);
+  const source=c.createBufferSource(),gain=c.createGain(),filter=c.createBiquadFilter();
+  source.buffer=buffer;filter.type='bandpass';filter.frequency.value=900+(i%3)*420;filter.Q.value=.65;
+  const t=c.currentTime+.015+i*.053;
+  gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.22,t+.006);gain.gain.exponentialRampToValueAtTime(.0001,t+.054);
+  source.connect(filter);filter.connect(gain);gain.connect(c.destination);source.start(t);
+ }
+ ogMusicStart();
+}
+function ogMusicStart(){if(!ogMusicEnabled||ogMusicTimer)return;let step=0;const notes=[261.63,329.63,392,329.63,293.66,349.23,440,349.23,261.63,329.63,392,523.25,440,392,329.63,293.66];const play=()=>{if(!ogMusicEnabled||document.hidden)return;const c=ogAudio();if(c){ogNote(notes[step%notes.length],c.currentTime,.3,.007);if(step%4===0)ogNote(notes[step%notes.length]/2,c.currentTime,.55,.004)}step++};play();ogMusicTimer=setInterval(play,420)}
+function ogMusicStop(){if(ogMusicTimer){clearInterval(ogMusicTimer);ogMusicTimer=null}}
+function ogAudioControl(container){const wrap=document.createElement('div');wrap.className='og-game-audio';const btn=document.createElement('button');btn.type='button';btn.textContent=ogMusicEnabled?'♫ Music: On':'♫ Music: Off';btn.onclick=()=>{ogMusicEnabled=!ogMusicEnabled;if(ogMusicEnabled)ogMusicStart();else ogMusicStop();btn.textContent=ogMusicEnabled?'♫ Music: On':'♫ Music: Off';btn.blur()};wrap.appendChild(btn);container.appendChild(wrap)}
+function ogMakeDie(container,enabled,click){const b=document.createElement('button');b.type='button';b.className='og-board-die';b.textContent='⚄';b.title='Roll the dice';b.setAttribute('aria-label','Roll the dice');b.disabled=!enabled;b.onclick=()=>{ogDiceSound();b.classList.add('rolling');b.blur();click()};container.appendChild(b)}
+let ogPreviousSnakeState=null;
+let ogSnakeAnimationFrame=0;
+function renderBoardGame(state){
+ const ogScrollBefore=window.scrollY;
+ const ogIsSnakeUpdate=state.type==='snakes' && ogPreviousSnakeState && ogPreviousSnakeState.you===state.you;
+ const ogPriorPositions=ogIsSnakeUpdate?[...ogPreviousSnakeState.positions]:null;
+ if(ogSnakeAnimationFrame){cancelAnimationFrame(ogSnakeAnimationFrame);ogSnakeAnimationFrame=0;}
+
+ if(!partnerId)return;
+ activeExtraGame={type:state.type,finished:state.finished};gameState=null;
+ gamePanel.hidden=false;
+ gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
+ inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ activeGameTitle.textContent=gameTitles[state.type];extraGameChoices.replaceChildren();
+ ogAudioControl(extraGameChoices);
+ const info=document.createElement('p');info.className='galli-question';
+ info.textContent=state.finished?(state.winner===state.you?'You won! 🎉':'Stranger won!'):(state.canRoll?'Your turn — roll the dice':'Waiting for stranger to roll');
+ extraGameChoices.appendChild(info);
+ if(state.type==='snakes'){
+  const jumps={4:14,9:31,20:38,28:84,40:59,51:67,63:81,71:91,17:7,54:34,62:19,64:60,87:24,93:73,95:75,99:78};
+  const holder=document.createElement('div');holder.className='og-snakes-wrap';
+  const grid=document.createElement('div');grid.className='og-board-grid';
+  for(let row=9;row>=0;row--){const nums=Array.from({length:10},(_,i)=>row*10+(row%2===0?i+1:10-i));
+   for(const n of nums){const cell=document.createElement('span');cell.className='og-board-cell';
+    const num=document.createElement('b');num.textContent=n;cell.appendChild(num);
+    if(state.positions[0]===n||state.positions[1]===n){const marker=document.createElement('span');marker.className='og-snake-players';marker.textContent=(state.positions[0]===n?'🔵':'')+(state.positions[1]===n?'🔴':'');cell.appendChild(marker)}
+    grid.appendChild(cell);
+   }
+  }
+  holder.appendChild(grid);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 1000 1000');svg.setAttribute('class','og-snake-overlay');svg.setAttribute('aria-label','Snakes and ladders connect numbered squares');
+  const xy=n=>{const r=Math.floor((n-1)/10),c=(n-1)%10;return {x:((r%2===0?c:9-c)+.5)*100,y:(9-r+.5)*100}};
+  const el=(name,attrs)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',name);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));svg.appendChild(e);return e};
+  for(const [fromStr,to] of Object.entries(jumps)){const from=+fromStr,a=xy(from),b=xy(to),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),nx=-dy/len*12,ny=dx/len*12;
+   if(to>from){for(const side of [-1,1])el('line',{x1:a.x+nx*side,y1:a.y+ny*side,x2:b.x+nx*side,y2:b.y+ny*side,stroke:'#76502c','stroke-width':8,'stroke-linecap':'round'});
+    for(let t=.12;t<.98;t+=.115)el('line',{x1:a.x+dx*t+nx,y1:a.y+dy*t+ny,x2:a.x+dx*t-nx,y2:a.y+dy*t-ny,stroke:'#d79c4e','stroke-width':8,'stroke-linecap':'round'});
+   }else{
+    // Head at the higher square, tapered curving body ending at the lower square.
+    const bend=35*(from%2?1:-1), px=-dy/len,py=dx/len;
+    const c1={x:a.x+dx*.28+px*bend,y:a.y+dy*.28+py*bend};
+    const c2={x:a.x+dx*.72-px*bend,y:a.y+dy*.72-py*bend};
+    const curve=`M ${a.x} ${a.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${b.x} ${b.y}`;
+    // Body outline and belly, with repeating scales, rather than a rope.
+    el('path',{d:curve,fill:'none',stroke:'#173f2e','stroke-width':29,'stroke-linecap':'round'});
+    el('path',{d:curve,fill:'none',stroke:from%2?'#42a66d':'#e49c3f','stroke-width':23,'stroke-linecap':'round'});
+    el('path',{d:curve,fill:'none',stroke:from%2?'#a4d98b':'#ffe0a0','stroke-width':5,'stroke-linecap':'round','stroke-dasharray':'6 20',opacity:.9});
+    const headAngle=Math.atan2(dy,dx)*180/Math.PI;
+    const head=document.createElementNS('http://www.w3.org/2000/svg','g');head.setAttribute('transform',`translate(${a.x} ${a.y}) rotate(${headAngle})`);
+    const addHead=(name,attrs)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',name);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));head.appendChild(e);return e};
+    addHead('ellipse',{cx:0,cy:0,rx:27,ry:21,fill:from%2?'#42a66d':'#e49c3f',stroke:'#173f2e','stroke-width':4});
+    addHead('ellipse',{cx:19,cy:0,rx:18,ry:13,fill:from%2?'#60be7c':'#f0b557'});
+    for(const ey of [-12,12]){addHead('circle',{cx:3,cy:ey,r:6,fill:'#fff'});addHead('circle',{cx:5,cy:ey,r:3,fill:'#151b14'});}
+    addHead('circle',{cx:30,cy:-5,r:2.5,fill:'#263a22'});addHead('circle',{cx:30,cy:5,r:2.5,fill:'#263a22'});
+    addHead('path',{d:'M 35 0 L 49 0 M 49 0 L 57 -6 M 49 0 L 57 6',fill:'none',stroke:'#dd3c59','stroke-width':3,'stroke-linecap':'round'});
+    svg.appendChild(head);
+   }
+  }
+  holder.appendChild(svg);ogMakeDie(holder,state.canRoll&&!state.finished,()=>socket.emit('galli-board-roll',{}));extraGameChoices.appendChild(holder);
+  // Animate the exact jump from its starting square to its destination at a readable pace.
+  if(ogPriorPositions){
+   for(let player=0;player<2;player++){
+    const before=ogPriorPositions[player],after=state.positions[player];
+    if(before===after)continue;
+    const rolled=state.lastRoll||0,landing=before+rolled;
+    if(jumps[landing]!==after || landing===after)continue;
+    const start=xy(landing),end=xy(after),duration=1900;
+    const token=document.createElementNS('http://www.w3.org/2000/svg','g');
+    const disk=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    disk.setAttribute('r','23');disk.setAttribute('fill',player===0?'#1267d9':'#d63248');disk.setAttribute('stroke','#fff');disk.setAttribute('stroke-width','5');token.appendChild(disk);
+    const label=document.createElementNS('http://www.w3.org/2000/svg','text');label.textContent=player===0?'B':'R';label.setAttribute('text-anchor','middle');label.setAttribute('dominant-baseline','central');label.setAttribute('font-size','22');label.setAttribute('font-weight','800');label.setAttribute('fill','#fff');token.appendChild(label);
+    svg.appendChild(token);
+    // Hide the destination marker while the animated token is moving.
+    for(const cell of grid.children){const number=cell.querySelector('b');if(number&&+number.textContent===after){const marker=cell.querySelector('.og-snake-players');if(marker)marker.style.opacity='0';}}
+    const began=performance.now();
+    const bend=35*(landing%2?1:-1);
+    const dx=end.x-start.x,dy=end.y-start.y,dist=Math.hypot(dx,dy)||1;
+    const nx=-dy/dist,ny=dx/dist;
+    const frame=now=>{
+     if(!token.isConnected)return;
+     const t=Math.min(1,(now-began)/duration);
+     let x,y;
+     if(after<landing){const p0=start,p1={x:start.x+dx*.28+nx*bend,y:start.y+dy*.28+ny*bend},p2={x:start.x+dx*.72-nx*bend,y:start.y+dy*.72-ny*bend},p3=end,u=1-t;
+      x=u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x;
+      y=u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y;
+     }else{x=start.x+dx*t;y=start.y+dy*t;}
+     token.setAttribute('transform',`translate(${x} ${y})`);
+     if(t<1)ogSnakeAnimationFrame=requestAnimationFrame(frame);
+     else{token.remove();for(const cell of grid.children){const number=cell.querySelector('b');if(number&&+number.textContent===after){const marker=cell.querySelector('.og-snake-players');if(marker)marker.style.opacity='1';}}}
+    };
+    ogSnakeAnimationFrame=requestAnimationFrame(frame);
+   }
+  }
+  ogPreviousSnakeState={you:state.you,positions:[...state.positions]};
+
+ }else{
+  const path=[];
+  for(let y=14;y>=9;y--)path.push([6,y]);for(let x=5;x>=0;x--)path.push([x,8]);path.push([0,7],[0,6]);for(let x=1;x<=5;x++)path.push([x,6]);for(let y=5;y>=0;y--)path.push([6,y]);path.push([7,0],[8,0]);for(let y=1;y<=5;y++)path.push([8,y]);for(let x=9;x<=14;x++)path.push([x,6]);path.push([14,7],[14,8]);for(let x=13;x>=9;x--)path.push([x,8]);for(let y=9;y<=14;y++)path.push([8,y]);path.push([7,14]);
+  const board=document.createElement('div');board.className='og-ludo-board';
+  const coords=(player,pos)=>{if(pos===0)return null;if(pos===57)return [7,7];if(pos>=52)return [7,player===0?pos-51:14-(pos-51)];return path[((player===0?26:0)+pos-1)%52]};
+  for(let y=0;y<15;y++)for(let x=0;x<15;x++){
+   const cell=document.createElement('div');cell.className='og-ludo-square';cell.style.gridColumn=x+1;cell.style.gridRow=y+1;
+   const home=(x<6&&y<6)?'red':(x>8&&y<6)?'blue':(x<6&&y>8)?'green':(x>8&&y>8)?'yellow':null;
+   const isPath=path.some(c=>c[0]===x&&c[1]===y);
+   if(home)cell.classList.add('og-home-'+home);
+   if(x>=6&&x<=8&&y>=6&&y<=8)cell.classList.add('og-ludo-center');
+   if(isPath)cell.classList.add('og-ludo-path');
+   if(x===7&&y>=9&&y<=13)cell.classList.add('og-ludo-green-lane');
+   if(x===7&&y>=1&&y<=5)cell.classList.add('og-ludo-blue-lane');
+   if((x===6&&y===14)||(x===8&&y===0))cell.classList.add('og-ludo-start');
+   for(let player=0;player<2;player++)state.tokens[player].forEach((pos,i)=>{
+    const at=pos===0? (player===0?[[10,1],[13,1],[10,4],[13,4]][i]:[[1,10],[4,10],[1,13],[4,13]][i]):coords(player,pos);
+    if(pos!==0&&at&&at[0]===x&&at[1]===y){const token=document.createElement('span');token.className='og-ludo-token '+(player===0?'og-blue-token':'og-green-token');token.textContent=String(i+1);token.title=(player===state.you?'Your':'Stranger’s')+' token '+(i+1);cell.appendChild(token)}
+   });board.appendChild(cell);
+  }
+  // Decorative home trays and classic four-color central finish.
+  for(const color of ['red','blue','green','yellow']){
+   const base=document.createElement('div');base.className='og-ludo-base '+color;
+   for(let i=0;i<4;i++){
+    const dot=document.createElement('span');dot.className='base-dot';
+    if(color==='blue'||color==='green'){
+     const p=color==='blue'?0:1,home=state.tokens[p][i]===0;
+     dot.classList.add(home?'active':'moved');
+     if(home&&p===state.you&&state.canRoll&&!state.finished){
+      dot.setAttribute('role','button');dot.tabIndex=0;
+      if(ogSelectedLudoToken===i)dot.classList.add('selected');
+      const select=()=>{ogSelectedLudoToken=i;board.querySelectorAll('.base-dot.selected').forEach(d=>d.classList.remove('selected'));dot.classList.add('selected');extraGameChoices.querySelectorAll('.og-ludo-actions button').forEach((b,j)=>b.classList.toggle('selected',j===i));};
+      dot.addEventListener('click',select);dot.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select()}});
+     }
+     dot.title=color+' gotti '+(i+1)+(home?' at home':' on track');
+     dot.setAttribute('aria-label',dot.title);
+    }
+    base.appendChild(dot);
+   }
+   board.appendChild(base);
+  }
+  const center=document.createElementNS('http://www.w3.org/2000/svg','svg');center.setAttribute('viewBox','0 0 100 100');center.setAttribute('class','og-ludo-center-art');for(const [pts,color] of [['0,0 100,0 50,50','#086bdc'],['100,0 100,100 50,50','#f9d427'],['0,100 100,100 50,50','#079a28'],['0,0 0,100 50,50','#ed1515']]){const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');poly.setAttribute('points',pts);poly.setAttribute('fill',color);center.appendChild(poly)}board.appendChild(center);
+  ogMakeDie(board,state.canRoll&&!state.finished,()=>socket.emit('galli-board-roll',{token:ogSelectedLudoToken}));
+  extraGameChoices.appendChild(board);
+  const key=document.createElement('p');key.className='og-board-legend';key.textContent='🔵 Blue vs 🟢 Green · Select a token, then roll the dice on the board';extraGameChoices.appendChild(key);
+  if(state.canRoll&&!state.finished){const choices=document.createElement('div');choices.className='og-ludo-actions';state.tokens[state.you].forEach((pos,i)=>{
+   const b=document.createElement('button');b.textContent='Gotti '+(i+1)+(pos===0?' · Home':pos===57?' · Finished':'');b.disabled=pos===57;b.classList.toggle('selected',ogSelectedLudoToken===i);b.onclick=()=>{ogSelectedLudoToken=i;choices.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');b.blur()};choices.appendChild(b)});extraGameChoices.appendChild(choices)}
+ }
+ if(state.lastRoll){const d=document.createElement('p');d.textContent='🎲 Last roll: '+state.lastRoll;extraGameChoices.appendChild(d);}
+
+
+ playAgainGameBtn.hidden=!state.finished;playAgainGameBtn.disabled=false;
+ gameMessage.textContent='Two-player '+(state.type==='ludo'?'Ludo':'Snakes & Ladders');
+ // Rebuilding the controls must not scroll the mobile viewport to the top.
+ requestAnimationFrame(()=>{if(Math.abs(window.scrollY-ogScrollBefore)>2)window.scrollTo({top:ogScrollBefore,behavior:'instant'});});
+}
+socket.on('galli-board-state',renderBoardGame);
+
+socket.on("galli-pro-required",({feature}={})=>showProNotice(feature||"Pro feature"));
+socket.on('galli-pro-preview-status',({enabled})=>{window.OG_PRO_TEST_MODE=!!enabled;});
 
 const gameBoard=document.getElementById("gameBoard");
 const inviteGameBtn=document.getElementById("inviteGameBtn");
@@ -1465,7 +1786,7 @@ let gameState=null, reactionsMuted=false, toastTimeout=null;
 gameBoard.hidden=true;
 function resetV4() {
   gameBoard.hidden=true;
-  gameState=null;activeExtraGame=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;extraGameChoices.hidden=true;gameTypePicker.hidden=false;activeGameTitle.textContent="🎮 Choose a game";
+  gameState=null;activeExtraGame=null;ogPreviousSnakeState=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;extraGameChoices.hidden=true;gameTypePicker.hidden=false;activeGameTitle.textContent="🎮 Choose a game";
   playAgainGameBtn.hidden=true;
   gameBoard.replaceChildren();gameMessage.textContent="Invite your stranger to play.";
   inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
@@ -1482,17 +1803,17 @@ socket.on("galli-game-invite",({type="ttt"}={})=>{
  selectedGameType=gameTitles[type]?type:"ttt";activeGameTitle.textContent=gameTitles[selectedGameType];gameTypePicker.hidden=true;extraGameChoices.hidden=true;
  if(!partnerId)return;
  gameBoard.hidden=true;
- gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);reactionPanel.hidden=true;inviteGameBtn.hidden=true;
+ gamePanel.hidden=false;reactionPanel.hidden=true;inviteGameBtn.hidden=true;
  acceptGameBtn.hidden=false;declineGameBtn.hidden=false;
  gameMessage.textContent=`Your partner invited you to play ${gameTitles[selectedGameType].replace(/^[^ ]+ /,"")}.`;
 });
 socket.on("galli-game-pending",()=>{gameMessage.textContent="Waiting for your partner to accept...";});
-socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);showGamePicker();gameMessage.textContent="Your partner declined. Choose a game to invite again.";});
-socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);showGamePicker();gameMessage.textContent="Game ended. Choose another game.";});
+socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;showGamePicker();gameMessage.textContent="Your partner declined. Choose a game to invite again.";});
+socket.on("galli-game-ended",()=>{resetV4();gamePanel.hidden=false;showGamePicker();gameMessage.textContent="Game ended. Choose another game.";});
 socket.on("galli-game-state",state=>{
  if(!partnerId)return;
  gameBoard.hidden=false;extraGameChoices.hidden=true;gameTypePicker.hidden=true;activeGameTitle.textContent=gameTitles.ttt;activeExtraGame=null;
- gameState=state;gamePanel.hidden=false;requestAnimationFrame(positionGameAtVideoSeam);inviteGameBtn.hidden=true;
+ gameState=state;gamePanel.hidden=false;inviteGameBtn.hidden=true;
  acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
  gameMessage.textContent=state.winner?(`${state.winner} WINS! 🎉`):state.draw?"IT'S A DRAW!":state.turn===state.you?"Your turn":"Partner's turn";
  gamePanel.classList.toggle("game-finished",!!state.winner||!!state.draw);
@@ -1690,7 +2011,17 @@ function renderBadgePreview(){
 }
 badgeTolerance.addEventListener('input',renderBadgePreview);
 badgeKeepOriginal.addEventListener('change',renderBadgePreview);
+// Prevent free visitors from opening the operating system file picker.
+// The server separately verifies entitlement before accepting any badge data.
+const customBadgeLabel=document.querySelector('label[for="customBadgeUpload"]');
+if(customBadgeLabel)customBadgeLabel.addEventListener('click',(event)=>{
+ if(!ownerUnlocked){event.preventDefault();event.stopPropagation();showProNotice('Update Custom Badge');}
+});
+customBadgeUpload.addEventListener('click',(event)=>{
+ if(!ownerUnlocked){event.preventDefault();showProNotice('Update Custom Badge');}
+});
 customBadgeUpload.addEventListener("change",async()=>{
+ if(!ownerUnlocked){showProNotice("Update Custom Badge");customBadgeUpload.value="";return;}
  const file=customBadgeUpload.files&&customBadgeUpload.files[0];
  if(!file)return;
  // Validate by extension AND known MIME when present; do not accept SVG or arbitrary files.
@@ -1778,7 +2109,7 @@ function stickerResize(){
 // Photo-derived transparent accessory artwork with landmark positioning.
 const faceArt={};
 for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","realistic-moustache"]){
- const image=new Image();image.src="/assets/face-effects/"+name+".png?v=5711";faceArt[name]=image;
+ const image=new Image();image.src="/assets/face-effects/"+name+".png?v=5712";faceArt[name]=image;
 }
 let smoothFace=null;
 function stickerAsset(ctx,name,x,y,width,height){

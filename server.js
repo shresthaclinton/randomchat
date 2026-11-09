@@ -28,15 +28,6 @@ function normalizeDatabaseUrl(raw) {
 }
 const pool = new Pool({ connectionString: normalizeDatabaseUrl(process.env.DATABASE_URL), max: 5,
   ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: true } : undefined });
-function requestIp(req) {
-  const forwarded = req.headers["x-forwarded-for"];
-  const value = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-  const first = typeof value === "string" && value.split(",")[0].trim();
-  return (first || req.socket.remoteAddress || "unknown").slice(0, 80);
-}
-function developerResetEnabled() {
-  return process.env.NODE_ENV !== "production" || process.env.ENABLE_DEVELOPER_RESET === "true";
-}
 async function initializeDatabase() {
   await pool.query(`CREATE TABLE IF NOT EXISTS moderation_reports (
     id BIGSERIAL PRIMARY KEY, time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -49,6 +40,16 @@ async function initializeDatabase() {
     client_id TEXT PRIMARY KEY, until_at TIMESTAMPTZ NOT NULL)`);
   await pool.query(`CREATE TABLE IF NOT EXISTS moderation_blocks (
     pair_key TEXT PRIMARY KEY)`);
+  // Anonymous, persistent analytics; browser IDs already exist for moderation.
+  await pool.query(`CREATE TABLE IF NOT EXISTS analytics_visitors (
+    client_id TEXT PRIMARY KEY, first_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(), last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS analytics_visit_days (
+    client_id TEXT NOT NULL, visit_day DATE NOT NULL, PRIMARY KEY (client_id, visit_day))`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS analytics_visit_days_day_idx ON analytics_visit_days(visit_day)`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS analytics_chats (
+    id TEXT PRIMARY KEY, started_at TIMESTAMPTZ NOT NULL, ended_at TIMESTAMPTZ,
+    duration_seconds INTEGER, client_a TEXT, client_b TEXT)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS analytics_chats_started_idx ON analytics_chats(started_at)`);
   const [savedReports, savedBans, savedBlocks] = await Promise.all([
     pool.query(`SELECT id, time, reason, reporter, reported, reported_client_id, reporter_client_id, description, status FROM moderation_reports ORDER BY id DESC LIMIT 500`),
     pool.query(`SELECT client_id, until_at FROM moderation_bans WHERE until_at > NOW()`),
@@ -101,7 +102,7 @@ function fetchMeteredIce() {
 }
 
 // Create the website server
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
 
   // Health: process is alive. No database access.
@@ -206,31 +207,16 @@ const server = http.createServer((req, res) => {
 
   // Private developer reset. The secret is stored only in Render environment variables.
   if (url.pathname === "/developer-reset" && req.method === "GET") {
-    if (!developerResetEnabled()) {
-      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" });
-      res.end("Not found");
-      return;
-    }
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'", "X-Robots-Tag": "noindex, nofollow" });
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
     res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>RandomChat developer reset</title><style>body{font:16px system-ui;background:#10131b;color:white;max-width:480px;margin:8vh auto;padding:20px}input,button{font:inherit;padding:14px;border-radius:8px;width:100%;box-sizing:border-box;margin-top:12px}button{background:#18a86b;color:white;border:0;cursor:pointer}</style></head><body><h2>Developer testing reset</h2><p>Private testing only. This clears temporary server blocks and the blocked list on <strong>this browser</strong>. Repeat on each test device.</p><form id="form"><input id="secret" type="password" autocomplete="off" placeholder="Developer reset secret" required><button>Reset testing blocks</button></form><p id="result" role="status"></p><script>document.getElementById('form').onsubmit=async(e)=>{e.preventDefault();const result=document.getElementById('result');result.textContent='Resetting…';try{const response=await fetch('/api/developer/reset-blocks',{method:'POST',headers:{'Content-Type':'application/json','X-Developer-Reset-Token':document.getElementById('secret').value},body:'{}'});if(!response.ok)throw Error(response.status===401?'Incorrect password or reset not configured':'Reset failed');localStorage.removeItem('randomchat-blocked-ids');result.textContent='Reset complete on this browser. Refresh RandomChat. Repeat on your other test devices.';document.getElementById('secret').value='';}catch(err){result.textContent=err.message;}};</script></body></html>`);
     return;
   }
   if (url.pathname === "/api/developer/reset-blocks" && req.method === "POST") {
-    if (!developerResetEnabled()) {
-      res.writeHead(404, { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" });
-      res.end(JSON.stringify({ ok: false }));
-      return;
-    }
     const configured = process.env.DEVELOPER_RESET_TOKEN || "";
     const provided = req.headers["x-developer-reset-token"] || "";
     const a = Buffer.from(configured);
     const b = Buffer.from(typeof provided === "string" ? provided : "");
     if (a.length < 24 || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
-      if (rateLimited(developerResetAuthTimes, requestIp(req), 8, 15 * 60_000)) {
-        res.writeHead(429, { "Content-Type": "application/json", "Cache-Control": "no-store" });
-        res.end(JSON.stringify({ ok: false }));
-        return;
-      }
       res.writeHead(401, { "Content-Type": "application/json", "Cache-Control": "no-store" });
       res.end(JSON.stringify({ ok: false }));
       return;
@@ -249,9 +235,17 @@ const server = http.createServer((req, res) => {
   }
   // Private beta admin panel: separate secret from developer reset.
   if (url.pathname === "/admin" && req.method === "GET") {
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'", "X-Robots-Tag": "noindex, nofollow" });
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'" });
     fs.createReadStream(path.join(__dirname, "admin.html")).pipe(res);
     return;
+  }
+  if(url.pathname==='/api/owner/unlock'&&req.method==='POST'){
+    let body='';req.on('data',chunk=>{body+=chunk;if(body.length>2048)req.destroy();});
+    req.on('end',()=>{let provided='';try{provided=JSON.parse(body).password||'';}catch{}
+      const ok=safeSecretMatch(provided);
+      res.writeHead(ok?200:401,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+      res.end(JSON.stringify(ok?{ok:true,ticket:ownerTicket(),expiresInSeconds:7200}:{ok:false,error:'Incorrect admin password'}));
+    });return;
   }
   if (url.pathname.startsWith("/api/admin/")) {
     const configured = process.env.ADMIN_DASHBOARD_TOKEN || "";
@@ -259,11 +253,6 @@ const server = http.createServer((req, res) => {
     const a = Buffer.from(configured);
     const b = Buffer.from(typeof provided === "string" ? provided : "");
     if (a.length < 24 || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
-      if (rateLimited(adminAuthTimes, requestIp(req), 10, 15 * 60_000)) {
-        res.writeHead(429, { "Content-Type": "application/json", "Cache-Control": "no-store" });
-        res.end(JSON.stringify({ ok: false, error: "Too many authentication attempts. Try later." }));
-        return;
-      }
       res.writeHead(401, { "Content-Type": "application/json", "Cache-Control": "no-store" });
       res.end(JSON.stringify({ ok: false, error: "Invalid admin token or not configured" }));
       return;
@@ -272,7 +261,37 @@ const server = http.createServer((req, res) => {
       const now = Date.now();
       for (const [id, until] of bannedIds) if (until <= now) bannedIds.delete(id);
       const activeChatSeconds = [...chatStarts.values()].reduce((sum, start) => sum + Math.max(0, Math.round((now - start) / 1000)), 0);
-      const payload = { ok: true, monitor: { ...monitor, activeChatSeconds, totalChatSeconds: monitor.completedChatSeconds + activeChatSeconds, estimatedAverageChatSeconds: monitor.matches ? Math.round((monitor.completedChatSeconds + activeChatSeconds) / monitor.matches) : 0, scope: "Current server process only; resets on restart", turnBytes: null }, icePaths: icePathOverview(), online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse().map(r => ({...r, uniqueReporters: new Set(reports.filter(x => x.reportedClientId && x.reportedClientId === r.reportedClientId && x.reporterClientId).map(x => x.reporterClientId)).size || (r.reporterClientId ? 1 : null)})), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
+      let dailyAnalytics;
+      try {
+        // Nepal calendar day; counts are derived from PostgreSQL, not process memory.
+        const r = await pool.query(`WITH bounds AS (
+          SELECT ((NOW() AT TIME ZONE 'Asia/Kathmandu')::date)::timestamp AT TIME ZONE 'Asia/Kathmandu' AS start_at,
+                 (((NOW() AT TIME ZONE 'Asia/Kathmandu')::date + 1)::timestamp AT TIME ZONE 'Asia/Kathmandu') AS end_at,
+                 (NOW() AT TIME ZONE 'Asia/Kathmandu')::date AS today
+        ) SELECT
+          (SELECT COUNT(*) FROM analytics_visit_days v, bounds b WHERE v.visit_day=b.today)::int AS visitors_today,
+          (SELECT COUNT(*) FROM analytics_visitors v, bounds b WHERE v.first_seen>=b.start_at AND v.first_seen<b.end_at)::int AS new_visitors_today,
+          (SELECT COUNT(*) FROM analytics_visit_days v JOIN analytics_visitors u USING(client_id), bounds b WHERE v.visit_day=b.today AND u.first_seen<b.start_at)::int AS returning_visitors_today,
+          (SELECT COUNT(DISTINCT client_id) FROM analytics_visit_days v, bounds b WHERE v.visit_day BETWEEN b.today-29 AND b.today)::int AS visitors_30d,
+          (SELECT COUNT(DISTINCT client_id) FROM analytics_visit_days v, bounds b WHERE v.visit_day=b.today)::int AS dau,
+          (SELECT COUNT(DISTINCT client_id) FROM analytics_visit_days v, bounds b WHERE v.visit_day BETWEEN b.today-29 AND b.today)::int AS mau,
+          (SELECT COUNT(*) FROM analytics_chats c, bounds b WHERE c.started_at>=b.start_at AND c.started_at<b.end_at)::int AS chats_started_today,
+          (SELECT COUNT(*) FROM analytics_chats c, bounds b WHERE c.ended_at>=b.start_at AND c.ended_at<b.end_at)::int AS chats_completed_today,
+          (SELECT COALESCE(SUM(duration_seconds),0) FROM analytics_chats c, bounds b WHERE c.ended_at>=b.start_at AND c.ended_at<b.end_at)::bigint AS completed_chat_seconds_today,
+          (SELECT COALESCE(ROUND(AVG(duration_seconds)),0) FROM analytics_chats c, bounds b WHERE c.ended_at>=b.start_at AND c.ended_at<b.end_at)::int AS average_completed_chat_seconds_today,
+          (SELECT COUNT(DISTINCT cid) FROM (
+            SELECT client_a AS cid FROM analytics_chats c, bounds b WHERE c.started_at>=b.start_at AND c.started_at<b.end_at
+            UNION SELECT client_b AS cid FROM analytics_chats c, bounds b WHERE c.started_at>=b.start_at AND c.started_at<b.end_at
+          ) q WHERE cid IS NOT NULL)::int AS unique_chatters_today,
+          (SELECT COUNT(DISTINCT current_day.client_id) FROM analytics_visit_days current_day
+            JOIN analytics_visit_days prior ON prior.client_id=current_day.client_id, bounds b
+            WHERE current_day.visit_day=b.today AND prior.visit_day BETWEEN b.today-7 AND b.today-1)::int AS returned_within_7d_today`);
+        dailyAnalytics = r.rows[0];
+      } catch (error) {
+        console.error('ANALYTICS_OVERVIEW_ERROR', error);
+        dailyAnalytics = { error: 'Analytics temporarily unavailable' };
+      }
+      const payload = { ok: true, ownerTicket: ownerTicket(), dailyAnalytics, monitor: { ...monitor, activeChatSeconds, totalChatSeconds: monitor.completedChatSeconds + activeChatSeconds, estimatedAverageChatSeconds: monitor.matches ? Math.round((monitor.completedChatSeconds + activeChatSeconds) / monitor.matches) : 0, scope: "Current server process only; resets on restart", turnBytes: null }, icePaths: icePathOverview(), online: io.engine.clientsCount, waiting: waiting.filter(id => io.sockets.sockets.has(id)).length, activeChats: partners.size / 2, reports: reports.slice(-100).reverse().map(r => ({...r, uniqueReporters: new Set(reports.filter(x => x.reportedClientId && x.reportedClientId === r.reportedClientId && x.reporterClientId).map(x => x.reporterClientId)).size || (r.reporterClientId ? 1 : null)})), bans: [...bannedIds].map(([clientId, until]) => ({ clientId, until: new Date(until).toISOString() })) };
       res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
       res.end(JSON.stringify(payload));
       return;
@@ -323,12 +342,6 @@ const server = http.createServer((req, res) => {
     }
     res.writeHead(404); res.end("Not found"); return;
   }
-  const policyPages = { "/privacy": "privacy.html", "/terms": "terms.html", "/guidelines": "guidelines.html" };
-  if (req.method === "GET" && policyPages[url.pathname]) {
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
-    fs.createReadStream(path.join(__dirname, policyPages[url.pathname])).pipe(res);
-    return;
-  }
   if (req.method === "GET" && url.pathname === "/robots.txt") {
     const base = (process.env.PUBLIC_BASE_URL || "https://onlinegalli.com").replace(/\/$/, "");
     const body = "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /developer/\nDisallow: /developer-reset\nSitemap: " + base + "/sitemap.xml\n";
@@ -342,6 +355,12 @@ const server = http.createServer((req, res) => {
     const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
     res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" });
     res.end(body);
+    return;
+  }
+  const policyPages = { "/privacy": "privacy.html", "/terms": "terms.html", "/guidelines": "guidelines.html" };
+  if (req.method === "GET" && policyPages[url.pathname]) {
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
+    fs.createReadStream(path.join(__dirname, policyPages[url.pathname])).pipe(res);
     return;
   }
   if (url.pathname !== "/" && url.pathname !== "/index.html") {
@@ -397,6 +416,51 @@ function icePathOverview() {
 
 // V4: transient game state, scoped to the currently matched pair.
 const games = new Map();
+const ogHangWords=[['MOUNTAIN','Nature / geography'],['KATHMANDU','City in Nepal'],['GUITAR','Musical instrument'],['CAMERA','Electronic device'],['ELEPHANT','Animal'],['SUNSHINE','Weather / nature'],['RAINBOW','Nature / sky'],['PIZZA','Food'],['FOOTBALL','Sport'],['BUTTERFLY','Insect'],['MONKEY','Animal'],['BICYCLE','Transport']];
+const ogSpinTasks=['Tell a joke','Sing for 10 seconds','Show a dance move','Share a fun fact','Do a funny impression','Ask a surprising question'];
+function ogNewFreeGame(g){
+ g.finished=false;g.winner=null;g.turn=0;g.round=(g.round||0)+1;
+ if(g.type==='connect4')g.board=Array(42).fill(null);
+ if(g.type==='hangman'){const entry=ogHangWords[crypto.randomInt(ogHangWords.length)];g.word=entry[0];g.category=entry[1];g.used=[];g.wrong=0;}
+ if(g.type==='spin')g.result='';
+ if(g.type==='draw'){g.word=ogHangWords[crypto.randomInt(ogHangWords.length)][0].toLowerCase();g.strokes=[];g.drawer=(g.round-1)%2;}
+}
+function ogEmitFreeGame(g){
+ [g.inviter,g.invitee].forEach((id,i)=>{
+  const base={type:g.type,you:i,turn:g.turn,finished:g.finished,winner:g.winner};
+  if(g.type==='connect4'){base.board=g.board;base.message=g.finished?(g.winner===null?'Draw!':g.winner===i?'You win!':'Partner wins!'):undefined;}
+  if(g.type==='hangman'){base.masked=g.word.split('').map(ch=>g.used.includes(ch)?ch:'_').join('');base.category=g.category;base.used=g.used;base.wrong=g.wrong;base.word=g.finished?g.word:undefined;base.message=g.finished?(g.winner===null?'Game over':g.winner===i?'You win!':'Partner wins!'):undefined;}
+  if(g.type==='spin'){base.result=g.result;base.message=g.result?'Next spin: '+(g.turn===i?'yours':'partner’s'):'Take turns spinning';}
+  if(g.type==='draw'){base.drawer=g.drawer;base.word=(g.drawer===i||g.finished)?g.word:undefined;base.strokes=g.strokes;base.message=g.finished?(g.winner===i?'Correct guess!':'Round finished'):undefined;}
+  io.to(id).emit('galli-free-state',base);
+ });
+}
+
+// Beta test access only. Production must use verified paid entitlements.
+// Owner entitlement: short-lived HMAC token derived from the existing dashboard secret.
+const proPreviewEnabled = false;
+function adminSecret(){const secret=process.env.ADMIN_DASHBOARD_TOKEN||'';return secret.length>=24?secret:null;}
+function safeSecretMatch(value){const secret=adminSecret();if(!secret||typeof value!=='string')return false;const a=Buffer.from(secret),b=Buffer.from(value);return a.length===b.length&&crypto.timingSafeEqual(a,b);}
+function ownerTicket(){const exp=Date.now()+2*60*60*1000;const payload=String(exp);const signature=crypto.createHmac('sha256',adminSecret()).update('onlinegalli-owner:'+payload).digest('hex');return payload+'.'+signature;}
+function validateOwnerTicket(ticket){if(typeof ticket!=='string'||ticket.length>160)return false;const parts=ticket.split('.');if(parts.length!==2||!/^[0-9]{13}$/.test(parts[0])||!/^[a-f0-9]{64}$/.test(parts[1]))return false;const exp=Number(parts[0]);if(exp<Date.now()||exp>Date.now()+2*60*60*1000)return false;const secret=adminSecret();if(!secret)return false;const expected=crypto.createHmac('sha256',secret).update('onlinegalli-owner:'+parts[0]).digest('hex');return crypto.timingSafeEqual(Buffer.from(expected),Buffer.from(parts[1]));}
+function hasPro(socket){return socket.data.owner===true || socket.data.proVerified===true;}
+
+const previousBySocket = new Map();
+const reconnectRequests = new Map();
+const snakesLadders = {4:14,9:31,20:38,28:84,40:59,51:67,63:81,71:91,17:7,54:34,62:19,64:60,87:24,93:73,95:75,99:78};
+function emitBoardGame(key,g){
+ for(const id of [g.inviter,g.invitee]) io.to(id).emit('galli-board-state',{
+  type:g.type, you:id===g.inviter?0:1, turn:g.turn, positions:g.positions,
+  lastRoll:g.lastRoll, finished:g.finished, winner:g.winner,
+  tokens:g.tokens||null, canRoll:!g.finished&&g.turn===(id===g.inviter?0:1)
+ });
+}
+function beginBoardGame(key,g){
+ g.positions=[0,0];g.tokens=g.type==='ludo'?[[0,0,0,0],[0,0,0,0]]:null;
+ g.turn=0;g.lastRoll=null;g.finished=false;g.winner=null;
+ emitBoardGame(key,g);
+}
+
 const reactionTimes = new Map();
 const textTimes = new Map();
 // Original text-only supporter labels. No official team logos are distributed.
@@ -445,6 +509,19 @@ function clearGame(socket) {
 // Lightweight process-lifetime metrics. Reset whenever Render restarts.
 const monitor = { startedAt: new Date().toISOString(), connections: 0, matches: 0, completedChatSeconds: 0, longestChatSeconds: 0 };
 const chatStarts = new Map();
+const analyticsSessions = new Map();
+function persistAnalytics(sql, params) {
+  pool.query(sql, params).catch(error => console.error('ANALYTICS_WRITE_ERROR', error));
+}
+function recordVisitor(clientId) {
+  // PostgreSQL uses Nepal time for the visit-day key; one row per browser/day.
+  persistAnalytics(`INSERT INTO analytics_visitors (client_id) VALUES ($1)
+    ON CONFLICT(client_id) DO UPDATE SET last_seen=NOW()`, [clientId]);
+  persistAnalytics(`INSERT INTO analytics_visit_days (client_id, visit_day)
+    VALUES ($1, (NOW() AT TIME ZONE 'Asia/Kathmandu')::date)
+    ON CONFLICT DO NOTHING`, [clientId]);
+}
+
 function closeChatTimer(a, b) {
   const key = pairKey(a, b);
   const started = chatStarts.get(key);
@@ -453,6 +530,14 @@ function closeChatTimer(a, b) {
   monitor.completedChatSeconds += seconds;
   monitor.longestChatSeconds = Math.max(monitor.longestChatSeconds, seconds);
   chatStarts.delete(key);
+  const session = analyticsSessions.get(key);
+  if (session) {
+    analyticsSessions.delete(key);
+    persistAnalytics(`INSERT INTO analytics_chats(id, started_at, ended_at, duration_seconds, client_a, client_b)
+      VALUES($1,$2,NOW(),$3,$4,$5)
+      ON CONFLICT(id) DO UPDATE SET ended_at=EXCLUDED.ended_at, duration_seconds=EXCLUDED.duration_seconds`,
+      [session.id, new Date(session.started), seconds, session.a, session.b]);
+  }
 }
 
 // Beta moderation state: kept in memory until the server restarts.
@@ -460,8 +545,6 @@ const reports = [];
 const bannedIds = new Map(); // Temporary bans: in-memory beta version.
 const reportTimes = new Map();
 const skipTimes = new Map();
-const adminAuthTimes = new Map();
-const developerResetAuthTimes = new Map();
 const recentPartners = new Map();
 const blockedPairs = new Set();
 const allowedReasons = new Set(["nudity", "harassment", "hate", "spam", "underage", "other"]);
@@ -528,7 +611,14 @@ function findPartner(socket) {
     partners.set(socket.id, otherId);
     partners.set(otherId, socket.id);
     monitor.matches++;
-    chatStarts.set(pairKey(socket.id, otherId), Date.now());
+    const started = Date.now();
+    const chatKey = pairKey(socket.id, otherId);
+    chatStarts.set(chatKey, started);
+    const session = { id: crypto.randomUUID(), started, a: socket.data.clientId, b: other.data.clientId };
+    analyticsSessions.set(chatKey, session);
+    persistAnalytics(`INSERT INTO analytics_chats(id, started_at, client_a, client_b)
+      VALUES($1,$2,$3,$4) ON CONFLICT(id) DO NOTHING`,
+      [session.id, new Date(started), session.a, session.b]);
 
     socket.emit("matched", {
       partnerId: otherId,
@@ -569,6 +659,9 @@ function leavePartner(socket) {
   clearGame(socket);
   partners.delete(socket.id);
   partners.delete(otherId);
+  previousBySocket.set(socket.id,{otherId,expires:Date.now()+120000});
+  previousBySocket.set(otherId,{otherId:socket.id,expires:Date.now()+120000});
+  reconnectRequests.delete(socket.id);reconnectRequests.delete(otherId);
 
   const other = io.sockets.sockets.get(otherId);
 
@@ -585,6 +678,10 @@ function leavePartner(socket) {
 io.on("connection", (socket) => {
   monitor.connections++;
   console.log("User connected:", socket.id);
+  socket.data.owner=false;
+  socket.data.proVerified=false; // Paid subscription validation is not yet implemented.
+  socket.emit("galli-pro-preview-status",{enabled:false});
+  socket.on('galli-owner-auth',({ticket}={})=>{socket.data.owner=validateOwnerTicket(ticket);socket.emit('galli-owner-status',{unlocked:socket.data.owner});});
 
   socket.data.ready = false;
   socket.data.clientId = null;
@@ -593,6 +690,7 @@ io.on("connection", (socket) => {
   socket.on("identify", ({ clientId, blocked } = {}) => {
     if (typeof clientId !== "string" || !idPattern.test(clientId)) return;
     if ((bannedIds.get(clientId) || 0) > Date.now()) { socket.emit("moderation-warning", "Access temporarily restricted."); socket.disconnect(true); return; }
+    if (socket.data.clientId !== clientId) recordVisitor(clientId);
     socket.data.clientId = clientId;
     socket.data.blocked = Array.isArray(blocked)
       ? blocked.filter(x => typeof x === "string" && idPattern.test(x)).slice(0, 300)
@@ -682,8 +780,49 @@ io.on("connection", (socket) => {
   });
 
 
+  // One-click Previous: immediately reconnect if the former partner is still available.
+  // Never require a reciprocal button press, and never interrupt the former partner's new chat.
+  socket.on('galli-previous-request',()=>{
+    if(!hasPro(socket)){socket.emit('galli-pro-required',{feature:'Previous'});return;}
+    const prev=previousBySocket.get(socket.id);
+    if(!prev || prev.expires<Date.now()){
+      socket.emit('galli-previous-status','Previous partner is no longer available.');return;
+    }
+    const other=io.sockets.sockets.get(prev.otherId);
+    if(!other || !other.connected || !socket.data.ready || !other.data.ready ||
+       partners.has(other.id) || !eligible(socket,other)){
+      socket.emit('galli-previous-status','Previous partner is unavailable.');return;
+    }
+    // The requesting user may already have been matched by Next Corner.
+    // Release that new chat, but retain the originally requested previous partner.
+    if(partners.has(socket.id)) leavePartner(socket);
+    if(!socket.connected || !other.connected || partners.has(socket.id) ||
+       partners.has(other.id) || !eligible(socket,other)){
+      socket.emit('galli-previous-status','Previous partner is unavailable.');return;
+    }
+    removeWaiting(socket.id);removeWaiting(other.id);
+    partners.set(socket.id,other.id);partners.set(other.id,socket.id);
+    const started=Date.now(),chatKey=pairKey(socket.id,other.id);
+    chatStarts.set(chatKey,started);monitor.matches++;
+    const session={id:crypto.randomUUID(),started,a:socket.data.clientId,b:other.data.clientId};
+    analyticsSessions.set(chatKey,session);
+    persistAnalytics(`INSERT INTO analytics_chats(id, started_at, client_a, client_b) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO NOTHING`,
+      [session.id,new Date(started),session.a,session.b]);
+    socket.emit('matched',{partnerId:other.id,initiator:true});
+    other.emit('matched',{partnerId:socket.id,initiator:false});
+    if(other.data.customBadge)socket.emit('galli-custom-badge-peer',{data:other.data.customBadge});
+    else socket.emit('galli-badge-peer',{team:other.data.supporterTeam||''});
+    if(socket.data.customBadge)other.emit('galli-custom-badge-peer',{data:socket.data.customBadge});
+    else other.emit('galli-badge-peer',{team:socket.data.supporterTeam||''});
+    previousBySocket.delete(socket.id);previousBySocket.delete(other.id);
+    reconnectRequests.delete(socket.id);reconnectRequests.delete(other.id);
+    socket.emit('galli-previous-status','Reconnected to previous partner.');
+  });
   socket.on("galli-game-invite", ({type="ttt"}={}) => {
-    if(!["ttt","rps","wyr"].includes(type))return;
+    if(!["ttt","rps","wyr","ludo","snakes","spin","draw","connect4","hangman"].includes(type))return;
+    if(['ludo','snakes'].includes(type)&&!hasPro(socket)){
+      socket.emit('galli-pro-required',{feature:type==='ludo'?'Ludo':'Snakes & Ladders'});return;
+    }
     const p=gamePair(socket);
     if(!p) return;
     const old=games.get(p.key);
@@ -702,6 +841,8 @@ io.on("connection", (socket) => {
       return;
     }
     g.status="playing";
+    if(["ludo","snakes"].includes(g.type)){beginBoardGame(p.key,g);return;}
+    if(["spin","draw","connect4","hangman"].includes(g.type)){ogNewFreeGame(g);ogEmitFreeGame(g);return;}
     if(g.type!=="ttt"){
       g.choices={};g.round=0;g.questionIndex=0;
       sendExtraGameState(p.key,g);
@@ -715,7 +856,10 @@ io.on("connection", (socket) => {
     const p=gamePair(socket);if(!p)return;
     const g=games.get(p.key);
     // A replay is allowed only after the current match has finished.
-    if(!g || g.status!=="playing" || (g.type==="ttt" ? (!g.winner && !g.draw) : Object.keys(g.choices||{}).length!==2))return;
+    if(!g || g.status!=="playing")return;
+    if(["ludo","snakes"].includes(g.type)){if(g.finished)beginBoardGame(p.key,g);return;}
+    if(["spin","draw","connect4","hangman"].includes(g.type)){if(g.finished||g.type==="spin"){ogNewFreeGame(g);ogEmitFreeGame(g);}return;}
+    if(g.type==="ttt" ? (!g.winner && !g.draw) : Object.keys(g.choices||{}).length!==2)return;
     if(g.type!=="ttt"){
       g.choices={};g.round=(g.round||0)+1;
       if(g.type==="wyr")g.questionIndex=(g.questionIndex+1)%wouldRatherQuestions.length;
@@ -726,6 +870,33 @@ io.on("connection", (socket) => {
       io.to(id).emit("galli-game-state",{board:g.board,turn:g.turn,you:g.players[id],winner:null,draw:false});
     }
   });
+  socket.on('galli-free-action',(action={})=>{
+    const p=gamePair(socket);if(!p)return;
+    const g=games.get(p.key);if(!g||g.status!=='playing'||!['spin','draw','connect4','hangman'].includes(g.type)||g.finished)return;
+    const me=socket.id===g.inviter?0:1;
+    if(g.type==='connect4'){
+      if(g.turn!==me||!Number.isInteger(action.column)||action.column<0||action.column>6)return;
+      let r=5;while(r>=0&&g.board[r*7+action.column]!==null)r--;if(r<0)return;
+      g.board[r*7+action.column]=me;
+      const win=()=>{for(let y=0;y<6;y++)for(let x=0;x<7;x++)for(const [dy,dx] of [[0,1],[1,0],[1,1],[1,-1]]){
+        if(Array.from({length:4},(_,k)=>[y+k*dy,x+k*dx]).every(([a,b])=>a>=0&&a<6&&b>=0&&b<7&&g.board[a*7+b]===me))return true;
+      }return false;};
+      if(win()){g.finished=true;g.winner=me;}else if(g.board.every(x=>x!==null)){g.finished=true;}else g.turn=1-me;
+    }else if(g.type==='hangman'){
+      if(g.turn!==me||typeof action.letter!=='string'||!/^[A-Z]$/.test(action.letter)||g.used.includes(action.letter))return;
+      g.used.push(action.letter);if(!g.word.includes(action.letter))g.wrong++;
+      if(g.word.split('').every(ch=>g.used.includes(ch))){g.finished=true;g.winner=me;}
+      else if(g.wrong>=6){g.finished=true;g.winner=null;}else g.turn=1-me;
+    }else if(g.type==='spin'){
+      if(g.turn!==me||action.spin!==true)return;g.result=ogSpinTasks[crypto.randomInt(ogSpinTasks.length)];g.turn=1-me;
+    }else if(g.type==='draw'){
+      if(me===g.drawer&&Array.isArray(action.stroke)&&action.stroke.length===4&&action.stroke.every(x=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=1)){
+        if(g.strokes.length>=3500)return;g.strokes.push(action.stroke);io.to(g.drawer===0?g.invitee:g.inviter).emit('galli-draw-stroke',action.stroke);return;
+      }else if(me!==g.drawer&&typeof action.guess==='string'){const guess=action.guess.trim().toLowerCase().slice(0,30);if(!guess)return;const correct=guess===g.word;socket.emit('galli-draw-guess-feedback',{correct,guess});if(correct){g.finished=true;g.winner=me;}else return;}
+      else return;
+    }
+    ogEmitFreeGame(g);
+  });
   socket.on("galli-game-move", ({index}={}) => {
     const p=gamePair(socket);if(!p)return;
     const g=games.get(p.key);
@@ -735,6 +906,34 @@ io.on("connection", (socket) => {
     else if(g.board.every(Boolean))g.draw=true;
     else g.turn=g.turn==="X"?"O":"X";
     for(const id of [socket.id,p.other])io.to(id).emit("galli-game-state",{board:g.board,turn:g.turn,you:g.players[id],winner:g.winner,draw:g.draw});
+  });
+  socket.on('galli-board-roll',({token}={})=>{
+    const p=gamePair(socket);if(!p)return;
+    const g=games.get(p.key);if(!g||!['ludo','snakes'].includes(g.type)||g.status!=='playing'||g.finished)return;
+    const player=socket.id===g.inviter?0:1;
+    if(player!==g.turn)return; // Both invited participants may play after an authorized Pro invitation.
+    const roll=require('crypto').randomInt(1,7);g.lastRoll=roll;
+    if(g.type==='snakes'){
+      const target=g.positions[player]+roll;
+      if(target<=100)g.positions[player]=snakesLadders[target]||target;
+      if(g.positions[player]===100){g.finished=true;g.winner=player;}
+    }else{
+      if(!Number.isInteger(token)||token<0||token>3)return;
+      const current=g.tokens[player][token];
+      if(current===57)return;
+      if(current===0 && roll!==6){g.turn=1-player;emitBoardGame(p.key,g);return;}
+      if(current===57)return;
+      const next=current===0?1:current+roll;
+      if(current+roll>57 && current!==0)return;
+      g.tokens[player][token]=next;
+      // Capture an opposing token on the shared 52-square track (not in home lanes).
+      if(next>=1&&next<=51){const square=((player===0?26:0)+next-1)%52;
+       g.tokens[1-player]=g.tokens[1-player].map(pos=>pos>=1&&pos<=51&&(((1-player===0?26:0)+pos-1)%52)===square?0:pos);
+      }
+      if(g.tokens[player].every(x=>x===57)){g.finished=true;g.winner=player;}
+    }
+    if(!g.finished && roll!==6)g.turn=1-player;
+    emitBoardGame(p.key,g);
   });
   socket.on("galli-extra-game-choice", ({choice}={}) => {
     const p=gamePair(socket);if(!p)return;
@@ -768,6 +967,8 @@ io.on("connection", (socket) => {
     if(p)io.to(p.other).emit("galli-badge-peer",{team});
   });
   socket.on("galli-custom-badge",({data}={})=>{
+    // Custom uploads are Pro-only until a verified subscription entitlement system exists.
+    if(!hasPro(socket)){socket.emit("galli-pro-required",{feature:"custom-badge"});return;}
     // Only small PNG data URLs; never write uploaded content to disk.
     if(typeof data!=="string"||!/^data:image\/png;base64,[A-Za-z0-9+/=]{1,65000}$/.test(data))return;
     if(rateLimited(reactionTimes,socket.id,4,60000))return;
