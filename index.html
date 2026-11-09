@@ -769,6 +769,22 @@ footer { line-height:1.8; }
 @keyframes ogConnectDrop{0%{transform:translateY(calc(-1 * var(--drop-rows) * (100% + 3px)))}72%{transform:translateY(3px)}88%{transform:translateY(-2px)}100%{transform:translateY(0)}}
 @media (prefers-reduced-motion:reduce){.og-connect-cell.og-drop-new::after{animation-duration:.01ms}}
 .og-letter-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.og-letter-grid button{padding:7px 0!important;min-width:0!important}.og-hang-word{text-align:center;font-size:24px;font-weight:800;letter-spacing:3px}.og-spin-wheel{width:220px;height:220px;border-radius:50%;background:conic-gradient(#fda4af 0 60deg,#fde68a 60deg 120deg,#86efac 120deg 180deg,#93c5fd 180deg 240deg,#c4b5fd 240deg 300deg,#fdba74 300deg 360deg);border:6px solid #fff;box-shadow:0 2px 12px #0003;position:relative;margin:12px auto;display:grid;place-items:center}.og-spin-wheel span{position:absolute;font-size:9px;font-weight:700;max-width:70px;text-align:center;color:#1f2937}.og-wheel-spinning{animation:ogspin 1.4s ease-out}@keyframes ogspin{to{transform:rotate(1080deg)}}.og-spin-result{text-align:center;font-weight:800}.og-draw-canvas{width:100%;max-width:420px;aspect-ratio:7/5;touch-action:none;background:white;border:2px solid #222;border-radius:8px;display:block;margin:auto}.og-draw-label{font-weight:700;text-align:center}.galli-game-picker{display:flex;flex-direction:column;gap:8px}
+
+/* Auto-scroll attention animation for incoming game invitations (mobile) */
+@keyframes galli-invite-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 226, 71, 0.8); transform: translate(-50%, -50%) scale(1); }
+  50% { box-shadow: 0 0 0 12px rgba(255, 226, 71, 0); transform: translate(-50%, -50%) scale(1.03); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 226, 71, 0); transform: translate(-50%, -50%) scale(1); }
+}
+#gamePanel.galli-invite-attention {
+  animation: galli-invite-pulse 1.5s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  #gamePanel.galli-invite-attention {
+    animation: none;
+    box-shadow: 0 0 0 4px rgba(255, 226, 71, 0.9);
+  }
+}
 </style>
 </head>
 
@@ -1827,6 +1843,22 @@ socket.on("galli-game-invite",({type="ttt"}={})=>{
  gamePanel.hidden=false;reactionPanel.hidden=true;inviteGameBtn.hidden=true;
  acceptGameBtn.hidden=false;declineGameBtn.hidden=false;
  gameMessage.textContent=`Your partner invited you to play ${gameTitles[selectedGameType].replace(/^[^ ]+ /,"")}.`;
+ // Auto-scroll and attention for mobile invitation popup
+ if (window.matchMedia('(max-width: 900px)').matches) {
+   requestAnimationFrame(() => {
+     positionGameAtVideoSeam();
+     const rect = gamePanel.getBoundingClientRect();
+     const fullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight && rect.left >= 0 && rect.right <= window.innerWidth;
+     if (!fullyVisible) {
+       const videoStage = document.getElementById('videoStage');
+       if (videoStage) {
+         videoStage.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+       }
+     }
+     gamePanel.classList.add('galli-invite-attention');
+     setTimeout(() => gamePanel.classList.remove('galli-invite-attention'), 1600);
+   });
+ }
 });
 socket.on("galli-game-pending",()=>{gameMessage.textContent="Waiting for your partner to accept...";});
 socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;showGamePicker();gameMessage.textContent="Your partner declined. Choose a game to invite again.";});
