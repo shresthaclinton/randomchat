@@ -363,6 +363,15 @@ const server = http.createServer(async (req, res) => {
     fs.createReadStream(path.join(__dirname, policyPages[url.pathname])).pipe(res);
     return;
   }
+  if (req.method === "GET" && url.pathname === "/google5e23824073191d84.html") {
+    const verifyPath = path.join(__dirname, "google5e23824073191d84.html");
+    fs.stat(verifyPath, (err, stat) => {
+      if (err || !stat.isFile()) { res.writeHead(404); res.end("Not found"); return; }
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" });
+      fs.createReadStream(verifyPath).pipe(res);
+    });
+    return;
+  }
   if (url.pathname !== "/" && url.pathname !== "/index.html") {
     res.writeHead(404);
     res.end("Page not found");
