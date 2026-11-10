@@ -2233,6 +2233,33 @@ window.addEventListener("pagehide", () => {
 
 // Face stickers: locally composited on the outgoing video track so the partner sees them.
 // FaceMesh is loaded on demand only when a sticker is selected.
+
+// Preload FaceMesh early so first sticker selection is near-instant
+let faceMeshPreload = null;
+function preloadFaceMesh() {
+  if (faceMeshPreload) return faceMeshPreload;
+  faceMeshPreload = (async () => {
+    if (!window.FaceMesh) {
+      await new Promise((resolve, reject) => {
+        const sc = document.createElement("script");
+        sc.src = "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js";
+        sc.onload = resolve;
+        sc.onerror = () => reject(new Error("Face tracking library unavailable"));
+        document.head.appendChild(sc);
+      });
+    }
+    // Force model/WASM download + compile
+    const mesh = new window.FaceMesh({
+      locateFile: file => "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/" + file
+    });
+    mesh.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: .5, minTrackingConfidence: .5 });
+    return mesh;
+  })();
+  return faceMeshPreload;
+}
+// Start preloading as soon as the script runs (or after a short delay if preferred)
+setTimeout(() => { preloadFaceMesh().catch(() => {}); }, 1500);
+
 const stickerSelect=document.getElementById("faceStickerSelect");
 const faceStickerButton=document.getElementById("faceStickerButton");
 const faceStickerMenu=document.getElementById("faceStickerMenu");
@@ -2357,16 +2384,24 @@ async function stickerLoadMesh(){
  if(stickerFaceMesh)return;
  if(stickerLoading)return stickerLoading;
  stickerLoading=(async()=>{
-  if(!window.FaceMesh){
-   await new Promise((resolve,reject)=>{
-    const sc=document.createElement("script");
-    sc.src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js";
-    sc.onload=resolve;sc.onerror=()=>reject(new Error("Face tracking library unavailable"));
-    document.head.appendChild(sc);
-   });
+  // Prefer the preloaded instance if available
+  let mesh = null;
+  try {
+    mesh = await preloadFaceMesh();
+  } catch(e) {
+    // Fallback to original on-demand load
+    if(!window.FaceMesh){
+     await new Promise((resolve,reject)=>{
+      const sc=document.createElement("script");
+      sc.src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js";
+      sc.onload=resolve;sc.onerror=()=>reject(new Error("Face tracking library unavailable"));
+      document.head.appendChild(sc);
+     });
+    }
+    mesh=new window.FaceMesh({locateFile:file=>"https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/"+file});
+    mesh.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:.5,minTrackingConfidence:.5});
   }
-  const mesh=new window.FaceMesh({locateFile:file=>"https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/"+file});
-  mesh.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:.5,minTrackingConfidence:.5});
+  if(!mesh) throw new Error("Failed to create FaceMesh");
   mesh.onResults(result=>{const next=result.multiFaceLandmarks?.[0]||null;
    if(!next){stickerFace=null;smoothFace=null;return;}
    if(!smoothFace||smoothFace.length!==next.length)smoothFace=next.map(p=>({...p}));
