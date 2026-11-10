@@ -1510,9 +1510,25 @@ const extraGameChoices=document.getElementById("extraGameChoices");
 window.OG_PRO_TEST_MODE=false;
 let ownerUnlocked=false;
 // Owner access is granted after successful login at /admin on this same origin/browser profile.
-socket.on('galli-owner-status',({unlocked})=>{ownerUnlocked=!!unlocked;if(!ownerUnlocked){console.warn('Online Galli: Pro unlock rejected. Reopen /admin on the SAME hostname, log in, then refresh this page.');}});
-socket.on('connect',()=>{const ticket=localStorage.getItem('ogOwnerTicket');if(ticket)socket.emit('galli-owner-auth',{ticket});});
-window.addEventListener('storage',e=>{if(e.key==='ogOwnerTicket'){const ticket=localStorage.getItem('ogOwnerTicket');if(socket.connected)socket.emit('galli-owner-auth',{ticket:ticket||''});if(!ticket)ownerUnlocked=false;}});
+function sendOwnerTicket(){
+  const ticket = localStorage.getItem('ogOwnerTicket') || '';
+  if (socket.connected) socket.emit('galli-owner-auth', { ticket });
+  if (!ticket) ownerUnlocked = false;
+}
+socket.on('galli-owner-status',({unlocked})=>{
+  ownerUnlocked = !!unlocked;
+  if (ownerUnlocked) {
+    console.info('Online Galli: Pro / owner access unlocked.');
+  } else if (localStorage.getItem('ogOwnerTicket')) {
+    console.warn('Online Galli: Pro unlock rejected. Ticket may be expired. Reopen /admin on the SAME hostname, log in again, then return to this page.');
+  }
+});
+socket.on('connect', sendOwnerTicket);
+window.addEventListener('storage', e => { if (e.key === 'ogOwnerTicket') sendOwnerTicket(); });
+window.addEventListener('focus', sendOwnerTicket);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) sendOwnerTicket(); });
+// Race fix: if the socket already connected before this listener was attached, send now.
+if (socket.connected) sendOwnerTicket();
 function showProNotice(feature){
  const notice=document.getElementById("galliProNotice");
  document.getElementById("galliProFeature").textContent=feature;
