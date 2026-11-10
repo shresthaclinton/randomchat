@@ -351,7 +351,7 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === "GET" && url.pathname === "/sitemap.xml") {
     const base = (process.env.PUBLIC_BASE_URL || "https://onlinegalli.com").replace(/\/$/, "");
-    const urls = ["/", "/privacy", "/terms", "/guidelines"].map(route => `  <url><loc>${base}${route}</loc></url>`).join("\n");
+    const urls = ["/", "/about", "/privacy", "/terms", "/guidelines"].map(route => `  <url><loc>${base}${route}</loc></url>`).join("\n");
     const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
     res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" });
     res.end(body);
