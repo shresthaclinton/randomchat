@@ -1841,6 +1841,23 @@ gamesBtn.onclick=()=>{
     socket.emit("galli-game-close");
     resetV4();
   }
+  // Mobile: after opening the game picker, smooth-scroll so the popup is fully visible
+  if (opening && window.matchMedia('(max-width: 900px)').matches) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        positionGameAtVideoSeam();
+        const rect = gamePanel.getBoundingClientRect();
+        const fullyVisible = rect.top >= 8 && rect.bottom <= window.innerHeight - 8 &&
+                             rect.left >= 0 && rect.right <= window.innerWidth;
+        if (!fullyVisible && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          const videoStage = document.getElementById('videoStage');
+          if (videoStage) {
+            videoStage.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+          }
+        }
+      });
+    });
+  }
 };
 
 inviteGameBtn.onclick=()=>{if(!partnerId)return;socket.emit("galli-game-invite",{type:selectedGameType});gameMessage.textContent="Waiting for your partner to accept...";inviteGameBtn.hidden=true;};
