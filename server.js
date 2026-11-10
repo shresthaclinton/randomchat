@@ -357,7 +357,7 @@ const server = http.createServer(async (req, res) => {
     res.end(body);
     return;
   }
-  const policyPages = { "/privacy": "privacy.html", "/terms": "terms.html", "/guidelines": "guidelines.html" };
+  const policyPages = { "/about": "about.html", "/privacy": "privacy.html", "/terms": "terms.html", "/guidelines": "guidelines.html" };
   if (req.method === "GET" && policyPages[url.pathname]) {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
     fs.createReadStream(path.join(__dirname, policyPages[url.pathname])).pipe(res);
