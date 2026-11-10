@@ -2236,8 +2236,8 @@ function stickerResize(){
 }
 // Photo-derived transparent accessory artwork with landmark positioning.
 const faceArt={};
-for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","moustache","pirate","cigar"]){
- const image=new Image();image.src="/assets/face-effects/"+name+".png?v=5720";faceArt[name]=image;
+for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","moustache","pirate-hat","pirate-eyepatch","cigar"]){
+ const image=new Image();image.src="/assets/face-effects/"+name+".png?v=5730";faceArt[name]=image;
 }
 let smoothFace=null;
 function stickerAsset(ctx,name,x,y,width,height){
@@ -2263,34 +2263,41 @@ function stickerDraw(ctx,face,mode,w,h){
  }
  const headY=(forehead.y-cy)*Math.cos(roll)+(forehead.x-cx)*Math.sin(roll);
  if(mode==="chaplin"){
-  stickerAsset(ctx,"chaplin-hat",-s*2.01,headY-s*1.55,s*4.02,s*2.01);
+  stickerAsset(ctx,"chaplin-hat",-s*1.68,headY-s*1.25,s*3.35,s*1.68);
   const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
   stickerAsset(ctx,"chaplin-moustache",-s*.23,lipY-s*.31,s*.46,s*.22);
  }
  if(mode==="shelby")stickerAsset(ctx,"shelby",-s*1.47,headY-s*.95,s*2.94,s*1.39);
  if(mode==="moustache"){
   const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
-  stickerAsset(ctx,"moustache",-s*.85,lipY-s*.28,s*1.70,s*.48);
+  stickerAsset(ctx,"moustache",-s*.68,lipY-s*.22,s*1.36,s*.384);
  }
  if(mode==="pirate"){
-  // Hat on forehead + eyepatch over the left eye region of the image
-  stickerAsset(ctx,"pirate",-s*1.6,headY-s*1.1,s*3.2,s*2.88);
+  // Hat stays in the position that fit well
+  stickerAsset(ctx,"pirate-hat",-s*1.6,headY-s*1.05,s*3.2,s*1.65);
+  // Eyepatch covers exactly one eye (person's left / landmark 33)
+  const eyeLX=(eyeL.x-cx)*Math.cos(roll)+(eyeL.y-cy)*Math.sin(roll);
+  const eyeLY=(eyeL.y-cy)*Math.cos(roll)-(eyeL.x-cx)*Math.sin(roll);
+  const patchW=s*1.15, patchH=s*.50;
+  stickerAsset(ctx,"pirate-eyepatch",eyeLX-patchW*.28,eyeLY-patchH*.45,patchW,patchH);
  }
  if(mode==="cigar"){
-  const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
-  const cigarW=s*1.1, cigarH=s*.42;
-  stickerAsset(ctx,"cigar",s*.05,lipY-s*.05,cigarW,cigarH);
-  // Simple rising smoke puffs
+  const corner=p(291); // right mouth corner
+  const cx2=(corner.x-cx)*Math.cos(roll)+(corner.y-cy)*Math.sin(roll);
+  const cy2=(corner.y-cy)*Math.cos(roll)-(corner.x-cx)*Math.sin(roll);
+  const cigarW=s*.95, cigarH=s*.36;
+  // Tip of the cigar sits in the mouth corner; body angles outward
+  stickerAsset(ctx,"cigar",cx2-s*.08,cy2-cigarH*.55,cigarW,cigarH);
+  // Smoke rises from the outer end
   const t=(performance.now()%2400)/2400;
   ctx.save();
-  ctx.globalAlpha=.55;
   for(let i=0;i<3;i++){
     const phase=(t+i*.28)%1;
-    const px=s*.55+Math.sin(phase*6.28+i)*s*.08;
-    const py=lipY-s*.15-phase*s*1.1;
-    const rad=s*(.04+phase*.08);
+    const px=cx2+cigarW*.7+Math.sin(phase*6.28+i)*s*.06;
+    const py=cy2-s*.1-phase*s*.9;
+    const rad=s*(.035+phase*.07);
     ctx.beginPath();
-    ctx.fillStyle='rgba(200,200,200,'+(0.55*(1-phase))+')';
+    ctx.fillStyle='rgba(210,210,210,'+(0.5*(1-phase))+')';
     ctx.arc(px,py,rad,0,Math.PI*2);
     ctx.fill();
   }
