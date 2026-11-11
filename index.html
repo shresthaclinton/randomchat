@@ -2378,16 +2378,16 @@ function stickerDraw(ctx,face,mode,w,h){
   const mouthX=((upper.x+lower.x)/2-cx)*Math.cos(roll)+((upper.y+lower.y)/2-cy)*Math.sin(roll);
   const mouthY=((upper.y+lower.y)/2-cy)*Math.cos(roll)-((upper.x+lower.x)/2-cx)*Math.sin(roll);
   const cigarW=s*1.05, cigarH=s*.36;
-  // Shift down and left so the tip (where arrow pointed) is between the lips
-  stickerAsset(ctx,"cigar",mouthX-s*.22,mouthY-cigarH*.15,cigarW,cigarH);
+  // Lower so the left tip sits between the lips (not on the upper lip)
+  stickerAsset(ctx,"cigar",mouthX-s*.28,mouthY+cigarH*.05,cigarW,cigarH);
   // Light bubbles rising from between the lips
   const t=(performance.now()%2200)/2200;
   ctx.save();
   for(let i=0;i<4;i++){
     const phase=(t+i*.22)%1;
     const drift=Math.sin(phase*4+i)*s*.05;
-    const px=mouthX-s*.05+drift;
-    const py=mouthY-phase*s*.85;
+    const px=mouthX-s*.08+drift;
+    const py=mouthY+cigarH*.1-phase*s*.85;
     const rad=s*(.025+phase*.04);
     const alpha=0.45*(1-phase);
     ctx.beginPath();
