@@ -1258,6 +1258,8 @@ async function startChat() {
     });
 
     localVideo.srcObject = localStream;
+    console.log("[FaceStickers] Camera ready, ensuring MediaPipe preload");
+    preloadFaceMesh().catch(()=>{});
     startFaceEffects();
     localPlaceholder.style.display = "none";
 
@@ -2234,13 +2236,16 @@ window.addEventListener("pagehide", () => {
 // Face stickers: locally composited on the outgoing video track so the partner sees them.
 // FaceMesh is loaded on demand only when a sticker is selected.
 
-// Stronger FaceMesh preload — starts immediately and warms the WASM/model
+// FaceMesh preload with timing — single instance, started early
 let faceMeshPreload = null;
+let faceMeshInitStart = 0;
 function preloadFaceMesh() {
   if (faceMeshPreload) return faceMeshPreload;
+  faceMeshInitStart = performance.now();
   faceMeshPreload = (async () => {
-    console.log("[FaceStickers] Preloading FaceMesh...");
+    console.log("[FaceStickers] Starting MediaPipe preload");
     if (!window.FaceMesh) {
+      const t0 = performance.now();
       await new Promise((resolve, reject) => {
         const sc = document.createElement("script");
         sc.src = "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js";
@@ -2248,20 +2253,23 @@ function preloadFaceMesh() {
         sc.onerror = () => reject(new Error("Face tracking library unavailable"));
         document.head.appendChild(sc);
       });
+      console.log("[FaceStickers] face_mesh.js loaded in", (performance.now()-t0).toFixed(0), "ms");
     }
+    const t1 = performance.now();
     const mesh = new window.FaceMesh({
       locateFile: file => "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/" + file
     });
     mesh.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: .5, minTrackingConfidence: .5 });
-    // Give the solution a moment to start fetching WASM + model
-    await new Promise(r => setTimeout(r, 800));
-    console.log("[FaceStickers] FaceMesh preload finished");
+    // Allow WASM + model fetch to begin
+    await new Promise(r => setTimeout(r, 300));
+    console.log("[FaceStickers] FaceMesh instance ready in", (performance.now()-t1).toFixed(0), "ms");
+    console.log("[FaceStickers] Total preload time:", (performance.now()-faceMeshInitStart).toFixed(0), "ms");
     return mesh;
   })();
   return faceMeshPreload;
 }
-// Start immediately
-preloadFaceMesh().catch(e => console.warn("[FaceStickers] Preload failed", e));
+// Start as early as possible
+preloadFaceMesh().catch(e => console.warn("[FaceStickers] Early preload failed", e));
 
 const stickerSelect=document.getElementById("faceStickerSelect");
 const faceStickerButton=document.getElementById("faceStickerButton");
@@ -2290,9 +2298,15 @@ function stickerResize(){
  }
 }
 // Photo-derived transparent accessory artwork with landmark positioning.
+// Preloaded early so selection is instant.
 const faceArt={};
-for(const name of ["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","moustache","pirate-hat","pirate-eyepatch","cigar"]){
- const image=new Image();image.src="/assets/face-effects/"+name+".png?v=5730";faceArt[name]=image;
+const stickerNames=["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","moustache","pirate-hat","pirate-eyepatch","cigar"];
+console.log("[FaceStickers] Preloading", stickerNames.length, "sticker images");
+for(const name of stickerNames){
+ const image=new Image();
+ image.onload=()=>console.log("[FaceStickers] Sticker ready:", name);
+ image.src="/assets/face-effects/"+name+".png?v=5730";
+ faceArt[name]=image;
 }
 let smoothFace=null;
 function stickerAsset(ctx,name,x,y,width,height){
@@ -2435,7 +2449,8 @@ function startFaceEffects(){
 async function stickerEnable(){
  if(!localStream){stickerMessage("Start your camera first.");return;}
  if(stickerSelect.value==="none"){stickerDisable();return;}
- stickerMessage("Loading face tracking… (preloaded)");
+ const selectTime = performance.now();
+ stickerMessage("Loading face tracking…");
  try{
   await stickerLoadMesh();
   if(!localStream||stickerSelect.value==="none")return;
@@ -2445,8 +2460,11 @@ async function stickerEnable(){
    stickerOutgoingTrack=stickerCapture.getVideoTracks()[0];
   }
   stickerReplaceTrack(stickerOutgoingTrack);
-  stickerMessage("Sticker on · visible to your partner");
+  const elapsed = (performance.now() - selectTime).toFixed(0);
+  console.log("[FaceStickers] Sticker selection to ready:", elapsed, "ms");
+  stickerMessage("Sticker on · visible to your partner (" + elapsed + "ms)");
  }catch(e){
+  console.error("[FaceStickers] Enable failed", e);
   stickerMessage("Face tracking unavailable. Try again later.");
   stickerSelect.value="none";if(faceStickerButton)faceStickerButton.textContent="Off";stickerDisable();
  }
