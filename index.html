@@ -2373,26 +2373,26 @@ function stickerDraw(ctx,face,mode,w,h){
   stickerAsset(ctx,"pirate-eyepatch",eyeLX-patchW*.28,eyeLY-patchH*.45,patchW,patchH);
  }
  if(mode==="cigar"){
-  // Place cigar so the end sits between the lips (use upper/lower lip midpoint)
+  // Place cigar so the left tip sits between the lips
   const upper=p(13), lower=p(14);
   const mouthX=((upper.x+lower.x)/2-cx)*Math.cos(roll)+((upper.y+lower.y)/2-cy)*Math.sin(roll);
   const mouthY=((upper.y+lower.y)/2-cy)*Math.cos(roll)-((upper.x+lower.x)/2-cx)*Math.sin(roll);
-  const cigarW=s*1.05, cigarH=s*.38;
-  // Cigar body extends to the right of the mouth; the left end is between the lips
-  stickerAsset(ctx,"cigar",mouthX-s*.12,mouthY-cigarH*.48,cigarW,cigarH);
-  // Soft smoke rising from between the lips (the end in the mouth)
-  const t=(performance.now()%2800)/2800;
+  const cigarW=s*1.05, cigarH=s*.36;
+  // Shift down and left so the tip (where arrow pointed) is between the lips
+  stickerAsset(ctx,"cigar",mouthX-s*.22,mouthY-cigarH*.15,cigarW,cigarH);
+  // Light bubbles rising from between the lips
+  const t=(performance.now()%2200)/2200;
   ctx.save();
-  for(let i=0;i<5;i++){
-    const phase=(t+i*.18)%1;
-    const drift=Math.sin(phase*5.5+i*1.7)*s*.08;
-    const px=mouthX+drift;
-    const py=mouthY-s*.05-phase*s*1.15;
-    const rad=s*(.04+phase*.09);
-    const alpha=0.35*(1-phase)*(1-phase); // softer fade
+  for(let i=0;i<4;i++){
+    const phase=(t+i*.22)%1;
+    const drift=Math.sin(phase*4+i)*s*.05;
+    const px=mouthX-s*.05+drift;
+    const py=mouthY-phase*s*.85;
+    const rad=s*(.025+phase*.04);
+    const alpha=0.45*(1-phase);
     ctx.beginPath();
-    ctx.fillStyle='rgba(220,220,220,'+alpha+')';
-    ctx.ellipse(px,py,rad*1.1,rad*1.4,0,0,Math.PI*2); // slightly elongated smoke puffs
+    ctx.fillStyle='rgba(200,200,200,'+alpha+')';
+    ctx.arc(px,py,rad,0,Math.PI*2);
     ctx.fill();
   }
   ctx.restore();
