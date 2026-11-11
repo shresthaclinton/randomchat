@@ -2373,23 +2373,25 @@ function stickerDraw(ctx,face,mode,w,h){
   stickerAsset(ctx,"pirate-eyepatch",eyeLX-patchW*.28,eyeLY-patchH*.45,patchW,patchH);
  }
  if(mode==="cigar"){
-  // Place cigar so the left tip sits between the lips
-  const upper=p(13), lower=p(14);
-  const mouthX=((upper.x+lower.x)/2-cx)*Math.cos(roll)+((upper.y+lower.y)/2-cy)*Math.sin(roll);
-  const mouthY=((upper.y+lower.y)/2-cy)*Math.cos(roll)-((upper.x+lower.x)/2-cx)*Math.sin(roll);
-  const cigarW=s*1.05, cigarH=s*.36;
-  // Lower so the left tip sits between the lips (not on the upper lip)
-  // Move right and up so the tip sits on the lips (not the chin)
-  stickerAsset(ctx,"cigar",mouthX-s*.08,mouthY-cigarH*.35,cigarW,cigarH);
-  // Light bubbles rising from between the lips
-  const t=(performance.now()%2200)/2200;
+  // Anchor to mouth corner so tip sits at the corner of the lips and body extends outward
+  // Use landmark 61 (appears on the user's right in the mirrored selfie view)
+  const corner=p(61);
+  const cX=(corner.x-cx)*Math.cos(roll)+(corner.y-cy)*Math.sin(roll);
+  const cY=(corner.y-cy)*Math.cos(roll)-(corner.x-cx)*Math.sin(roll);
+  const cigarW=s*1.0, cigarH=s*.34;
   ctx.save();
+  ctx.translate(cX, cY);
+  ctx.rotate(-0.22); // slight natural downward tilt
+  // Tip starts right at the corner; body extends away from the center of the mouth
+  stickerAsset(ctx,"cigar",-cigarW*.92,-cigarH*.42,cigarW,cigarH);
+  // Bubbles from the tip (at the mouth corner)
+  const t=(performance.now()%2200)/2200;
   for(let i=0;i<4;i++){
     const phase=(t+i*.22)%1;
-    const drift=Math.sin(phase*4+i)*s*.05;
-    const px=mouthX+drift;
-    const py=mouthY-cigarH*.3-phase*s*.85;
-    const rad=s*(.025+phase*.04);
+    const drift=Math.sin(phase*4+i)*s*.04;
+    const px=-cigarW*.85+drift;
+    const py=-cigarH*.15-phase*s*.75;
+    const rad=s*(.022+phase*.035);
     const alpha=0.45*(1-phase);
     ctx.beginPath();
     ctx.fillStyle='rgba(200,200,200,'+alpha+')';
