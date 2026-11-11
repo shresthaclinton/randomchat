@@ -2234,11 +2234,12 @@ window.addEventListener("pagehide", () => {
 // Face stickers: locally composited on the outgoing video track so the partner sees them.
 // FaceMesh is loaded on demand only when a sticker is selected.
 
-// Preload FaceMesh early so first sticker selection is near-instant
+// Stronger FaceMesh preload — starts immediately and warms the WASM/model
 let faceMeshPreload = null;
 function preloadFaceMesh() {
   if (faceMeshPreload) return faceMeshPreload;
   faceMeshPreload = (async () => {
+    console.log("[FaceStickers] Preloading FaceMesh...");
     if (!window.FaceMesh) {
       await new Promise((resolve, reject) => {
         const sc = document.createElement("script");
@@ -2248,17 +2249,19 @@ function preloadFaceMesh() {
         document.head.appendChild(sc);
       });
     }
-    // Force model/WASM download + compile
     const mesh = new window.FaceMesh({
       locateFile: file => "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/" + file
     });
     mesh.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: .5, minTrackingConfidence: .5 });
+    // Give the solution a moment to start fetching WASM + model
+    await new Promise(r => setTimeout(r, 800));
+    console.log("[FaceStickers] FaceMesh preload finished");
     return mesh;
   })();
   return faceMeshPreload;
 }
-// Start preloading as soon as the script runs (or after a short delay if preferred)
-setTimeout(() => { preloadFaceMesh().catch(() => {}); }, 1500);
+// Start immediately
+preloadFaceMesh().catch(e => console.warn("[FaceStickers] Preload failed", e));
 
 const stickerSelect=document.getElementById("faceStickerSelect");
 const faceStickerButton=document.getElementById("faceStickerButton");
@@ -2432,7 +2435,7 @@ function startFaceEffects(){
 async function stickerEnable(){
  if(!localStream){stickerMessage("Start your camera first.");return;}
  if(stickerSelect.value==="none"){stickerDisable();return;}
- stickerMessage("Loading face tracking...");
+ stickerMessage("Loading face tracking… (preloaded)");
  try{
   await stickerLoadMesh();
   if(!localStream||stickerSelect.value==="none")return;
