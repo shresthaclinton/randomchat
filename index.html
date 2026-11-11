@@ -2484,7 +2484,7 @@ async function stickerEnable(){
   stickerReplaceTrack(stickerOutgoingTrack);
   const elapsed = (performance.now() - selectTime).toFixed(0);
   console.log("[FaceStickers] Sticker selection to ready:", elapsed, "ms");
-  stickerMessage("Sticker on · visible to your partner (" + elapsed + "ms)");
+  stickerMessage("Sticker on · visible to your partner");
  }catch(e){
   console.error("[FaceStickers] Enable failed", e);
   stickerMessage("Face tracking unavailable. Try again later.");
