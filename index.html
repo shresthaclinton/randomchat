@@ -1258,8 +1258,8 @@ async function startChat() {
     });
 
     localVideo.srcObject = localStream;
-    console.log("[FaceStickers] Camera ready, ensuring MediaPipe preload");
-    preloadFaceMesh().catch(()=>{});
+    console.log("[FaceStickers] Camera ready, ensuring MediaPipe preload + warm-up");
+    preloadFaceMesh().then(() => warmupFaceMesh()).catch(()=>{});
     startFaceEffects();
     localPlaceholder.style.display = "none";
 
@@ -2270,6 +2270,28 @@ function preloadFaceMesh() {
 }
 // Start as early as possible
 preloadFaceMesh().catch(e => console.warn("[FaceStickers] Early preload failed", e));
+
+// Warm-up: send one real camera frame so WASM/model fully initializes before user selects a sticker
+async function warmupFaceMesh() {
+  try {
+    const mesh = await preloadFaceMesh();
+    // Wait until video has a frame
+    if (localVideo.readyState < 2) {
+      await new Promise(resolve => {
+        const onReady = () => { localVideo.removeEventListener("loadeddata", onReady); resolve(); };
+        localVideo.addEventListener("loadeddata", onReady);
+        setTimeout(resolve, 2000); // safety timeout
+      });
+    }
+    if (!localVideo.videoWidth) return;
+    const t = performance.now();
+    console.log("[FaceStickers] Sending warm-up frame...");
+    await mesh.send({ image: localVideo });
+    console.log("[FaceStickers] Warm-up frame processed in", (performance.now()-t).toFixed(0), "ms");
+  } catch (e) {
+    console.warn("[FaceStickers] Warm-up failed", e);
+  }
+}
 
 const stickerSelect=document.getElementById("faceStickerSelect");
 const faceStickerButton=document.getElementById("faceStickerButton");
