@@ -2378,35 +2378,59 @@ function stickerDraw(ctx,face,mode,w,h){
   const patchW=s*1.15, patchH=s*.50;
   stickerAsset(ctx,"pirate-eyepatch",eyeLX-patchW*.28,eyeLY-patchH*.45,patchW,patchH);
  }
- if(mode==="cigar"){
-  // Place between the lips (midpoint of upper lip 13 and lower lip 14)
+
+if(mode==="cigar"){
+  // Detect the midpoint between upper and lower lips
   const upper=p(13), lower=p(14);
-  const mX=((upper.x+lower.x)/2-cx)*Math.cos(roll)+((upper.y+lower.y)/2-cy)*Math.sin(roll);
-  const mY=((upper.y+lower.y)/2-cy)*Math.cos(roll)-((upper.x+lower.x)/2-cx)*Math.sin(roll);
-  const cigarW=s*1.05, cigarH=s*.36;
+
+  const lipX=(upper.x+lower.x)/2;
+  const lipY=(upper.y+lower.y)/2;
+
+  // Correct for face rotation
+  const mX=(lipX-cx)*Math.cos(roll)+(lipY-cy)*Math.sin(roll);
+  const mY=(lipY-cy)*Math.cos(roll)-(lipX-cx)*Math.sin(roll);
+
+  const cigarW=s*1.05;
+  const cigarH=s*.36;
+
   ctx.save();
-  ctx.translate(mX, mY);
-  ctx.rotate(0.12); // slight natural angle
-  // Tip sits in the middle of the mouth between the lips; body extends to the side
-  stickerAsset(ctx,"cigar",-cigarW*.15,-cigarH*.5,cigarW,cigarH);
-  // Bubbles rising from between the lips
+  ctx.translate(mX,mY);
+
+  // Slight natural downward angle
+  ctx.rotate(0.12);
+
+  // Move cigar left so its right end meets the lips
+  stickerAsset(
+    ctx,
+    "cigar",
+    -cigarW*.95,
+    -cigarH*.5,
+    cigarW,
+    cigarH
+  );
+
+  // Rising smoke bubbles
   const t=(performance.now()%2200)/2200;
+
   for(let i=0;i<4;i++){
     const phase=(t+i*.22)%1;
     const drift=Math.sin(phase*4+i)*s*.04;
     const px=drift;
     const py=-phase*s*.7;
     const rad=s*(.022+phase*.035);
-    const alpha=0.45*(1-phase);
+    const alpha=.45*(1-phase);
+
     ctx.beginPath();
     ctx.fillStyle='rgba(200,200,200,'+alpha+')';
     ctx.arc(px,py,rad,0,Math.PI*2);
     ctx.fill();
   }
+
   ctx.restore();
- }
- ctx.restore();
 }
+ctx.restore();
+}
+
 function stickerRender(t){
  if(!stickerRunning)return;
  stickerRaf=requestAnimationFrame(stickerRender);
