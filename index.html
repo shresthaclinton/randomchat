@@ -2409,27 +2409,38 @@ if(mode==="cigar"){
     cigarH
   );
 
-  // Rising smoke bubbles
-  const t=(performance.now()%2200)/2200;
+ 
+  // Realistic animated smoke from the burning cigar tip
+  const t = performance.now() / 1000;
 
-  for(let i=0;i<4;i++){
-    const phase=(t+i*.22)%1;
-    const drift=Math.sin(phase*4+i)*s*.04;
-    const px=drift;
-    const py=-phase*s*.7;
-    const rad=s*(.022+phase*.035);
-    const alpha=.45*(1-phase);
+  for(let i = 0; i < 5; i++){
+    const phase = (t * 0.65 + i * 0.2) % 1;
+
+    // Smoke origin at the left tip
+    const px = -cigarW * 0.88 +
+      Math.sin(t * 1.8 + i) * s * 0.035;
+
+    // Smoke rises upward
+    const py = -phase * s * 0.65;
+
+    const rad = s * (0.018 + phase * 0.045);
+    const alpha = 0.20 * (1 - phase);
 
     ctx.beginPath();
-    ctx.fillStyle='rgba(200,200,200,'+alpha+')';
-    ctx.arc(px,py,rad,0,Math.PI*2);
+    ctx.fillStyle = 'rgba(210,210,210,' + alpha + ')';
+    ctx.shadowBlur = s * 0.045;
+    ctx.shadowColor = 'rgba(220,220,220,0.35)';
+    ctx.arc(px, py, rad, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  ctx.shadowBlur = 0;
 
   ctx.restore();
 }
 ctx.restore();
 }
+
 
 function stickerRender(t){
  if(!stickerRunning)return;
