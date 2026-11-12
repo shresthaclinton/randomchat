@@ -2375,7 +2375,7 @@ function stickerDraw(ctx,face,mode,w,h){
   // Eyepatch covers exactly one eye (person's left / landmark 33)
   const eyeLX=(eyeL.x-cx)*Math.cos(roll)+(eyeL.y-cy)*Math.sin(roll);
   const eyeLY=(eyeL.y-cy)*Math.cos(roll)-(eyeL.x-cx)*Math.sin(roll);
-  const patchW=s*1.15, patchH=s*.50;
+  const patchW=s*2.30, patchH=s*1.00;
   stickerAsset(ctx,"pirate-eyepatch",eyeLX-patchW*.28,eyeLY-patchH*.45,patchW,patchH);
  }
 
