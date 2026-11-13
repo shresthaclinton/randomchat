@@ -91,6 +91,34 @@ video {
 
 #localVideo { transform: scaleX(-1); }
 
+/* Get Pro shortcut: anchored to the user's video, top-right corner. */
+.galli-get-pro{
+  position:absolute;
+  top:12px;
+  right:12px;
+  z-index:30;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:9px 12px;
+  border:1px solid #fff0a6;
+  border-radius:999px;
+  background:linear-gradient(135deg,#ffe979,#ffbf28);
+  color:#211707;
+  box-shadow:0 3px 12px #0008;
+  font-size:11px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.45px;
+  cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.galli-get-pro:hover{transform:translateY(-2px);box-shadow:0 6px 16px #0009}
+.galli-get-pro:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media(max-width:600px){
+  .galli-get-pro{top:8px;right:8px;padding:8px 10px;font-size:10px}
+}
+
 .placeholder {
   position: absolute;
   inset: 0;
@@ -881,6 +909,9 @@ footer { line-height:1.8; }
 
     <div class="video-box">
       <video id="localVideo" autoplay muted playsinline></video>
+      <button type="button" class="galli-get-pro" id="galliGetProBtn" aria-label="Get Online Galli Pro">
+        👑 GET PRO
+      </button>
       <canvas id="faceStickerPreview" aria-hidden="true"></canvas>
       <div class="reaction-in-video" id="localReaction" aria-live="polite"></div>
       <div class="placeholder" id="localPlaceholder">
@@ -1588,6 +1619,7 @@ function showProNotice(feature){
  document.getElementById("galliProFeature").textContent=feature;
  notice.hidden=false;
 }
+document.getElementById("galliGetProBtn").addEventListener("click",()=>showProNotice("Online Galli Pro"));
 document.getElementById("galliProClose").addEventListener("click",()=>document.getElementById("galliProNotice").hidden=true);
 document.getElementById("previousCornerBtn").addEventListener("click",()=>{
  if(!ownerUnlocked){showProNotice("Previous");return;}
