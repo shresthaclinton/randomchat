@@ -1,0 +1,2649 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Online Galli | Free Random Video Chat with Strangers</title>
+<meta name="description" content="Online Galli is a free 18+ random video chat. Talk to strangers one-to-one, play multiplayer games, and use face stickers. No account needed. A new meetup around every corner.">
+<meta name="keywords" content="Online Galli, Nepali video chat, free video chat Nepal, random video chat, one-to-one video, Nepali strangers, video chat Nepal">
+<meta name="robots" content="index, follow">
+<meta name="author" content="Online Galli">
+<link rel="canonical" href="https://onlinegalli.com/">
+<meta name="theme-color" content="#ffe247">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Online Galli">
+<meta property="og:title" content="Online Galli | Free Random Video Chat with Strangers">
+<meta property="og:description" content="Free 18+ random video chat. Talk to strangers one-to-one, play games, and use face stickers. No account needed.">
+<meta property="og:url" content="https://onlinegalli.com/">
+<meta property="og:image" content="https://onlinegalli.com/assets/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Online Galli | Free Random Video Chat with Strangers">
+<meta name="twitter:description" content="Free 18+ random video chat. Talk to strangers one-to-one, play games, and use face stickers.">
+<meta name="twitter:image" content="https://onlinegalli.com/assets/og-image.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Online Galli","url":"https://onlinegalli.com/","description":"Free 18+ one-to-one video chat for Nepali adults. Meet someone new instantly.","applicationCategory":"CommunicationApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"audience":{"@type":"PeopleAudience","requiredMinAge":18}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"What is Online Galli?","acceptedAnswer":{"@type":"Answer","text":"Online Galli is a free 18+ random video chat where you can talk to strangers one-to-one, play multiplayer games, and use face stickers. No account is required."}},
+{"@type":"Question","name":"How does random matching work?","acceptedAnswer":{"@type":"Answer","text":"Click Enter the Galli. The system pairs you with another adult who is also waiting. When either person leaves, you can be matched with someone new."}},
+{"@type":"Question","name":"Do I need an account?","acceptedAnswer":{"@type":"Answer","text":"No. You can start a video chat without creating an account. Camera and microphone access is requested only after you choose to enter."}},
+{"@type":"Question","name":"Can I play games with the other person?","acceptedAnswer":{"@type":"Answer","text":"Yes. While connected you can invite the other person to multiplayer games such as Tic-Tac-Toe, Connect Four, Rock Paper Scissors, and others. Some games are Pro features."}},
+{"@type":"Question","name":"Is Online Galli safe?","acceptedAnswer":{"@type":"Answer","text":"Online Galli is 18+ only. You can report or block anyone. Do not share personal information. Community Guidelines explain the rules."}}
+]}
+</script>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #ffe247;
+  color: #171717;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  padding: 18px 5%;
+  border-bottom: 2px solid #171717;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Brand: road icon + clearly separated words */
+.logo { display: inline-flex; align-items: center; gap: 10px; font-size: clamp(21px, 3vw, 27px); font-weight: 900; letter-spacing: -.7px; white-space: nowrap; }
+.logo svg { width: 35px; height: 35px; flex: none; }
+.logo span { color: #171717; }
+.online { color: #171717; font-size: 13px; font-weight: 700; }
+.tagline { margin: 0 0 18px; font-size: clamp(22px, 4vw, 38px); font-weight: 900; letter-spacing: -1px; }
+.subtitle { margin: -9px 0 20px; color: #39331a; }
+
+.container {
+  max-width: 1400px;
+  margin: 25px auto;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 20px;
+}
+
+.videos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.video-box {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #171717;
+  border: 2px solid #171717;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#localVideo { transform: scaleX(-1); }
+
+/* Get Pro shortcut: anchored to the user's video, top-right corner. */
+.galli-get-pro{
+  position:absolute;
+  top:12px;
+  right:12px;
+  z-index:30;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:9px 12px;
+  border:1px solid #fff0a6;
+  border-radius:999px;
+  background:linear-gradient(135deg,#ffe979,#ffbf28);
+  color:#211707;
+  box-shadow:0 3px 12px #0008;
+  font-size:11px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.45px;
+  cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.galli-get-pro:hover{transform:translateY(-2px);box-shadow:0 6px 16px #0009}
+.galli-get-pro:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media(max-width:600px){
+  .galli-get-pro{top:8px;right:8px;padding:8px 10px;font-size:10px}
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #aab4c7;
+  pointer-events: none;
+  padding: 20px;
+}
+
+.placeholder .emoji { font-size: 48px; }
+.placeholder p { font-size: 13px; }
+
+.label {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: #000a;
+  padding: 7px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+button {
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 9px;
+  color: white;
+  background: #171717;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled { opacity: .4; cursor: not-allowed; }
+button:hover:not(:disabled) { filter: brightness(1.15); }
+
+.start { background: #168a3a; color: #ffffff; border: 2px solid #0b6428; }
+.start:hover:not(:disabled) { background: #10702f; filter: none; }
+.next { background: #ffffff; color: #171717; border: 2px solid #171717; }
+.stop { background: #a92828; }
+
+#status {
+  margin-top: 18px;
+  color: #312b17;
+  line-height: 1.6;
+}
+
+.ad {
+  background: #171717;
+  border: 1px solid #171717;
+  border-radius: 15px;
+  padding: 35px 20px;
+  text-align: center;
+  min-height: 250px;
+}
+
+.ad h3 { color: #ffe247; }
+.ad p { color: #b5bed0; font-size: 14px; }
+
+.safety {
+  background: #fff6c7;
+  padding: 18px;
+  border-radius: 12px;
+  margin-top: 15px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #39331a;
+}
+
+footer {
+  padding: 30px;
+  text-align: center;
+  color: #514821;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .videos { grid-template-columns: 1fr; }
+  .controls button { flex: 1; }
+}
+
+.beta-consent { margin: 16px 0 8px; padding: 13px 15px; border: 2px solid #171717; border-radius: 12px; background: #fff6ba; line-height: 1.5; }
+.beta-consent label { display:flex; align-items:flex-start; gap:10px; font-size:14px; cursor:pointer; }
+.beta-consent input { width:19px; height:19px; margin-top:2px; flex:none; accent-color:#168a3a; }
+.beta-consent a, footer a { color:inherit; text-decoration:underline; }
+footer { line-height:1.8; }
+
+.entry-gate{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto}
+.entry-gate[hidden]{display:none!important}
+.entry-panel{width:min(100%,580px);max-height:calc(100dvh - 36px);overflow:auto;background:#ffe247;color:#171717;border-radius:22px;padding:clamp(20px,5vw,38px);box-shadow:0 20px 70px #0008}
+.entry-panel h2{font-size:clamp(24px,5vw,35px);margin:12px 0}
+.entry-panel p,.entry-panel li{line-height:1.55}
+.entry-panel ul{padding-left:22px;margin:15px 0}
+.entry-panel .gate-check{display:flex;gap:12px;align-items:flex-start;background:#fff5bf;border:2px solid #171717;border-radius:12px;padding:14px;margin:18px 0;cursor:pointer;line-height:1.5}
+.entry-panel .gate-check input{width:23px;height:23px;flex:none;margin-top:2px;accent-color:#168a3a}
+.entry-panel a{color:#171717;text-decoration:underline;font-weight:700}
+#confirmEntryBtn{width:100%;padding:16px;font-size:17px;border:0;border-radius:12px;font-weight:800;background:#168a3a;color:#fff;cursor:pointer}
+#confirmEntryBtn:disabled{background:#77847a;cursor:not-allowed}
+.gate-footnote{font-size:12px;text-align:center;margin-top:12px}
+
+
+.v4-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.v4-tools button,.v4-panel button{padding:10px 14px;border-radius:9px;cursor:pointer}
+.v4-panel{margin-top:12px;padding:16px;background:#222;color:white;border:2px solid #ffe247;border-radius:14px}
+.v4-panel[hidden]{display:none!important}
+.v4-board{display:grid;grid-template-columns:repeat(3,minmax(60px,88px));gap:6px;margin:14px 0}
+.v4-board button{aspect-ratio:1;font-size:32px;font-weight:800;background:#ffe247;color:#111;border:0}
+.v4-board button:disabled{opacity:.8;cursor:default}
+.v4-reactions{display:flex;flex-wrap:wrap;gap:6px}
+.v4-reactions button{font-size:22px;background:#333;border:1px solid #777;color:white}
+.v4-toast{min-height:30px;font-size:26px;margin-top:6px}
+
+#videoStage{position:relative;isolation:isolate}
+#gamePanel.v4-panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:15;width:min(330px,calc(100% - 24px));max-height:calc(100% - 16px);overflow:auto;box-shadow:0 14px 45px #000c;text-align:center;background:#1d1d1d;border:3px solid #ffe247;border-radius:16px;padding:14px}
+#gamePanel .v4-board{grid-template-columns:repeat(3,minmax(0,1fr));max-width:230px;margin:10px auto}
+#gamePanel .v4-board button{min-height:50px;font-size:28px}
+#gamePanel p{margin:8px 0;font-size:13px}
+#gamePanel button{margin:3px}
+#acceptGameBtn{background:#168a3a;color:white;border:0}
+#declineGameBtn,#closeGameBtn{background:#444;color:white;border:1px solid #777}
+#reactionPanel.v4-panel{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:12;width:max-content;max-width:calc(100% - 18px);padding:9px;border:2px solid #ffe247;border-radius:16px;background:#171717ef;text-align:center;box-shadow:0 8px 25px #0008}
+#reactionPanel strong{display:block;font-size:12px;margin-bottom:5px}
+#reactionPanel .v4-reactions{justify-content:center;gap:5px}
+#reactionPanel .v4-reactions button{font-size:clamp(22px,3vw,30px);padding:7px;min-width:39px;border-radius:12px}
+#reactionToast.v4-toast{position:absolute;left:25%;top:48%;transform:translate(-50%,-50%);z-index:14;pointer-events:none;font-size:clamp(60px,12vw,110px);filter:drop-shadow(0 5px 15px #0009);text-align:center;line-height:1.1}
+#reactionToast:not(:empty){animation:galliPop .7s ease-out both}
+@keyframes galliPop{0%{opacity:0;transform:translate(-50%,-30%) scale(.35)}35%{opacity:1;transform:translate(-50%,-65%) scale(1.25)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.v4-tools{justify-content:center}.v4-tools button{font-weight:700}
+@media(max-width:650px){#gamePanel.v4-panel{width:min(270px,calc(100% - 12px));padding:9px;max-height:calc(100% - 8px)}#gamePanel .v4-board{max-width:155px;gap:4px}#gamePanel .v4-board button{min-height:38px;font-size:21px;padding:4px}#gamePanel button{padding:6px 8px;font-size:12px}#reactionPanel.v4-panel{bottom:5px;padding:6px}#reactionPanel .v4-reactions button{min-width:32px;padding:4px;font-size:22px}}
+
+/* V4.2: precisely centered floating game window across both video feeds. */
+#videoStage { position:relative; isolation:isolate; }
+#gamePanel.v4-panel {
+ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+ z-index:30; box-sizing:border-box; width:min(270px,calc(100% - 20px));
+ max-height:min(94%,440px); overflow-y:auto; background:rgba(22,22,22,.97);
+ border:2px solid #ffe247; border-radius:15px; padding:12px;
+ box-shadow:0 12px 40px rgba(0,0,0,.8); color:white; text-align:center;
+}
+#gamePanel.v4-panel[hidden],#reactionPanel.v4-panel[hidden] { display:none!important; }
+#gamePanel .v4-board { display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:min(192px,100%);margin:9px auto; }
+#gamePanel .v4-board button { aspect-ratio:1; min-height:0; padding:0; font-size:29px; border-radius:7px; }
+#gamePanel strong { font-size:15px; }
+#gamePanel p { margin:7px 0; line-height:1.35; font-size:13px; }
+#gamePanel button { margin:3px 2px; padding:8px 10px; }
+#gamePanel #acceptGameBtn { background:#168a3a; color:white; border:0; }
+#gamePanel #declineGameBtn { background:#444; color:white; border:1px solid #888; }
+#reactionPanel.v4-panel { z-index:25; bottom:9px; }
+#reactionToast.v4-toast {
+ left:50%; top:42%; transform:translate(-50%,-50%);
+ z-index:35; font-size:clamp(76px,13vw,145px); line-height:1;
+ text-shadow:0 7px 18px rgba(0,0,0,.55); pointer-events:none;
+}
+@keyframes galliPop {
+ 0% {opacity:0;transform:translate(-50%,-20%) scale(.3)}
+ 35% {opacity:1;transform:translate(-50%,-55%) scale(1.2)}
+ 100% {opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@media(max-width:600px) {
+ #gamePanel.v4-panel { width:min(260px,calc(100% - 20px));max-height:45%;padding:9px; }
+ #gamePanel .v4-board { width:min(145px,100%);gap:3px; }
+ #gamePanel .v4-board button { font-size:22px; }
+ #gamePanel button { font-size:12px;padding:6px 8px; }
+ #reactionToast.v4-toast { font-size:clamp(74px,22vw,115px); }
+}
+
+#videoStage { position:relative; isolation:isolate; overflow:visible; }
+#gamePanel.v4-panel {
+ position:absolute!important; left:50%!important; top:50%!important;
+ bottom:auto!important; right:auto!important;
+ transform:translate(-50%,-50%)!important;
+ margin:0!important; z-index:80!important;
+ width:min(270px,calc(100% - 18px))!important;
+ max-height:min(390px,95%)!important;
+ overflow:auto; box-sizing:border-box;
+}
+#gamePanel.game-finished #gameMessage {
+ background:#168a3a;color:#fff;font-size:20px;font-weight:900;
+ padding:12px 7px;border-radius:10px;letter-spacing:.02em;
+}
+.reaction-in-video {
+ position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);
+ z-index:12;pointer-events:none;font-size:clamp(66px,11vw,120px);
+ line-height:1;text-shadow:0 6px 16px #0009;
+}
+.reaction-in-video:not(:empty){animation:galliInBox .8s ease-out both}
+@keyframes galliInBox {
+ 0%{opacity:0;transform:translate(-50%,-25%) scale(.3)}
+ 35%{opacity:1;transform:translate(-50%,-55%) scale(1.18)}
+ 100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@media(max-width:600px){
+ #videoStage {display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+ #videoStage>.video-box{min-width:0}
+ #gamePanel.v4-panel {max-height:min(330px,82%)!important;width:min(240px,calc(100% - 24px))!important}
+ #gamePanel .v4-board{width:min(150px,100%)}
+ #gamePanel .v4-board button{font-size:23px}
+ .reaction-in-video{font-size:clamp(70px,23vw,110px)}
+}
+
+/* V4.4: Position the invitation/game at the real seam of the two video boxes. */
+#videoStage{position:relative!important}
+#gamePanel.v4-panel{
+ left:var(--galli-popup-x,50%)!important;
+ top:var(--galli-popup-y,50%)!important;
+ transform:translate(-50%,-50%)!important;
+ z-index:100!important;
+}
+#gamePanel.game-finished #gameMessage{
+ display:block!important;background:#168a3a!important;color:#fff!important;
+ font-size:clamp(18px,4vw,24px)!important;font-weight:900!important;
+ padding:12px 8px!important;border-radius:10px!important;text-align:center!important;
+}
+@media(max-width:600px){
+ #gamePanel.v4-panel{width:min(245px,calc(100vw - 30px))!important;max-height:300px!important}
+}
+
+ /* V4.5: Mobile overlays are portaled to body; use viewport coordinates. */
+ #gamePanel.v4-panel{
+  position:fixed!important;left:var(--galli-popup-x,50vw)!important;
+  top:var(--galli-popup-y,50dvh)!important;
+  transform:translate(-50%,-50%)!important;
+  z-index:10020!important;max-height:min(360px,75dvh)!important;
+  width:min(265px,calc(100vw - 24px))!important;
+  overflow:auto!important;
+ }
+ #reactionPanel.v4-panel{
+  position:fixed!important;left:50%!important;bottom:max(14px,env(safe-area-inset-bottom))!important;
+  top:auto!important;transform:translateX(-50%)!important;
+  z-index:10021!important;width:min(440px,calc(100vw - 20px))!important;
+  box-sizing:border-box;
+ }
+ #reactionPanel .v4-reactions{display:flex;justify-content:center;flex-wrap:wrap}
+ #reactionPanel .v4-reactions button{font-size:clamp(24px,7vw,34px)!important;min-width:38px!important}
+ #videoStage .video-box{position:relative!important;isolation:isolate!important}
+ #videoStage .reaction-in-video{
+  display:flex!important;align-items:center;justify-content:center;
+  position:absolute!important;inset:0!important;
+  width:100%!important;height:100%!important;
+  z-index:999!important;pointer-events:none!important;
+  transform:none!important;font-size:clamp(80px,20vw,140px)!important;
+  text-shadow:0 6px 20px #000b;
+ }
+ #videoStage .reaction-in-video:empty{display:none!important}
+ #videoStage .reaction-in-video:not(:empty){animation:galliReactionV45 .9s ease-out both}
+ @keyframes galliReactionV45{
+  0%{opacity:0;scale:.3}35%{opacity:1;scale:1.2}100%{opacity:1;scale:1}
+ }
+ @media(max-width:600px){
+  #gamePanel.v4-panel{width:min(245px,calc(100vw - 22px))!important;max-height:min(290px,70dvh)!important}
+  #gamePanel .v4-board{width:min(145px,100%)!important}
+ }
+
+#gamePanel[hidden],#reactionPanel[hidden]{display:none!important}
+#gamePanel.v4-panel{
+ position:fixed!important;left:var(--galli-popup-x,50vw)!important;
+ top:var(--galli-popup-y,50dvh)!important;
+ transform:translate(-50%,-50%)!important;
+ z-index:10020!important;max-height:min(320px,78dvh)!important;
+ width:min(255px,calc(100vw - 24px))!important;
+ box-sizing:border-box!important;overflow-y:auto!important;
+}
+#gamePanel .v4-board{width:min(160px,100%)!important;margin:8px auto!important}
+#gamePanel .v4-board button{min-height:38px!important;font-size:23px!important;padding:5px!important}
+#reactionPanel.v4-panel{
+ position:fixed!important;left:50%!important;bottom:max(14px,env(safe-area-inset-bottom))!important;
+ top:auto!important;transform:translateX(-50%)!important;
+ z-index:10021!important;width:min(440px,calc(100vw - 20px))!important;
+ box-sizing:border-box!important;
+}
+#videoStage .video-box{position:relative!important;isolation:isolate!important}
+#videoStage .reaction-in-video{
+ display:flex!important;align-items:center;justify-content:center;
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ z-index:999!important;pointer-events:none!important;
+ transform:none!important;font-size:clamp(76px,20vw,135px)!important;
+ text-shadow:0 6px 20px #000b;
+}
+#videoStage .reaction-in-video:empty{display:none!important}
+#videoStage .reaction-in-video:not(:empty){animation:galliReactionV46 .9s ease-out both}
+@keyframes galliReactionV46{0%{opacity:0;scale:.3}35%{opacity:1;scale:1.2}100%{opacity:1;scale:1}}
+
+/* V5: supporter badges stay in their own video boxes */
+.video-box{position:relative!important}
+.galli-badge{position:absolute;bottom:12px;right:12px;z-index:20;max-width:65%;
+ background:#ffe247;color:#161616;border:2px solid #161616;border-radius:10px;
+ font-size:clamp(11px,2vw,15px);font-weight:800;padding:7px 9px;
+ text-align:center;box-shadow:0 3px 10px #0009;pointer-events:none}
+.galli-badge[hidden]{display:none!important}
+.galli-social{margin-top:14px;background:#1e1e1e;border-radius:14px;padding:12px;color:#fff}
+.galli-social-tabs{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.galli-social-tabs button,.galli-chat-form button{background:#ffe247;color:#171717;border:0;border-radius:9px;padding:11px 14px;font-weight:800;cursor:pointer;touch-action:manipulation}
+.galli-social-tabs button:disabled,.galli-chat-form button:disabled{opacity:.45;cursor:not-allowed}
+.galli-badge-select-label{font-size:14px;font-weight:700}
+#teamBadgeSelect{background:#fff;color:#161616;border-radius:8px;padding:10px;max-width:100%;font-size:14px}
+.galli-chat{margin-top:12px;border:1px solid #555;border-radius:12px;overflow:hidden}
+.galli-chat[hidden]{display:none!important}
+.galli-chat-title{background:#303030;padding:12px;font-weight:800}
+.galli-chat-title span{display:block;color:#ccc;font-size:12px;font-weight:400;margin-top:3px}
+.galli-chat-messages{height:220px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#111}
+.galli-chat-msg{max-width:88%;padding:9px 12px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.4}
+.galli-chat-msg.mine{align-self:flex-end;background:#ffe247;color:#171717}
+.galli-chat-msg.theirs{align-self:flex-start;background:#383838;color:#fff}
+.galli-chat-form{display:flex;gap:8px;padding:10px;background:#262626}
+.galli-chat-form input{flex:1;min-width:0;border-radius:8px;padding:12px;border:1px solid #666;background:#fff;color:#111;font-size:16px}
+.galli-chat-notice{padding:0 10px 8px;font-size:12px;color:#ffe247}
+@media(max-width:600px){.galli-badge{bottom:9px;right:9px;max-width:62%;padding:5px 7px;font-size:12px}.galli-chat-messages{height:185px}}
+
+/* V5.2: mirrored Omegle-style chat captions in BOTH video frames */
+#videoStage .video-box{position:relative!important}
+.galli-video-chat{position:absolute;z-index:38;left:9px;right:9px;bottom:39px;
+ display:flex;flex-direction:column;align-items:flex-start;gap:4px;max-height:47%;
+ overflow-y:auto;scrollbar-width:none;pointer-events:none}
+.galli-video-chat::-webkit-scrollbar{display:none}
+.galli-video-chat-line{max-width:100%;width:fit-content;background:rgba(0,0,0,.74);
+ color:white;padding:6px 9px;border-radius:7px;line-height:1.4;
+ font-size:clamp(12px,2.5vw,15px);overflow-wrap:anywhere;white-space:pre-wrap;
+ text-shadow:0 1px 2px #000}
+.galli-video-chat-line strong{color:#fff;font-weight:800}
+.galli-chat-bar{display:flex;flex-direction:row;align-items:stretch;gap:8px;margin:0;padding:4px}
+.galli-chat-bar input{flex:1;min-width:0;min-height:48px;font-size:16px}
+.galli-chat-bar button{flex:none;min-height:48px;padding:8px 15px}
+.galli-inline-reactions{display:flex;flex-wrap:wrap;align-items:center;gap:7px;
+ padding:7px 3px;margin-top:6px}
+.galli-inline-reactions .v4-reactions{display:flex;flex-wrap:wrap;gap:5px;flex:1}
+.galli-inline-reactions .v4-reactions button{font-size:23px;min-width:39px;min-height:39px;
+ padding:5px;border-radius:9px;cursor:pointer}
+.galli-inline-reactions #muteReactionsBtn{margin-left:auto;white-space:nowrap;padding:9px}
+.galli-social-tabs{margin-top:8px}
+@media(max-width:600px){
+ .galli-video-chat{left:6px;right:6px;bottom:32px;gap:3px;max-height:40%}
+ .galli-video-chat-line{font-size:12px;padding:5px 7px}
+ .galli-chat-bar button{padding:7px 12px}
+ .galli-inline-reactions .v4-reactions button{font-size:21px;min-width:35px;min-height:35px}
+}
+
+/* V5.3: chat above main controls; My Support beside quick reactions. */
+.galli-social{margin:10px 0 12px!important}
+.galli-inline-reactions{display:flex!important;align-items:center!important;gap:7px!important;flex-wrap:wrap!important}
+.galli-inline-reactions .v4-reactions{flex:0 1 auto!important}
+.galli-inline-reactions #muteReactionsBtn{margin-left:0!important}
+.galli-inline-reactions .galli-social-tabs{display:flex!important;align-items:center!important;gap:7px!important;margin:0!important;flex-wrap:wrap!important}
+.galli-inline-reactions .galli-badge-select-label{white-space:nowrap;font-size:13px}
+.galli-inline-reactions #teamBadgeSelect{max-width:180px;min-height:39px;padding:7px}
+@media(max-width:600px){.galli-inline-reactions{gap:6px!important}.galli-inline-reactions .v4-reactions button{min-width:34px;min-height:35px;font-size:21px}.galli-inline-reactions #teamBadgeSelect{max-width:150px}}
+
+/* NPL logo-only circular badges: preserve video and chat layout. */
+.galli-badge{width:clamp(46px,6vw,72px)!important;height:clamp(46px,6vw,72px)!important;
+ max-width:none!important;aspect-ratio:1!important;border-radius:50%!important;
+ background:rgba(255,255,255,.94)!important;border:2px solid rgba(255,255,255,.95)!important;
+ padding:5px!important;display:flex!important;align-items:center;justify-content:center;
+ overflow:hidden!important;box-sizing:border-box!important;}
+.galli-badge[hidden]{display:none!important}
+.galli-badge img{width:100%;height:100%;object-fit:contain;display:block}
+@media(max-width:600px){.galli-badge{width:48px!important;height:48px!important;right:8px!important;bottom:8px!important;padding:4px!important}}
+#playAgainGameBtn:not([hidden]){background:#f9d74d;color:#171717;font-weight:800;border-radius:9px;margin-right:6px}
+#playAgainGameBtn[hidden]{display:none!important}
+
+/* V5.3.4: 1.5x larger transparent NPL logo badges, unchanged layout. */
+.galli-badge{width:clamp(69px,9vw,108px)!important;height:clamp(69px,9vw,108px)!important;box-sizing:border-box!important;overflow:hidden!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.galli-badge[hidden]{display:none!important}
+.galli-badge img{max-width:100%!important;max-height:100%!important;object-fit:contain!important;background:transparent!important}
+@media(max-width:600px){.galli-badge{width:72px!important;height:72px!important}}
+
+.galli-game-picker,.galli-game-choices{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin:8px 0}
+.galli-game-picker[hidden],.galli-game-choices[hidden]{display:none!important}
+.galli-game-picker button,.galli-game-choices button{background:#e2c441;color:#111;border:0;border-radius:9px;padding:8px 10px;font-weight:700;font-size:13px;cursor:pointer;touch-action:manipulation}
+.galli-game-choices button:disabled{opacity:.5;cursor:default}
+.galli-question{font-size:14px;font-weight:700;width:100%;color:white}
+#gamePanel{width:min(300px,calc(100vw - 24px))!important}
+
+/* V5.4.1: games action is orange; block action lives beside report. */
+#gamesBtn{background:#f58220!important;color:#151515!important;border:2px solid #c95d08!important;font-weight:800!important;box-shadow:0 2px 0 #a94c06!important;cursor:pointer}
+#gamesBtn:hover:not(:disabled){background:#ff9b3c!important}
+#gamesBtn:disabled{opacity:.55;cursor:not-allowed}
+.controls #blockBtn{background:#282828;color:#fff;border:1px solid #555}
+.controls #blockBtn:disabled{opacity:.55}
+
+/* V5.4.2: keep Games on the far right of the controls; status directly below Enter. */
+.controls{display:flex;align-items:flex-start;flex-wrap:wrap;gap:10px}
+.controls .galli-enter-wrap{display:flex;flex-direction:column;align-items:stretch;gap:5px;flex:0 0 auto;min-width:145px;max-width:210px}
+.controls .galli-enter-wrap #startBtn{width:100%;min-height:48px}
+.controls .galli-enter-wrap #status{margin:0!important;font-size:12px;line-height:1.35;color:#332d1b;max-width:210px;overflow-wrap:anywhere}
+.controls > button{min-height:48px}
+.controls #gamesBtn{background:#ff9b2f!important;color:#191919!important;border:2px solid #d46b0a!important;font-weight:800!important;margin-left:auto!important}
+.controls #gamesBtn:hover:not(:disabled){background:#ffb356!important}
+.controls #gamesBtn:disabled{opacity:.55}
+@media(max-width:700px){
+ .controls .galli-enter-wrap{flex:1 1 140px;min-width:125px}
+ .controls > button{flex:1 1 auto}
+ .controls #gamesBtn{margin-left:auto!important;flex:0 1 auto}
+}
+
+/* V5.4.3: taller advertisement and safety notice below it, in the indicated sidebar space. */
+@media (min-width:901px){
+ .container>aside .ad{min-height:470px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:48px}
+ .container>aside .safety{margin-top:28px}
+}
+@media (max-width:900px){
+ .container>aside .ad{min-height:290px}
+ .container>aside .safety{margin-top:15px}
+}
+
+/* Keep Face Stickers and My Support next to the reactions, on one responsive row. */
+.galli-inline-reactions{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.galli-inline-reactions .v4-reactions{flex:0 1 auto}
+.galli-inline-reactions .galli-face-effects{display:flex;align-items:center;flex-wrap:wrap;margin:0;gap:6px}
+.galli-inline-reactions .galli-social-tabs{display:flex;align-items:center;gap:6px;margin:0}
+.galli-inline-reactions #faceStickerSelect{max-width:145px;padding:8px}
+.galli-inline-reactions #teamBadgeSelect{max-width:170px;padding:8px}
+@media(max-width:650px){.galli-inline-reactions{gap:7px}.galli-inline-reactions .galli-face-effects,.galli-inline-reactions .galli-social-tabs{font-size:12px}}
+/* Optional local face stickers: original video is unchanged when Off. */
+.galli-face-effects{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:8px 0 6px;font-weight:700}
+.galli-face-effects select{background:#fff;color:#111;border-radius:8px;padding:8px;max-width:185px}
+#faceStickerStatus{font-size:12px;color:#f7d96b;font-weight:400}
+#faceStickerPreview{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;transform:scaleX(-1);object-fit:fill}
+.galli-sticker-picker{position:relative;display:inline-block}
+.galli-sticker-picker select{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+#faceStickerButton{background:#fff;color:#111;border:0;border-radius:8px;padding:8px 10px;font-weight:700;max-width:160px;text-align:left}
+.galli-sticker-menu{position:absolute;left:0;top:calc(100% + 4px);z-index:40;min-width:190px;background:#fff;color:#111;border-radius:8px;box-shadow:0 8px 24px #0005;padding:4px;display:none;flex-direction:column}.galli-sticker-menu:not([hidden]){display:flex}
+.galli-sticker-menu button{background:#fff;color:#111;border:0;border-radius:6px;padding:8px 10px;text-align:left;font-weight:600}
+.galli-sticker-menu button:hover,.galli-sticker-menu button:focus{background:#ffe247}
+
+@media(max-width:600px){.galli-face-effects{gap:5px;font-size:12px}.galli-face-effects select{max-width:155px}}
+
+/* Shoe cursor and wide treaded footsteps. Desktop mouse only. */
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
+  html, body, body * , select, option { cursor:none !important; }
+  .galli-shoe-cursor {position:fixed;left:0;top:0;width:58px;height:30px;z-index:2147483646;pointer-events:none;transform:translate(-50%,-50%) rotate(0deg);filter:drop-shadow(0 2px 2px #0006);will-change:left,top;}
+  .galli-shoe-cursor img {width:100%;height:100%;display:block;object-fit:contain;user-select:none}
+  .galli-shoe-cursor.stomp {animation:galli-cursor-stomp .23s ease-out}
+  @keyframes galli-cursor-stomp {50%{scale:.78}100%{scale:1}}
+  .galli-shoeprint {position:fixed;width:32px;height:59px;pointer-events:none;z-index:2147483640;opacity:.82;transform-origin:center;animation:galli-step-fade 1.15s ease-out forwards;will-change:opacity,transform}
+  .galli-shoeprint svg {display:block;width:100%;height:100%}
+  @keyframes galli-step-fade {0%{opacity:.83}25%{opacity:.75}100%{opacity:0}}
+}
+@media (prefers-reduced-motion:reduce){.galli-shoeprint,.galli-shoe-cursor{display:none!important}}
+
+/* v5.6: realistic 3D digital LED advertisement board; retains existing safety panel. */
+.container>aside .galli-billboard-slot{
+  display:block!important;min-height:0!important;padding:12px 7px 18px!important;
+  overflow:visible;background:transparent;border:0;text-align:center;
+}
+.galli-led-stage{width:100%;perspective:1000px;padding:0 5px 4px;filter:drop-shadow(8px 12px 8px rgba(0,0,0,.26))}
+.galli-led-board{
+  position:relative;width:96%;margin:auto;aspect-ratio:0.53;
+  padding:9px;background:linear-gradient(105deg,#080b13,#303442 13%,#080a10 27%,#151721 87%,#05070d);
+  border:2px solid #080a0e;border-radius:4px;
+  box-shadow:inset 2px 0 2px #777b8c, inset -3px 0 4px #000, 5px 5px 0 #090b11, 8px 8px 9px #0008;
+  transform:rotateY(-5deg) rotateX(1deg);transform-origin:center center;
+}
+.galli-led-board:before{content:"";position:absolute;left:-8px;top:4px;bottom:3px;width:7px;background:linear-gradient(90deg,#06070c,#30313b);transform:skewY(-13deg)}
+.galli-led-screen{
+  position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;
+  justify-content:space-around;gap:7px;height:100%;overflow:hidden;
+  padding:12px 6px 8px;color:#fff;
+  background:radial-gradient(ellipse at 0 75%,#f0650b99,transparent 43%),
+  radial-gradient(ellipse at 100% 10%,#9825e0b8,transparent 49%),
+  radial-gradient(ellipse at 70% 90%,#601ad4,transparent 43%),#0b0824;
+  box-shadow:inset 0 0 12px #000;
+}
+.galli-led-screen:before{content:"";position:absolute;inset:0;z-index:-1;opacity:.25;
+  background-image:radial-gradient(#fff8 0.65px,transparent .9px);background-size:4px 4px}
+.galli-led-screen:after{content:"";position:absolute;z-index:-1;width:190%;height:25%;left:-45%;bottom:8%;
+  border-top:5px solid #ff7a00;border-bottom:4px solid #ab4bff;border-radius:50%;transform:rotate(-15deg);
+  box-shadow:0 0 20px #fa641b}
+.galli-led-brand{font-size:clamp(15px,1.8vw,24px);font-weight:900;white-space:nowrap;letter-spacing:-.8px}
+.galli-led-brand span{background:#ff8508;color:#16111a;border-radius:10px;padding:3px 5px}
+.galli-led-headline{font-weight:1000;font-size:clamp(25px,3.1vw,42px);line-height:1.04;
+  font-style:italic;letter-spacing:-1px;text-shadow:0 2px 10px #0008}
+.galli-led-headline em{color:#ff8900;font-size:1.35em;font-style:italic}
+.galli-led-subtitle{font-size:clamp(9px,1.1vw,13px);letter-spacing:2px;font-weight:800;line-height:1.45}
+.galli-led-benefits{display:flex;width:100%;justify-content:space-around;font-size:22px}
+.galli-led-benefits span{display:flex;flex-direction:column;align-items:center;flex:1}
+.galli-led-benefits span+span{border-left:1px solid #ffffff50}
+.galli-led-benefits small{font-size:clamp(8px,.9vw,11px);font-weight:600;line-height:1.25}
+.galli-led-cta{display:block;max-width:100%;background:linear-gradient(135deg,#ff9b0a,#ff4c08);
+  color:white!important;padding:10px 7px;border-radius:30px;text-decoration:none;
+  font-size:clamp(11px,1.1vw,14px);font-weight:900;box-shadow:0 0 20px #ff73008c;
+  transition:transform .2s,filter .2s}
+.galli-led-cta:hover{transform:scale(1.04);filter:brightness(1.2)}
+.galli-led-sponsored{font-size:8px;letter-spacing:1.3px;opacity:.7}
+.galli-led-foot{width:100%;height:15px;margin:-1px auto 0;
+  background:linear-gradient(#343640,#080910 60%,#171923);border-radius:2px 2px 7px 7px;
+  transform:perspective(130px) rotateX(35deg);box-shadow:0 6px 9px #0005}
+@media(max-width:900px){
+ .container>aside .galli-billboard-slot{max-width:360px;margin:0 auto}
+ .galli-led-brand{font-size:23px}.galli-led-headline{font-size:40px}
+ .galli-led-subtitle{font-size:13px}.galli-led-benefits small{font-size:11px}
+ .galli-led-cta{font-size:14px}
+}
+@media(prefers-reduced-motion:no-preference){
+ .galli-led-screen{animation:galli-led-glow 5s ease-in-out infinite alternate}
+ @keyframes galli-led-glow{from{filter:brightness(.96)}to{filter:brightness(1.08)}}
+}
+
+
+/* V5.7.2 — reposition the SAME billboard below the mobile introduction,
+   directly above the stranger camera. No duplicate ads or new dependencies. */
+#galliMobileAdPosition{display:none}
+@media(max-width:600px){
+ #galliMobileAdPosition{display:none;width:100%;margin:0 0 12px}
+ #galliMobileAdPosition.galli-ad-visible{display:block}
+ #galliIntroBanner.galli-intro-hidden{display:none}
+ #galliMobileAdPosition .galli-billboard-slot{
+   display:block!important;width:100%;max-width:none!important;
+   padding:3px 4px 9px!important;margin:0!important;
+   min-height:0!important;background:transparent!important;border:0!important;
+ }
+ #galliMobileAdPosition .galli-led-stage{
+   width:100%;padding:0 4px 2px;filter:drop-shadow(5px 6px 4px #0004)
+ }
+ #galliMobileAdPosition .galli-led-board{
+   width:98%;aspect-ratio:2.7 / 1;min-height:120px;max-height:190px;
+   padding:5px;transform:rotateY(-3deg) rotateX(1deg);
+   box-shadow:inset 1px 0 2px #777,3px 4px 0 #090b11,5px 6px 8px #0006;
+ }
+ #galliMobileAdPosition .galli-led-screen{
+   display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+   grid-template-rows:auto 1fr auto;align-items:center;justify-items:center;
+   column-gap:5px;row-gap:1px;padding:7px 9px;
+ }
+ #galliMobileAdPosition .galli-led-brand{
+   grid-column:1;grid-row:1;font-size:clamp(12px,3.6vw,18px);
+   letter-spacing:-.5px;justify-self:start
+ }
+ #galliMobileAdPosition .galli-led-headline{
+   grid-column:1;grid-row:2 / span 2;font-size:clamp(18px,5.3vw,29px);
+   letter-spacing:-.5px;text-align:left;justify-self:start;line-height:1.02
+ }
+ #galliMobileAdPosition .galli-led-headline em{font-size:1.2em}
+ #galliMobileAdPosition .galli-led-subtitle{
+   grid-column:2;grid-row:1;font-size:clamp(7px,2vw,10px);
+   letter-spacing:.8px;line-height:1.25
+ }
+ #galliMobileAdPosition .galli-led-benefits{
+   grid-column:2;grid-row:2;font-size:clamp(12px,3.2vw,17px);
+   gap:0;align-self:center
+ }
+ #galliMobileAdPosition .galli-led-benefits small{
+   font-size:clamp(6px,1.55vw,9px);line-height:1.1
+ }
+ #galliMobileAdPosition .galli-led-cta{
+   grid-column:2;grid-row:3;width:100%;padding:6px 3px;
+   font-size:clamp(8px,2.2vw,11px);white-space:nowrap;
+ }
+ #galliMobileAdPosition .galli-led-sponsored{display:none}
+ #galliMobileAdPosition .galli-led-foot{height:9px}
+}
+
+
+/* V5.7.4: second always-visible mobile square LED billboard below controls,
+   with safety notice immediately below. Original 30-second banner remains. */
+#galliMobileBottomAds{display:none}
+@media(max-width:600px){
+ #galliMobileBottomAds{display:flex;flex-direction:column;gap:12px;margin:18px 0 10px;width:100%}
+ #galliMobileBottomAds .galli-billboard-slot{
+   display:block!important;width:100%;max-width:none!important;min-height:0!important;
+   padding:8px 7px 14px!important;margin:0!important;background:transparent!important;
+   border:0!important;text-align:center!important
+ }
+ #galliMobileBottomAds .galli-led-stage{width:100%;padding:0 5px 3px}
+ #galliMobileBottomAds .galli-led-board{
+   width:96%;aspect-ratio:1/1;min-height:0;max-height:none;padding:8px;
+   transform:rotateY(-4deg) rotateX(1deg)
+ }
+ #galliMobileBottomAds .galli-led-screen{
+   display:flex;flex-direction:column;align-items:center;justify-content:space-around;
+   gap:4px;padding:10px 8px
+ }
+ #galliMobileBottomAds .galli-led-brand{font-size:clamp(17px,5.1vw,25px)}
+ #galliMobileBottomAds .galli-led-headline{font-size:clamp(26px,7.4vw,43px);line-height:1.01}
+ #galliMobileBottomAds .galli-led-headline em{font-size:1.22em}
+ #galliMobileBottomAds .galli-led-subtitle{font-size:clamp(9px,2.65vw,14px);letter-spacing:1.3px}
+ #galliMobileBottomAds .galli-led-benefits{font-size:clamp(16px,5vw,23px)}
+ #galliMobileBottomAds .galli-led-benefits small{font-size:clamp(8px,2.3vw,11px)}
+ #galliMobileBottomAds .galli-led-cta{font-size:clamp(10px,3.2vw,15px);padding:8px 13px}
+ #galliMobileBottomAds .galli-led-sponsored{font-size:7px}
+ #galliMobileBottomAds .galli-led-foot{height:12px}
+ #galliMobileBottomAds .safety{display:block!important;margin:0!important;width:100%}
+}
+
+
+/* Custom PNG badge picker: stays compact on phones */
+.galli-upload-label{display:inline-flex;align-items:center;cursor:pointer;background:#ffe247;color:#111;border-radius:8px;padding:9px;font-size:12px;font-weight:800}
+#customBadgeUpload{width:130px;max-width:100%;font-size:11px;color:#fff}
+.galli-clear-badge{border:1px solid #ddd;background:#333;color:white;border-radius:7px;padding:8px;cursor:pointer}
+#customBadgeStatus{font-size:11px;color:#ffe247;max-width:210px}
+@media(max-width:600px){.galli-upload-label{font-size:11px;padding:7px}#customBadgeUpload{width:110px}}
+
+/* V5.7.6: custom PNG badges retain their silhouette, without the round badge plate. */
+.galli-badge.galli-custom-transparent{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0!important;overflow:visible!important;backdrop-filter:none!important}
+.galli-badge.galli-custom-transparent img{background:transparent!important;border:0!important;border-radius:0!important;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+/* Badge editing preview; checkerboard here indicates actual transparency only. */
+#badgeEditPanel{width:100%;max-width:300px;padding:10px;background:#161321;border:1px solid #655782;border-radius:10px;color:#fff;font-size:12px}
+#badgeEditPanel[hidden]{display:none!important}.badge-preview-row{display:flex;gap:12px;justify-content:space-around;margin-bottom:8px}
+.badge-preview-row>div{display:grid;gap:4px;text-align:center}.badge-preview-row canvas{width:96px;height:96px;object-fit:contain;border:1px solid #777;border-radius:5px;background-color:#eee;background-image:linear-gradient(45deg,#bbb 25%,transparent 25%),linear-gradient(-45deg,#bbb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#bbb 75%),linear-gradient(-45deg,transparent 75%,#bbb 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+#badgeEditPanel label{display:block;margin:8px 0}#badgeTolerance{width:100%;accent-color:#ffe247}#badgeApply{background:#ffe247;border:0;border-radius:6px;padding:8px 12px;font-weight:800;cursor:pointer}
+
+.pro-pill{display:inline-block;background:#ffdf54;color:#151515;border-radius:12px;padding:2px 6px;font-size:10px;font-weight:900}
+.pro-locked{position:relative}
+.galli-pro-overlay[hidden]{display:none!important}
+.galli-pro-overlay{position:fixed;inset:0;z-index:999999;background:#000b;display:grid;place-items:center;padding:20px}
+.galli-pro-dialog{background:#211b2b;color:#fff;border:2px solid #ffdd52;border-radius:18px;padding:22px;max-width:360px;text-align:center;box-shadow:0 20px 60px #0008}
+.galli-pro-dialog p{font-size:14px;line-height:1.5}
+.galli-pro-dialog button{background:#ffdf54;color:#171717;border:0;border-radius:9px;padding:11px 30px;font-weight:900;cursor:pointer}
+#previousCornerBtn{background:#28202c;color:#ffdf54;border:1px solid #ffdf54;border-radius:9px;padding:10px;font-weight:800}
+
+/* Online Galli Pro layout refinement: tilted overlapping corner tags */
+.pro-locked,.galli-upload-label{position:relative!important;overflow:visible!important}
+.pro-corner-tag{position:absolute;z-index:4;right:-9px;top:-10px;transform:rotate(17deg);transform-origin:center;display:inline-block;padding:3px 6px;border-radius:4px;background:#ffd63f;color:#171717;border:1px solid #171717;box-shadow:0 2px 4px #0004;font-size:9px;line-height:1.1;font-weight:950;letter-spacing:.35px;white-space:nowrap;pointer-events:none}
+.galli-game-picker{display:flex!important;flex-wrap:nowrap!important;justify-content:flex-start!important;gap:7px!important;overflow-x:auto;overflow-y:visible;padding:13px 10px 9px 2px;margin:4px 0 8px;scrollbar-width:thin}
+.galli-game-picker button{position:relative;flex:0 0 auto;white-space:nowrap;font-size:11px!important;padding:8px 9px!important;min-height:35px}
+/* Keep Play Games compact and aligned with the control buttons when width allows */
+.controls{column-gap:8px!important;row-gap:9px!important}
+.controls>button{padding:12px 11px!important;white-space:nowrap;font-size:12px}
+.controls #previousCornerBtn{background:#fff4b3;color:#171717;border:2px solid #171717}
+.controls #gamesBtn{margin-left:0!important}
+@media(max-width:600px){.controls>button{flex:0 1 auto!important;padding:10px 8px!important;font-size:11px}.controls .galli-enter-wrap{min-width:130px;max-width:180px}.pro-corner-tag{font-size:8px;right:-6px;top:-9px}}
+
+
+/* V5.7.14: mobile controls and five game choices always accessible */
+.controls{display:flex!important;flex-wrap:wrap!important;overflow:visible!important}
+.controls #previousCornerBtn{display:inline-flex!important;visibility:visible!important;align-items:center;justify-content:center;position:relative!important;min-height:44px!important}
+.galli-game-picker{overflow-x:auto!important;overflow-y:auto!important;max-width:100%!important;min-height:62px!important}
+.galli-game-picker button{display:inline-flex!important;visibility:visible!important;align-items:center;position:relative!important}
+.og-board-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:1px;width:100%;font-size:8px}
+.og-board-cell{padding:3px 0;min-height:20px;text-align:center;background:#fff2ba;color:#201920;border-radius:2px}
+.og-board-cell:nth-child(odd){background:#e2f0e6}
+.og-ludo-track{display:grid;gap:8px}.og-ludo-track>div{display:flex;flex-wrap:wrap;gap:4px}.og-ludo-track button{font-size:11px;padding:5px}
+@media(max-width:600px){.controls .galli-enter-wrap{flex:1 1 100%!important;max-width:none!important}.controls #previousCornerBtn{order:1!important;flex:1 1 28%!important}.controls #nextBtn{order:2!important;flex:1 1 28%!important}.controls #gamesBtn{order:3!important;flex:1 1 28%!important}.controls #muteBtn{order:4!important}.controls #stopBtn{order:5!important}.controls #reportBtn{order:6!important}.controls #blockBtn{order:7!important}.galli-game-picker{padding-top:16px!important}}
+
+/* Game selection: vertical stack, visible on phones without sideways scrolling */
+.galli-game-picker{display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:flex-start!important;overflow:visible!important;max-width:100%!important;min-height:0!important;padding:14px 12px 8px 4px!important;gap:11px!important}
+.galli-game-picker button{display:flex!important;flex:0 0 auto!important;justify-content:center!important;align-items:center!important;width:100%!important;min-height:43px!important;white-space:normal!important;font-size:13px!important;padding:11px 15px!important}
+@media(max-width:600px){.galli-game-picker{padding:16px 12px 8px 4px!important;gap:12px!important}.galli-game-picker button{min-height:46px!important}}
+
+/* True visual boards for the two-player board games */
+.og-snakes-wrap{position:relative;width:min(100%,420px);aspect-ratio:1;margin:8px auto}
+.og-snakes-wrap .og-board-grid{width:100%;height:100%;grid-template-rows:repeat(10,minmax(0,1fr));gap:1px}
+.og-snakes-wrap .og-board-cell{position:relative;display:flex;align-items:flex-start;justify-content:flex-start;padding:3px;min-height:0;font-size:clamp(9px,2.5vw,13px);font-weight:700}
+.og-snake-players{position:absolute;bottom:1px;right:1px;font-size:clamp(10px,2.7vw,15px);z-index:3}
+.og-snake-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2}
+.og-board-legend{font-size:12px;line-height:1.5;text-align:center;margin:7px auto;max-width:440px}
+.og-ludo-board{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));grid-template-rows:repeat(15,minmax(0,1fr));width:min(100%,420px);aspect-ratio:1;margin:8px auto;border:3px solid #333;background:#fff}
+.og-ludo-square{border:1px solid #777;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;gap:1px;flex-wrap:wrap}
+.og-home-blue{background:#83c5fa}.og-home-red{background:#f5a5a5}.og-home-green{background:#b8e7a5}.og-home-yellow{background:#f5e4a1}
+.og-ludo-path{background:#fff}.og-ludo-blue-lane{background:#63aaf4}.og-ludo-red-lane{background:#ed8b8b}.og-ludo-center{background:#f5cb58}.og-ludo-start{outline:2px solid #202020;outline-offset:-2px}
+.og-ludo-token{display:inline-flex;align-items:center;justify-content:center;width:clamp(12px,3.7vw,20px);height:clamp(12px,3.7vw,20px);border-radius:50%;color:white;font-size:10px;font-weight:800;border:1px solid #fff;box-shadow:0 1px 2px #555}
+.og-blue-token{background:#075fce}.og-red-token{background:#cc2736}.og-ludo-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.og-ludo-actions button{font-size:12px;padding:9px 5px}
+/* Prevent mobile viewport jumping during dice rolls and board updates. */
+.og-snakes-wrap{overflow:hidden;contain:layout paint;touch-action:pan-y}
+.og-snake-overlay{overflow:hidden!important}
+#extraGameChoices{overflow-anchor:none}
+@media(max-width:600px){.og-snakes-wrap{width:min(100%,380px)}#gamePanel{overflow-anchor:none}}
+
+/* Reference-inspired classic Ludo board, blue/green are the only active teams */
+.og-ludo-board{position:relative;border:5px solid #b68d3c;border-radius:9%;overflow:hidden;box-shadow:0 3px 12px #0003;isolation:isolate}
+.og-ludo-square{border:1px solid #b4b4b4;z-index:1}
+.og-home-red{background:#ed1515}.og-home-blue{background:#086bdc}.og-home-green{background:#079a28}.og-home-yellow{background:#f9d427}
+.og-ludo-green-lane{background:#00a336!important}.og-ludo-blue-lane{background:#0876e8!important}
+.og-ludo-center{background:transparent!important;border:0!important}
+.og-ludo-center-art{position:absolute;left:40%;top:40%;width:20%;height:20%;z-index:3;pointer-events:none}
+.og-ludo-base{position:absolute;width:35.5%;height:35.5%;z-index:2;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);place-items:center;border-radius:18%;border:5px solid white;box-shadow:inset 0 0 0 3px currentColor,0 0 0 2px #fff;pointer-events:none}
+.og-ludo-base.blue{top:2.2%;right:2.2%;color:#086bdc;background:#e9f3ff}.og-ludo-base.green{bottom:2.2%;left:2.2%;color:#079a28;background:#e5ffed}
+.og-ludo-base.red{top:2.2%;left:2.2%;color:#ed1515;background:#fff}.og-ludo-base.yellow{bottom:2.2%;right:2.2%;color:#f9d427;background:#fff}
+.og-ludo-base .base-dot{width:40%;aspect-ratio:1;border-radius:50%;background:currentColor;border:2px solid currentColor;box-shadow:inset 0 0 0 2px #fff,0 1px 3px #0004}
+ .og-ludo-base .base-dot.active{box-shadow:0 0 0 2px #fff,0 2px 5px #0007;cursor:pointer;pointer-events:auto;position:relative;z-index:8;opacity:1!important}
+.og-ludo-base .base-dot.active::after{content:"";position:absolute;inset:19%;border-radius:50%;background:radial-gradient(circle at 30% 22%,#ffffffc0,transparent 50%);pointer-events:none}
+.og-ludo-base .base-dot.moved{opacity:.28!important;cursor:default;box-shadow:none}
+.og-ludo-base.blue,.og-ludo-base.green{pointer-events:auto}
+.og-ludo-base .base-dot.selected{outline:3px solid #ffda27;outline-offset:2px;transform:scale(1.06)}
+.og-ludo-token{position:relative;z-index:5;width:clamp(12px,3.6vw,20px);height:clamp(12px,3.6vw,20px);box-shadow:0 1px 3px #0008}
+.og-green-token{background:#008b31}/* Home gotti are represented by the four visible tray pieces, not hidden */
+.og-board-die{position:absolute;right:3%;bottom:3%;z-index:9;border:2px solid #fff!important;background:#fffc!important;color:#202020!important;box-shadow:0 3px 12px #0005;min-width:56px;min-height:56px;border-radius:14px!important;font-size:29px!important;cursor:pointer;touch-action:manipulation}
+.og-board-die:disabled{opacity:.5;cursor:default}.og-board-die.rolling{animation:og-dice-wiggle .48s ease-out}
+@keyframes og-dice-wiggle{0%{transform:rotate(0) scale(1)}25%{transform:rotate(18deg) scale(1.1)}50%{transform:rotate(-20deg)}75%{transform:rotate(12deg)}100%{transform:rotate(0)}}
+.og-ludo-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}.og-ludo-actions button{flex:0 0 auto;border-radius:999px!important;padding:7px 12px!important}
+.og-ludo-actions button.selected{outline:3px solid #ffb900;outline-offset:1px}
+.og-game-audio{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;margin:3px auto 7px}.og-game-audio button{font-size:12px!important;padding:6px 12px!important}
+
+
+.galli-seo{max-width:860px;margin:28px auto 10px;padding:0 20px 20px;line-height:1.55}
+.galli-seo h2{font-size:20px;margin:22px 0 8px}
+.galli-seo p{margin:0 0 10px;color:#2a2a2a}
+.galli-seo a{color:#126e32}
+</style>
+<meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
+<style>
+.og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#f5c518}.og-connect-cell.og-drop-new{position:relative;overflow:visible;z-index:2}
+.og-connect-cell.og-drop-new::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--drop-color);border:1px solid rgba(0,0,0,.12);pointer-events:none;animation:ogConnectDrop .65s cubic-bezier(.22,.78,.35,1) both;will-change:transform}
+@keyframes ogConnectDrop{0%{transform:translateY(calc(-1 * var(--drop-rows) * (100% + 3px)))}72%{transform:translateY(3px)}88%{transform:translateY(-2px)}100%{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.og-connect-cell.og-drop-new::after{animation-duration:.01ms}}
+.og-letter-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.og-letter-grid button{padding:7px 0!important;min-width:0!important}.og-hang-word{text-align:center;font-size:24px;font-weight:800;letter-spacing:3px}.og-spin-wheel{width:220px;height:220px;border-radius:50%;background:conic-gradient(#fda4af 0 60deg,#fde68a 60deg 120deg,#86efac 120deg 180deg,#93c5fd 180deg 240deg,#c4b5fd 240deg 300deg,#fdba74 300deg 360deg);border:6px solid #fff;box-shadow:0 2px 12px #0003;position:relative;margin:12px auto;display:grid;place-items:center}.og-spin-wheel span{position:absolute;font-size:9px;font-weight:700;max-width:70px;text-align:center;color:#1f2937}.og-wheel-spinning{animation:ogspin 1.4s ease-out}@keyframes ogspin{to{transform:rotate(1080deg)}}.og-spin-result{text-align:center;font-weight:800}.og-draw-canvas{width:100%;max-width:420px;aspect-ratio:7/5;touch-action:none;background:white;border:2px solid #222;border-radius:8px;display:block;margin:auto}.og-draw-label{font-weight:700;text-align:center}.galli-game-picker{display:flex;flex-direction:column;gap:8px}
+
+/* Auto-scroll attention animation for incoming game invitations (mobile) */
+@keyframes galli-invite-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 226, 71, 0.8); transform: translate(-50%, -50%) scale(1); }
+  50% { box-shadow: 0 0 0 12px rgba(255, 226, 71, 0); transform: translate(-50%, -50%) scale(1.03); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 226, 71, 0); transform: translate(-50%, -50%) scale(1); }
+}
+#gamePanel.galli-invite-attention {
+  animation: galli-invite-pulse 1.5s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  #gamePanel.galli-invite-attention {
+    animation: none;
+    box-shadow: 0 0 0 4px rgba(255, 226, 71, 0.9);
+  }
+}
+</style>
+</head>
+
+<body>
+
+
+<div id="entryGate" class="entry-gate" role="dialog" aria-modal="true" aria-labelledby="entryTitle">
+ <div class="entry-panel">
+  <div style="font-weight:800">🛣 ONLINE GALLI · 18+ BETA</div>
+  <h2 id="entryTitle">Welcome to Online Galli!</h2>
+  <p>Meet new people through spontaneous one-on-one video chats. Please read these rules before entering.</p>
+  <ul>
+   <li>You must be <strong>18 years or older</strong>.</li>
+   <li>No sexual misconduct, harassment, threats, or hateful behavior.</li>
+   <li>Never share your address, phone number, or other private information.</li>
+   <li>Do not record or share another person’s video without their permission.</li>
+   <li>Use Report or Block if someone makes you uncomfortable or breaks the rules.</li>
+  </ul>
+  <label class="gate-check"><input id="adultConsent" type="checkbox" autocomplete="off">
+   <span>I confirm that I am <strong>18 or older</strong>, understand I may meet unknown adults, and agree to the
+   <a href="/terms" target="_blank" rel="noopener">Terms</a>,
+   <a href="/privacy" target="_blank" rel="noopener">Privacy Notice</a> and
+   <a href="/guidelines" target="_blank" rel="noopener">Community Guidelines</a>.</span>
+  </label>
+  <button id="confirmEntryBtn" type="button" disabled>✓ I Agree — Enter Online Galli</button>
+  <p class="gate-footnote">Camera and microphone access is requested only after clicking “Enter the Galli”.</p>
+ </div>
+</div>
+
+<header>
+  <div class="logo" aria-label="Online Galli">
+    <svg viewBox="0 0 40 40" role="img" aria-label="Road logo" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="10" fill="#171717"/>
+      <path d="M12 37 L18 4 H22 L28 37 Z" fill="#FFE247"/>
+      <path d="M20 8 V13 M20 18 V23 M20 28 V33" stroke="#171717" stroke-width="2.3" stroke-linecap="round"/>
+    </svg>
+    <span>Online Galli</span>
+  </div>
+  <div class="online">● 18+ beta</div>
+</header>
+
+<main class="container">
+
+<section>
+  <div id="galliIntroBanner">
+    <h1 class="tagline">A new meetup around every corner...</h1>
+    <p class="subtitle">Explore a virtual street and meet someone new. · Meet someone unexpected.</p>
+  </div>
+  <div id="galliMobileAdPosition" aria-label="Mobile advertising position" hidden></div>
+  <div class="videos" id="videoStage">
+
+    <div class="video-box">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <div class="reaction-in-video" id="remoteReaction" aria-live="polite"></div>
+      <div class="placeholder" id="remotePlaceholder">
+        <div class="emoji">👤</div>
+        <h3>Someone new is around the corner...</h3>
+        <p>Click Enter the Galli to begin</p>
+      </div>
+      <div class="label">Stranger</div>
+      <div class="galli-badge" id="peerBadge" hidden></div>
+<div class="galli-video-chat" id="peerVideoChat" role="log" aria-label="Conversation on stranger video"></div>
+    </div>
+
+    <div class="video-box">
+      <video id="localVideo" autoplay muted playsinline></video>
+      <button type="button" class="galli-get-pro" id="galliGetProBtn" aria-label="Get Online Galli Pro">
+        👑 GET PRO
+      </button>
+      <canvas id="faceStickerPreview" aria-hidden="true"></canvas>
+      <div class="reaction-in-video" id="localReaction" aria-live="polite"></div>
+      <div class="placeholder" id="localPlaceholder">
+        <div class="emoji">📷</div>
+        <h3>Your Camera</h3>
+        <p>Camera is off</p>
+      </div>
+      <div class="label">You</div>
+      <div class="galli-badge" id="myBadge" hidden></div>
+<div class="galli-video-chat" id="myVideoChat" role="log" aria-label="Conversation on your video"></div>
+    </div>
+
+  <div class="v4-panel" id="gamePanel" hidden>
+ <strong id="activeGameTitle">🎮 Games</strong>
+ <div id="gameTypePicker" class="galli-game-picker"><button type="button" data-galli-game="ttt">❎ Tic-Tac-Toe</button><button type="button" data-galli-game="rps">✊ Rock Paper Scissors</button><button type="button" data-galli-game="wyr">🤔 Would You Rather?</button><button type="button" data-galli-game="ludo" class="pro-locked">🎲 Ludo <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button><button type="button" data-galli-game="snakes" class="pro-locked">🐍 Snakes & Ladders <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button><button type="button" data-galli-game="spin">🎡 Spin the Wheel</button><button type="button" data-galli-game="draw">🎨 Draw & Guess</button><button type="button" data-galli-game="connect4">🔴 Connect Four</button><button type="button" data-galli-game="hangman">🔤 Hangman</button></div>
+ <p id="gameMessage" aria-live="polite">Invite your stranger to play.</p>
+ <div id="gameBoard" class="v4-board" role="group" aria-label="Tic-Tac-Toe board"></div>
+ <div id="extraGameChoices" class="galli-game-choices" hidden></div>
+ <button id="inviteGameBtn">Invite to Play</button>
+ <button id="acceptGameBtn" hidden>Accept</button>
+ <button id="declineGameBtn" hidden>Decline</button>
+ <button id="playAgainGameBtn" hidden>↻ Play Again</button>
+ <button id="closeGameBtn">Close Game</button>
+</div>
+<div class="v4-panel" id="reactionPanel" hidden></div>
+
+
+
+  </div>
+<section class="galli-social" aria-label="Chat and My Support">
+ <form id="textChatForm" class="galli-chat-form galli-chat-bar">
+  <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Say hello to your stranger" disabled>
+  <button type="submit" id="textChatSend" disabled>Send ➤</button>
+ </form>
+
+<div class="galli-inline-reactions" aria-label="Quick reactions">
+  <div id="reactionChoices" class="v4-reactions"></div>
+  <button type="button" id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
+ <div class="galli-face-effects" aria-label="Face stickers">
+ <label for="faceStickerSelect">🎭 Face Stickers</label>
+ <div class="galli-sticker-picker" id="faceStickerPicker">
+  <button type="button" id="faceStickerButton" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose a face sticker">Off</button>
+  <div class="galli-sticker-menu" id="faceStickerMenu" role="listbox" hidden>
+   <button type="button" data-value="none" role="option">Off</button>
+   <button type="button" data-value="thug" role="option">🕶️ Thug Life</button>
+   <button type="button" data-value="chaplin" role="option">🎩 Charlie Chaplin</button>
+   <button type="button" data-value="aviator" role="option">🕶️ Aviator Sunglasses</button>
+   <button type="button" data-value="wayfarer" role="option">🕶️ Wayfarer Classic</button>
+   <button type="button" data-value="shelby" role="option">🧢 Thomas Shelby Cap</button>
+   <button type="button" data-value="steampunk" role="option">🥽 Round Glasses</button>
+   <button type="button" data-value="moustache" role="option">🥸 Moustache</button>
+   <button type="button" data-value="pirate" role="option">🏴‍☠️ Pirate Eyepatch</button>
+   <button type="button" data-value="cigar" role="option">🚬 Cigar</button>
+  </div>
+  <select id="faceStickerSelect" aria-hidden="true" tabindex="-1">
+   <option value="none">Off</option>
+   <option value="thug">Thug Life</option>
+   <option value="chaplin">Charlie Chaplin</option>
+   <option value="aviator">Aviator Sunglasses</option>
+   <option value="wayfarer">Wayfarer Classic</option>
+   <option value="shelby">Thomas Shelby Cap</option>
+   <option value="steampunk">Round Glasses</option>
+   <option value="moustache">Moustache</option>
+   <option value="pirate">Pirate Eyepatch</option>
+   <option value="cigar">Cigar</option>
+  </select>
+ </div>
+ <span id="faceStickerStatus" role="status" aria-live="polite"></span>
+</div>
+ <div class="galli-social-tabs">
+  <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My Support</label>
+  <select id="teamBadgeSelect" aria-label="Choose My Support">
+   <option value="">No badge</option><option>Biratnagar Kings</option><option>Chitwan Rhinos</option>
+   <option>Janakpur Bolts</option><option>Kathmandu Gurkhas</option><option>Karnali Yaks</option>
+   <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
+  </select>
+  <label class="galli-upload-label" for="customBadgeUpload">📤 Update Custom Badge <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></label>
+  <input id="customBadgeUpload" type="file" accept=".png,.jpg,.jpeg,.jfif,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp" aria-label="Upload custom image badge" /><small class="galli-badge-format-help" style="display:block;font-size:10px;opacity:.8">PNG · JPG/JPEG · JFIF · WebP · GIF (still) · BMP · max 5 MB</small>
+  <div id="badgeEditPanel" hidden><div class="badge-preview-row"><div><small>Original</small><canvas id="badgeBefore" width="96" height="96"></canvas></div><div><small>Background removed</small><canvas id="badgeAfter" width="96" height="96"></canvas></div></div><label for="badgeTolerance">Removal strength <output id="badgeToleranceValue">32</output><input id="badgeTolerance" type="range" min="8" max="85" value="32" step="1"></label><label><input id="badgeKeepOriginal" type="checkbox"> Keep original background</label><button type="button" id="badgeApply">Apply badge</button></div>
+  <button id="clearCustomBadge" type="button" class="galli-clear-badge" hidden>Remove badge</button>
+  <span id="customBadgeStatus" role="status" aria-live="polite"></span>
+ </div>
+ </div>
+ <div id="textChatNotice" class="galli-chat-notice" role="status"></div>
+</section>
+
+<div id="galliProNotice" class="galli-pro-overlay" hidden role="dialog" aria-modal="true" aria-label="Pro feature">
+ <div class="galli-pro-dialog"><div style="font-size:32px">👑</div><h3><span id="galliProFeature">Feature</span> — PRO</h3>
+ <p>This feature is reserved for Online Galli Pro. Subscription activation is coming soon. Free video chat and existing games remain available.</p>
+ <button type="button" id="galliProClose">Got it</button></div></div>
+<div class="controls">
+    <div class="galli-enter-wrap">
+      <button class="start" id="startBtn">▶ Enter the Galli</button>
+      <div id="status" role="status" aria-live="polite">Ready to enter Online Galli.</div>
+    </div>
+    <button id="previousCornerBtn" type="button" class="pro-locked">↩ Previous <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button>
+    <button class="next" id="nextBtn" disabled>⏭ Next Corner</button>
+    <button id="muteBtn" disabled>🎤 Mute</button>
+    <button class="stop" id="stopBtn" disabled>🚪 Exit Galli</button>
+    <button id="reportBtn" disabled>⚑ Report</button>
+    <button id="blockBtn" disabled>🚫 Block User</button>
+    <button id="gamesBtn" disabled aria-label="Play Games: choose from five games">🎮 Play Games ▸</button>
+  </div>
+  <div id="galliMobileBottomAds" aria-label="Advertising and safety information"></div>
+
+</section>
+
+<aside>
+  <div class="ad galli-billboard-slot">
+    <div class="galli-led-stage">
+      <div class="galli-led-board">
+        <div class="galli-led-screen">
+          <div class="galli-led-brand">Online <span>Galli</span></div>
+          <div class="galli-led-headline">YOUR<br>BUSINESS<br><em>HERE</em></div>
+          <div class="galli-led-subtitle">ADVERTISE WITH<br>ONLINE GALLI</div>
+          <div class="galli-led-benefits"><span>◉<small>High<br>Visibility</small></span><span>♟<small>Real<br>Users</small></span><span>◎<small>Targeted<br>Reach</small></span></div>
+         <a class="galli-led-cta"
+   href="https://mail.google.com/mail/?view=cm&fs=1&to=contact@onlinegalli.com&su=Book%20a%20Spot%20on%20Online%20Galli"
+   target="_blank"
+   rel="noopener noreferrer"
+   aria-label="Inquire about advertising on Online Galli">
+   BOOK YOUR SPOT ↗
+</a>
+          <div class="galli-led-sponsored">ADVERTISEMENT SPACE</div>
+        </div>
+      </div>
+      <div class="galli-led-foot"></div>
+    </div>
+  </div>
+
+  <div class="safety">
+    <strong>Safety Notice</strong>
+    <p>
+      18+ beta testing only. Never share personal information. Do not record others without consent.
+      Use Report or Block if someone behaves inappropriately. Reports are reviewed manually.
+    </p>
+  </div>
+</aside>
+
+</main>
+
+
+<section class="galli-seo" aria-label="About Online Galli">
+  <h2>What is Online Galli?</h2>
+  <p>Online Galli is a free random video chat for adults. You are matched one-to-one with a stranger for a spontaneous conversation. There is no account to create and no app to install — it runs in your browser.</p>
+  <h2>How random matching works</h2>
+  <p>Click <strong>Enter the Galli</strong>. The system looks for another adult who is also waiting. When a match is found, your cameras connect and you can talk. Either person can leave at any time and be matched with someone new.</p>
+  <h2>Games and face stickers</h2>
+  <p>While you are connected you can invite the other person to multiplayer games such as Tic-Tac-Toe, Connect Four, Rock Paper Scissors, Would You Rather, and more. You can also turn on face stickers — glasses, hats, a moustache, and other accessories — that appear on your video for both of you. Some games and features are marked Pro.</p>
+  <h2>Safety and privacy</h2>
+  <p>Online Galli is for people <strong>18 and older</strong>. Do not share your phone number, address, or other private details. Do not record the other person without permission. If someone makes you uncomfortable, use <strong>Report</strong> or <strong>Block</strong>. Read the <a href="/guidelines">Community Guidelines</a>, <a href="/privacy">Privacy Notice</a>, and <a href="/terms">Terms</a> before you start. Learn more on the <a href="/about">About</a> page.</p>
+</section>
+
+<footer>Online Galli © 2026 · 18+ beta · <a href="/about">About</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/guidelines">Community Guidelines</a> · Be respectful. Stay safe.</footer>
+
+<script>
+/* Move the existing billboard, not a copy: mobile = below intro, desktop = sidebar. */
+(function(){
+ const ad=document.querySelector('aside .galli-billboard-slot');
+ const mobileSlot=document.getElementById('galliMobileAdPosition');
+ const sidebar=document.querySelector('.container > aside');
+ const bottomSlot=document.getElementById('galliMobileBottomAds');
+ const safety=sidebar?.querySelector('.safety');
+ if(!ad||!mobileSlot||!sidebar||!bottomSlot)return;
+ // Clone the same billboard artwork for a second, always-visible square ad.
+ // Keep the original for the timed introduction replacement.
+ const secondAd=ad.cloneNode(true);
+ secondAd.setAttribute('aria-label','Business advertising billboard');
+ bottomSlot.appendChild(secondAd);
+ // Move the existing safety notice to directly below the second billboard
+ // on mobile, and restore it to the desktop sidebar on wider screens.
+ const safetyAnchor=safety?document.createComment('Safety notice original position'):null;
+ if(safety&&safetyAnchor)safety.parentNode.insertBefore(safetyAnchor,safety);
+ function positionSafety(){
+  if(!safety)return;
+  if(window.matchMedia('(max-width: 600px)').matches){
+   if(safety.parentNode!==bottomSlot)bottomSlot.appendChild(safety);
+  }else if(safetyAnchor&&safety.parentNode!==sidebar){
+   sidebar.insertBefore(safety,safetyAnchor.nextSibling);
+  }
+ }
+
+ const mobileQuery=window.matchMedia('(max-width: 600px)');
+ function positionBillboard(){
+  if(mobileQuery.matches){
+   if(ad.parentNode!==mobileSlot)mobileSlot.appendChild(ad);
+  }else if(ad.parentNode!==sidebar){
+   sidebar.insertBefore(ad,sidebar.firstChild);
+  }
+ }
+ // Replace the introduction in its exact location after 30 seconds on this page.
+ const intro=document.getElementById('galliIntroBanner');
+ let elapsed=false;
+ function updateMobileIntro(){
+  const showAd=mobileQuery.matches&&elapsed;
+  if(intro)intro.classList.toggle('galli-intro-hidden',showAd);
+  mobileSlot.classList.toggle('galli-ad-visible',showAd);
+  mobileSlot.hidden=!showAd;
+ }
+ const originalPosition=positionBillboard;
+ positionBillboard=function(){originalPosition();updateMobileIntro();};
+ positionBillboard();
+ positionSafety();
+ window.setTimeout(function(){elapsed=true;updateMobileIntro();},30000);
+ if(mobileQuery.addEventListener)mobileQuery.addEventListener('change',function(){positionBillboard();positionSafety();});
+ else mobileQuery.addListener(function(){positionBillboard();positionSafety();});
+})();
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+const entryGate = document.getElementById("entryGate");
+const adultConsent = document.getElementById("adultConsent");
+const confirmEntryBtn = document.getElementById("confirmEntryBtn");
+let entryConfirmed = false;
+adultConsent.addEventListener("change", () => {
+  confirmEntryBtn.disabled = !adultConsent.checked;
+});
+confirmEntryBtn.addEventListener("click", () => {
+  if (!adultConsent.checked) return;
+  entryConfirmed = true;
+  entryGate.hidden = true;
+  startBtn.focus();
+});
+
+const localVideo = document.getElementById("localVideo");
+const remoteVideo = document.getElementById("remoteVideo");
+const localPlaceholder = document.getElementById("localPlaceholder");
+const remotePlaceholder = document.getElementById("remotePlaceholder");
+
+const startBtn = document.getElementById("startBtn");
+const nextBtn = document.getElementById("nextBtn");
+const muteBtn = document.getElementById("muteBtn");
+const stopBtn = document.getElementById("stopBtn");
+const reportBtn = document.getElementById("reportBtn");
+const blockBtn = document.getElementById("blockBtn");
+const clientIdKey = "randomchat-anonymous-id";
+const blockedKey = "randomchat-blocked-ids";
+let clientId = localStorage.getItem(clientIdKey);
+if (!clientId || !/^[a-f0-9-]{36}$/i.test(clientId)) {
+  clientId = crypto.randomUUID();
+  localStorage.setItem(clientIdKey, clientId);
+}
+let blockedIds = [];
+try { blockedIds = JSON.parse(localStorage.getItem(blockedKey) || "[]"); } catch (_) {}
+if (!Array.isArray(blockedIds)) blockedIds = [];
+function identify() { if (socket.connected) socket.emit("identify", { clientId, blocked: blockedIds.slice(-300) }); }
+function requestMatch() {
+  if (!socket.connected) {
+    status("Waiting for server connection...");
+    return;
+  }
+  identify();
+  socket.emit("find-partner");
+}
+
+const statusBox = document.getElementById("status");
+
+let localStream = null;
+let peer = null;
+let partnerId = null;
+let isMuted = false;
+let generation = 0;
+let pendingCandidates = [];
+let connectionTimer = null;
+let disconnectTimer = null;
+function clearConnectionTimers() {
+  clearTimeout(connectionTimer);
+  clearTimeout(disconnectTimer);
+  connectionTimer = null;
+  disconnectTimer = null;
+}
+function recoverFailedCall(expectedGeneration) {
+  if (generation !== expectedGeneration || !localStream || !partnerId) return;
+  console.warn("Online Galli: video connection timed out or failed; finding another partner");
+  nextChat();
+}
+function startConnectionTimer(expectedGeneration) {
+  clearTimeout(connectionTimer);
+  connectionTimer = setTimeout(() => recoverFailedCall(expectedGeneration), 20000);
+}
+
+
+function status(message) {
+  statusBox.textContent = message;
+}
+
+function remoteMessage(title, description) {
+  remotePlaceholder.style.display = "flex";
+  remotePlaceholder.querySelector("h3").textContent = title;
+  remotePlaceholder.querySelector("p").textContent = description;
+}
+
+
+// Private, low-frequency ICE path telemetry. No IP addresses, SDP or candidate details leave the browser.
+let icePathTimer = null;
+let lastIcePath = '';
+async function publishIcePath(pc, expectedGeneration) {
+  if (peer !== pc || generation !== expectedGeneration || pc.connectionState !== 'connected') return;
+  try {
+    const stats = await pc.getStats();
+    let selected = null;
+    stats.forEach(item => {
+      if (item.type === 'transport' && item.selectedCandidatePairId) selected = stats.get(item.selectedCandidatePairId) || selected;
+    });
+    if (!selected) stats.forEach(item => {
+      if (item.type === 'candidate-pair' && item.state === 'succeeded' && (item.selected || item.nominated)) selected = item;
+    });
+    if (!selected) return;
+    const local = stats.get(selected.localCandidateId);
+    const remote = stats.get(selected.remoteCandidateId);
+    if (!local || !remote) return;
+    const path = local.candidateType === 'relay' || remote.candidateType === 'relay' ? 'turn' : 'p2p';
+    // Heartbeat every 5s: server expires ICE reports after 20s.
+    lastIcePath = path;
+    if (socket.connected) socket.emit('galli-ice-path', { path });
+  } catch (error) { console.debug('ICE path statistics unavailable', error); }
+}
+function startIcePathMonitor(pc, expectedGeneration) {
+  clearInterval(icePathTimer);
+  icePathTimer = setInterval(() => publishIcePath(pc, expectedGeneration), 5000);
+  publishIcePath(pc, expectedGeneration);
+}
+
+function closePeer() {
+  clearInterval(icePathTimer); icePathTimer = null; lastIcePath = "";
+  if (partnerId && socket.connected) socket.emit("galli-ice-path", { path: "unknown" });
+  clearConnectionTimers();
+  generation++;
+  pendingCandidates = [];
+
+  if (peer) {
+    peer.onicecandidate = null;
+    peer.ontrack = null;
+    peer.close();
+    peer = null;
+  }
+
+  partnerId = null;
+  resetV4();
+  resetSocial();
+  reportBtn.disabled = true;
+  blockBtn.disabled = true;
+  remoteVideo.srcObject = null;
+  remoteMessage("Waiting for a stranger", "Searching...");
+}
+
+// Load TURN settings before entering matchmaking so the answering peer is ready.
+let currentIceServers = [{ urls: "stun:stun.l.google.com:19302" }];
+async function loadIceServers() {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5500);
+    try {
+      const response = await fetch("/api/ice-servers", { cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error("ICE settings unavailable");
+      const data = await response.json();
+      if (Array.isArray(data.iceServers) && data.iceServers.length) currentIceServers = data.iceServers;
+    } finally { clearTimeout(timer); }
+  } catch (error) {
+    console.warn("TURN unavailable; using STUN only", error);
+  }
+}
+
+async function startChat() {
+  if (localStream) return;
+  if (!entryConfirmed || !adultConsent.checked) {
+    status("Please confirm you are 18+ and accept the beta policies before entering.");
+    entryGate.hidden = false;
+    adultConsent.focus();
+    return;
+  }
+
+  startBtn.disabled = true;
+  status("Requesting camera and microphone...");
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true
+    });
+
+    localVideo.srcObject = localStream;
+    console.log("[FaceStickers] Camera ready, ensuring MediaPipe preload + warm-up");
+    preloadFaceMesh().then(() => warmupFaceMesh()).catch(()=>{});
+    startFaceEffects();
+    localPlaceholder.style.display = "none";
+
+    nextBtn.disabled = false;
+    muteBtn.disabled = false;
+    stopBtn.disabled = false;
+
+    status("Preparing connection...");
+    await loadIceServers();
+    if (!localStream) return; // Stop was clicked while ICE settings loaded.
+    status("Searching for another user...");
+    requestMatch();
+
+  } catch (error) {
+    status("Camera error: " + error.message);
+    startBtn.disabled = false;
+  }
+}
+
+function stopChat() {
+  socket.emit("stop");
+  closePeer();
+
+  stopFaceEffects();
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+
+  localVideo.srcObject = null;
+  localPlaceholder.style.display = "flex";
+
+  startBtn.disabled = false;
+  nextBtn.disabled = true;
+  muteBtn.disabled = true;
+  stopBtn.disabled = true;
+
+  isMuted = false;
+  muteBtn.textContent = "🎤 Mute";
+  remoteMessage("Waiting for a stranger", "Click Enter the Galli to begin");
+  status("Chat stopped.");
+}
+
+function nextChat() {
+  if (!localStream) return;
+
+  closePeer();
+  status("Finding another person...");
+  socket.emit("next");
+}
+
+function toggleMute() {
+  if (!localStream) return;
+
+  isMuted = !isMuted;
+
+  localStream.getAudioTracks().forEach(track => {
+    track.enabled = !isMuted;
+  });
+
+  muteBtn.textContent = isMuted ? "🔇 Unmute" : "🎤 Mute";
+}
+
+async function createPeer(id) {
+  closePeer();
+  partnerId = id;
+  resetV4();
+  resetSocial();
+  reportBtn.disabled = false;
+  blockBtn.disabled = false;
+
+  const currentGeneration = generation;
+  startConnectionTimer(currentGeneration);
+
+  peer = new RTCPeerConnection({ iceServers: currentIceServers });
+
+  const pc = peer;
+
+  localStream.getTracks().forEach(track => {
+    pc.addTrack(track.kind === "video" && stickerOutgoingTrack ? stickerOutgoingTrack : track, localStream);
+  });
+
+  pc.ontrack = event => {
+    if (generation !== currentGeneration) return;
+
+    if (event.streams && event.streams[0]) {
+      remoteVideo.srcObject = event.streams[0];
+    } else {
+      const stream = remoteVideo.srcObject || new MediaStream();
+      stream.addTrack(event.track);
+      remoteVideo.srcObject = stream;
+    }
+
+    remotePlaceholder.style.display = "none";
+    remoteVideo.play().catch(() => {
+      status("Click the video to allow playback.");
+    });
+  };
+
+  pc.onicecandidate = event => {
+    if (event.candidate && generation === currentGeneration) {
+      socket.emit("signal", {
+        to: id,
+        data: {
+          type: "candidate",
+          candidate: event.candidate
+        }
+      });
+    }
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    if (generation === currentGeneration) console.info("Online Galli ICE state:", pc.iceConnectionState);
+  };
+  pc.onconnectionstatechange = () => {
+    if (generation !== currentGeneration) return;
+
+    if (pc.connectionState === "connected") {
+      clearConnectionTimers();
+      status("Connected! You can now talk.");
+      startIcePathMonitor(pc, currentGeneration);
+    } else if (pc.connectionState === "disconnected") {
+      status("Connection interrupted. Reconnecting...");
+      clearTimeout(disconnectTimer);
+      disconnectTimer = setTimeout(() => recoverFailedCall(currentGeneration), 8000);
+    } else if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+      status("Connection failed. Finding another person...");
+      recoverFailedCall(currentGeneration);
+    }
+  };
+
+  return pc;
+}
+
+socket.on("matched", async ({ partnerId: id, initiator }) => {
+  if (!localStream) return;
+
+  try {
+    const pc = await createPeer(id);
+    status("Partner found! Connecting...");
+
+    if (initiator) {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      if (peer !== pc) return;
+
+      socket.emit("signal", {
+        to: id,
+        data: {
+          type: "offer",
+          description: pc.localDescription
+        }
+      });
+    }
+  } catch (error) {
+    status("Connection setup error: " + error.message);
+    if (localStream && partnerId === id) nextChat();
+  }
+});
+
+socket.on("signal", async ({ from, data }) => {
+  if (!peer || from !== partnerId || !localStream) return;
+
+  const pc = peer;
+
+  try {
+    if (data.type === "offer") {
+      await pc.setRemoteDescription(data.description);
+      if (peer !== pc) return;
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      if (peer !== pc) return;
+
+      socket.emit("signal", {
+        to: from,
+        data: {
+          type: "answer",
+          description: pc.localDescription
+        }
+      });
+
+    } else if (data.type === "answer") {
+      await pc.setRemoteDescription(data.description);
+
+    } else if (data.type === "candidate") {
+      if (!pc.remoteDescription) {
+        pendingCandidates.push(data.candidate);
+      } else {
+        await pc.addIceCandidate(data.candidate);
+      }
+    }
+
+    if (pc.remoteDescription) {
+      const candidates = pendingCandidates.splice(0);
+
+      for (const candidate of candidates) {
+        if (peer !== pc) return;
+        await pc.addIceCandidate(candidate);
+      }
+    }
+  } catch (error) {
+    if (peer === pc) {
+      status("WebRTC error: " + error.message);
+    }
+  }
+});
+
+socket.on("waiting", () => {
+  if (localStream && !partnerId) {
+    status("Waiting for another user...");
+  }
+});
+
+socket.on("partner-left", () => {
+  closePeer();
+  if (localStream) {
+    status("Partner left. Searching again...");
+  }
+});
+
+socket.on("disconnect", () => {
+  closePeer();
+  if (localStream) {
+    status("Server disconnected. Waiting to reconnect...");
+  }
+});
+
+socket.on("connect", () => {
+  identify();
+  if (localStream) requestMatch();
+});
+
+reportBtn.addEventListener("click", () => {
+  if (!partnerId) return;
+  const reason = prompt("Report reason: nudity, harassment, hate, spam, underage, or other");
+  if (reason === null) return;
+  const normalized = reason.trim().toLowerCase();
+  if (!["nudity", "harassment", "hate", "spam", "underage", "other"].includes(normalized)) {
+    status("Choose a valid report reason."); return;
+  }
+  const description = prompt("Optional: Briefly explain what happened (max 500 characters). Leave blank to skip.");
+  if (description === null) return;
+  socket.timeout(5000).emit("report-user", { reason: normalized, description: description.slice(0, 500) }, (err, response) => {
+    status(!err && response?.ok ? "Report submitted. Thank you." : "Could not submit report. Try again.");
+  });
+});
+blockBtn.addEventListener("click", () => {
+  if (!partnerId || !confirm("Block this user and end the call?")) return;
+  const targetId = partnerId;
+  socket.timeout(5000).emit("block-user", { targetId }, (err, response) => {
+    if (err || !response?.ok) { status("Could not block user. Try again."); return; }
+    blockedIds = [...new Set([...blockedIds, response.blockedId])].slice(-300);
+    localStorage.setItem(blockedKey, JSON.stringify(blockedIds));
+    identify();
+    closePeer();
+    status("User blocked. Finding someone else...");
+  });
+});
+socket.on("moderation-warning", message => status(message));
+
+// V4 game and positive reaction controls. No additional video processing.
+const gamesBtn=document.getElementById("gamesBtn");
+
+const muteReactionsBtn=document.getElementById("muteReactionsBtn");
+const gamePanel=document.getElementById("gamePanel");
+const videoStage=document.getElementById("videoStage");
+function positionGameAtVideoSeam(){
+ const boxes=videoStage.querySelectorAll(".video-box");
+ if(boxes.length!==2)return;
+ const a=boxes[0].getBoundingClientRect(),b=boxes[1].getBoundingClientRect();
+ const stacked=b.top>=a.bottom-4;
+ const x=stacked?(a.left+a.right)/2:(a.right+b.left)/2;
+ const y=stacked?(a.bottom+b.top)/2:(Math.max(a.top,b.top)+Math.min(a.bottom,b.bottom))/2;
+ // Fixed viewport coordinates avoid mobile grid placement, clipping and scroll-offset errors.
+ gamePanel.style.setProperty("--galli-popup-x",`${x}px`);
+ gamePanel.style.setProperty("--galli-popup-y",`${y}px`);
+}
+window.addEventListener("scroll",positionGameAtVideoSeam,{passive:true});
+window.addEventListener("resize",positionGameAtVideoSeam);
+window.addEventListener("orientationchange",positionGameAtVideoSeam);
+if("ResizeObserver" in window){
+ const observer=new ResizeObserver(positionGameAtVideoSeam);
+ videoStage.querySelectorAll(".video-box").forEach(box=>observer.observe(box));
+}
+document.body.appendChild(gamePanel);
+const reactionPanel=document.getElementById("reactionPanel");
+document.body.appendChild(reactionPanel);
+requestAnimationFrame(positionGameAtVideoSeam);
+const gameMessage=document.getElementById("gameMessage");
+const activeGameTitle=document.getElementById("activeGameTitle");
+const gameTypePicker=document.getElementById("gameTypePicker");
+const extraGameChoices=document.getElementById("extraGameChoices");
+// Pro is not sold or activated in this build: do not simulate paid access.
+window.OG_PRO_TEST_MODE=false;
+let ownerUnlocked=false;
+// Owner access is granted after successful login at /admin on this same origin/browser profile.
+function sendOwnerTicket(){
+  const ticket = localStorage.getItem('ogOwnerTicket') || '';
+  if (socket.connected) socket.emit('galli-owner-auth', { ticket });
+  if (!ticket) ownerUnlocked = false;
+}
+socket.on('galli-owner-status',({unlocked})=>{
+  ownerUnlocked = !!unlocked;
+  if (ownerUnlocked) {
+    console.info('Online Galli: Pro / owner access unlocked.');
+  } else if (localStorage.getItem('ogOwnerTicket')) {
+    console.warn('Online Galli: Pro unlock rejected. Ticket may be expired. Reopen /admin on the SAME hostname, log in again, then return to this page.');
+  }
+});
+socket.on('connect', sendOwnerTicket);
+window.addEventListener('storage', e => { if (e.key === 'ogOwnerTicket') sendOwnerTicket(); });
+window.addEventListener('focus', sendOwnerTicket);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) sendOwnerTicket(); });
+// Race fix: if the socket already connected before this listener was attached, send now.
+if (socket.connected) sendOwnerTicket();
+function showProNotice(feature){
+ const notice=document.getElementById("galliProNotice");
+ document.getElementById("galliProFeature").textContent=feature;
+ notice.hidden=false;
+}
+document.getElementById("galliGetProBtn").addEventListener("click",()=>showProNotice("Online Galli Pro"));
+document.getElementById("galliProClose").addEventListener("click",()=>document.getElementById("galliProNotice").hidden=true);
+document.getElementById("previousCornerBtn").addEventListener("click",()=>{
+ if(!ownerUnlocked){showProNotice("Previous");return;}
+ socket.emit('galli-previous-request');
+});
+socket.on('galli-previous-status',message=>status(message));
+
+const gameTitles={ttt:"❎ Tic-Tac-Toe",rps:"✊ Rock Paper Scissors",wyr:"🤔 Would You Rather?",ludo:"🎲 Ludo 👑 PRO",snakes:"🐍 Snakes & Ladders 👑 PRO",spin:"🎡 Spin the Wheel",draw:"🎨 Draw & Guess",connect4:"🔴 Connect Four",hangman:"🔤 Hangman"};
+let selectedGameType="ttt",activeExtraGame=null;
+function setGameType(type){
+ if(!gameTitles[type])return;
+ if(["ludo","snakes"].includes(type)&&!ownerUnlocked){showProNotice(gameTitles[type]);return;}
+ selectedGameType=type;activeGameTitle.textContent=gameTitles[type];
+ gameTypePicker.hidden=true;extraGameChoices.hidden=true;
+ gameBoard.hidden=true;inviteGameBtn.hidden=false;
+ gameMessage.textContent="Invite your stranger to play.";
+}
+function showGamePicker(){
+ activeExtraGame=null;gameTypePicker.hidden=false;extraGameChoices.hidden=true;
+ gameBoard.hidden=true;inviteGameBtn.hidden=true;
+ activeGameTitle.textContent="🎮 Choose a game";
+ gameMessage.textContent="Choose a game to invite your stranger.";
+}
+gameTypePicker.querySelectorAll("[data-galli-game]").forEach(b=>b.addEventListener("click",()=>setGameType(b.dataset.galliGame)));
+function renderExtraGame(state){
+ if(!partnerId)return;
+ activeExtraGame=state;selectedGameType=state.type;
+ activeGameTitle.textContent=gameTitles[state.type];
+ gamePanel.hidden=false;
+ gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
+ inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ extraGameChoices.replaceChildren();
+ const finished=!!state.finished;
+ gamePanel.classList.toggle("game-finished",finished);
+ playAgainGameBtn.hidden=!finished;playAgainGameBtn.disabled=false;
+ if(state.type==="rps"){
+  gameMessage.textContent=finished?(state.result==="draw"?"IT'S A DRAW!":state.result===state.you?"YOU WIN! 🎉":"STRANGER WINS!"):(state.chosen?"Waiting for stranger's choice...":"Choose secretly. Choices reveal together.");
+  if(finished){
+   const line=document.createElement("p");line.textContent=`You: ${state.yourChoice} · Stranger: ${state.theirChoice}`;extraGameChoices.appendChild(line);
+  }else{
+   for(const [choice,label] of [["rock","✊ Rock"],["paper","✋ Paper"],["scissors","✌️ Scissors"]]){
+    const b=document.createElement("button");b.textContent=label;b.disabled=!!state.chosen;
+    b.onclick=()=>socket.emit("galli-extra-game-choice",{choice});extraGameChoices.appendChild(b);
+   }
+  }
+ }else{
+  const question=document.createElement("p");question.className="galli-question";question.textContent=state.question;extraGameChoices.appendChild(question);
+  gameMessage.textContent=finished?"Both answers revealed!":state.chosen?"Waiting for stranger's answer...":"Pick one. Both answers reveal together.";
+  if(finished){
+   const p=document.createElement("p");p.textContent=`You: ${state.yourChoice} · Stranger: ${state.theirChoice}`;extraGameChoices.appendChild(p);
+  }else{
+   state.options.forEach((label,i)=>{const b=document.createElement("button");b.textContent=label;b.disabled=!!state.chosen;b.onclick=()=>socket.emit("galli-extra-game-choice",{choice:i});extraGameChoices.appendChild(b);});
+  }
+ }
+}
+socket.on("galli-extra-game-state",renderExtraGame);
+// Four free, server-synchronized games.
+function ogEl(tag,txt,cls){const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e}
+function ogFreeState(state){
+ if(!partnerId)return;
+ const previousConnectBoard=activeExtraGame?.type==='connect4'&&state.type==='connect4'&&Array.isArray(activeExtraGame.board)
+  ? [...activeExtraGame.board] : null;
+ activeExtraGame={...state,board:Array.isArray(state.board)?[...state.board]:state.board,finished:!!state.finished};selectedGameType=state.type;
+ activeGameTitle.textContent=gameTitles[state.type];gamePanel.hidden=false;
+ gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
+ inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ extraGameChoices.replaceChildren();gamePanel.classList.toggle('game-finished',!!state.finished);
+ playAgainGameBtn.hidden=!state.finished;playAgainGameBtn.disabled=false;
+ const me=state.you,turn=state.turn===me;
+ gameMessage.textContent=state.message||(state.finished?'Round complete':turn?'Your turn':'Partner’s turn');
+ if(state.type==='connect4'){
+  const board=ogEl('div',undefined,'og-connect-board');
+  for(let r=0;r<6;r++)for(let c=0;c<7;c++){
+   const cell=ogEl('button','', 'og-connect-cell');const v=state.board[r*7+c];
+   if(v!==null){
+    const newDisc=Array.isArray(previousConnectBoard)&&previousConnectBoard.length===42&&previousConnectBoard[r*7+c]===null;
+    cell.classList.add(v===0?'og-disc-red':'og-disc-blue');
+    if(newDisc){cell.classList.add('og-drop-new');cell.style.setProperty('--drop-color',v===0?'#e53e3e':'#1475f5');cell.style.setProperty('--drop-rows',String(r+1));}
+   }
+   cell.disabled=!!state.finished||!turn||state.board[c]!==null;
+   cell.setAttribute('aria-label','Column '+(c+1)+', row '+(r+1));
+   cell.onclick=()=>socket.emit('galli-free-action',{column:c});board.appendChild(cell);
+  }extraGameChoices.appendChild(ogEl('p','🔴 Red vs 🔵 Blue — take turns dropping discs','og-game-legend'));extraGameChoices.appendChild(board);
+ }else if(state.type==='hangman'){
+  extraGameChoices.appendChild(ogEl('p','💡 Hint: '+(state.category||'Common word'),'og-game-hint'));extraGameChoices.appendChild(ogEl('p',state.masked.split('').join(' '),'og-hang-word'));
+  extraGameChoices.appendChild(ogEl('p','Wrong guesses: '+state.wrong+'/6 · Used: '+(state.used.join(', ')||'none')));
+  if(state.finished&&state.word)extraGameChoices.appendChild(ogEl('p','Word: '+state.word));
+  const letters=ogEl('div',undefined,'og-letter-grid');
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter=>{const b=ogEl('button',letter);b.disabled=state.finished||!turn||state.used.includes(letter);b.onclick=()=>socket.emit('galli-free-action',{letter});letters.appendChild(b)});
+  extraGameChoices.appendChild(letters);
+ }else if(state.type==='spin'){
+  const wheel=ogEl('div',undefined,'og-spin-wheel');
+  const sectors=['Tell a joke','Sing 10 seconds','Show a dance move','Fun fact','Funny impression','Ask a question'];
+  sectors.forEach((label,i)=>{const el=ogEl('span',label);el.style.transform=`rotate(${i*60}deg) translateY(-77px) rotate(${-i*60}deg)`;wheel.appendChild(el)});
+  extraGameChoices.appendChild(wheel);
+  if(state.result)extraGameChoices.appendChild(ogEl('p','🎯 '+state.result,'og-spin-result'));
+  const b=ogEl('button','🎡 Spin the Wheel');b.disabled=!turn;b.onclick=()=>{b.disabled=true;wheel.classList.add('og-wheel-spinning');socket.emit('galli-free-action',{spin:true})};extraGameChoices.appendChild(b);
+ }else if(state.type==='draw'){
+  const label=ogEl('p',state.drawer===me?'Draw this word: '+state.word:'Guess the drawing!','og-draw-label');extraGameChoices.appendChild(label);
+  const canvas=ogEl('canvas');canvas.width=420;canvas.height=300;canvas.className='og-draw-canvas';extraGameChoices.appendChild(canvas);
+  const ctx=canvas.getContext('2d');ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=4;ctx.strokeStyle='#202020';ctx.fillStyle='#fff';ctx.fillRect(0,0,420,300);
+  for(const stroke of state.strokes){ctx.beginPath();ctx.moveTo(stroke[0]*420,stroke[1]*300);ctx.lineTo(stroke[2]*420,stroke[3]*300);ctx.stroke()}
+  if(state.drawer===me&&!state.finished){let down=false,last=null;const point=e=>{const rect=canvas.getBoundingClientRect();return [Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height))]};
+   canvas.onpointerdown=e=>{down=true;last=point(e);canvas.setPointerCapture(e.pointerId)};
+   canvas.onpointermove=e=>{if(!down)return;const now=point(e);const seg=[...last,...now];ctx.beginPath();ctx.moveTo(last[0]*420,last[1]*300);ctx.lineTo(now[0]*420,now[1]*300);ctx.stroke();socket.emit('galli-free-action',{stroke:seg});last=now};
+   canvas.onpointerup=()=>{down=false};canvas.onpointercancel=()=>{down=false};
+  }else if(state.drawer!==me&&!state.finished){const form=ogEl('form');const input=ogEl('input');input.placeholder='Guess the word';input.maxLength=30;input.required=true;const submit=ogEl('button','Guess');submit.type='submit';form.append(input,submit);form.onsubmit=e=>{e.preventDefault();const guess=input.value.trim();if(!guess)return;socket.emit('galli-free-action',{guess});input.value='';let feedback=extraGameChoices.querySelector('.og-guess-feedback');if(!feedback){feedback=ogEl('p','','og-guess-feedback');form.after(feedback)}feedback.textContent='Checking your guess…'};extraGameChoices.appendChild(form)}
+  if(state.finished)extraGameChoices.appendChild(ogEl('p','Answer: '+state.word));
+ }
+}
+socket.on('galli-free-state',ogFreeState);
+socket.on('galli-draw-guess-feedback',({correct,guess}={})=>{if(activeExtraGame?.type!=='draw')return;let feedback=extraGameChoices.querySelector('.og-guess-feedback');if(!feedback){feedback=ogEl('p','','og-guess-feedback');extraGameChoices.appendChild(feedback)}feedback.textContent=correct?'🎉 Correct!':'❌ '+String(guess||'That guess')+' — try again!';});
+socket.on('galli-draw-stroke',stroke=>{if(activeExtraGame?.type!=='draw')return;const canvas=extraGameChoices.querySelector('canvas.og-draw-canvas');if(!canvas||!Array.isArray(stroke))return;const ctx=canvas.getContext('2d');ctx.beginPath();ctx.moveTo(stroke[0]*420,stroke[1]*300);ctx.lineTo(stroke[2]*420,stroke[3]*300);ctx.stroke()});
+
+let ogAudioContext=null,ogMusicTimer=null,ogMusicEnabled=true,ogSelectedLudoToken=0,ogLastRollSeen='';
+function ogAudio(){try{ogAudioContext=ogAudioContext||new(window.AudioContext||window.webkitAudioContext)();if(ogAudioContext.state==='suspended')ogAudioContext.resume();return ogAudioContext}catch(e){return null}}
+function ogNote(freq,when,duration,volume=.015,type='sine'){
+ const c=ogAudio();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(freq,when);g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(volume,when+.025);g.gain.exponentialRampToValueAtTime(.0001,when+duration);o.connect(g).connect(c.destination);o.start(when);o.stop(when+duration+.02);
+}
+function ogDiceSound(){
+ const c=ogAudio();if(!c)return;
+ // A short rattling dice sound, generated locally without an external audio file.
+ const count=11, sampleRate=c.sampleRate;
+ for(let i=0;i<count;i++){
+  const len=Math.floor(sampleRate*.055),buffer=c.createBuffer(1,len,sampleRate),samples=buffer.getChannelData(0);
+  for(let j=0;j<len;j++)samples[j]=(Math.random()*2-1)*Math.pow(1-j/len,2);
+  const source=c.createBufferSource(),gain=c.createGain(),filter=c.createBiquadFilter();
+  source.buffer=buffer;filter.type='bandpass';filter.frequency.value=900+(i%3)*420;filter.Q.value=.65;
+  const t=c.currentTime+.015+i*.053;
+  gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.22,t+.006);gain.gain.exponentialRampToValueAtTime(.0001,t+.054);
+  source.connect(filter);filter.connect(gain);gain.connect(c.destination);source.start(t);
+ }
+ ogMusicStart();
+}
+function ogMusicStart(){if(!ogMusicEnabled||ogMusicTimer)return;let step=0;const notes=[261.63,329.63,392,329.63,293.66,349.23,440,349.23,261.63,329.63,392,523.25,440,392,329.63,293.66];const play=()=>{if(!ogMusicEnabled||document.hidden)return;const c=ogAudio();if(c){ogNote(notes[step%notes.length],c.currentTime,.3,.007);if(step%4===0)ogNote(notes[step%notes.length]/2,c.currentTime,.55,.004)}step++};play();ogMusicTimer=setInterval(play,420)}
+function ogMusicStop(){if(ogMusicTimer){clearInterval(ogMusicTimer);ogMusicTimer=null}}
+function ogAudioControl(container){const wrap=document.createElement('div');wrap.className='og-game-audio';const btn=document.createElement('button');btn.type='button';btn.textContent=ogMusicEnabled?'♫ Music: On':'♫ Music: Off';btn.onclick=()=>{ogMusicEnabled=!ogMusicEnabled;if(ogMusicEnabled)ogMusicStart();else ogMusicStop();btn.textContent=ogMusicEnabled?'♫ Music: On':'♫ Music: Off';btn.blur()};wrap.appendChild(btn);container.appendChild(wrap)}
+function ogMakeDie(container,enabled,click){const b=document.createElement('button');b.type='button';b.className='og-board-die';b.textContent='⚄';b.title='Roll the dice';b.setAttribute('aria-label','Roll the dice');b.disabled=!enabled;b.onclick=()=>{ogDiceSound();b.classList.add('rolling');b.blur();click()};container.appendChild(b)}
+let ogPreviousSnakeState=null;
+let ogSnakeAnimationFrame=0;
+function renderBoardGame(state){
+ const ogScrollBefore=window.scrollY;
+ const ogIsSnakeUpdate=state.type==='snakes' && ogPreviousSnakeState && ogPreviousSnakeState.you===state.you;
+ const ogPriorPositions=ogIsSnakeUpdate?[...ogPreviousSnakeState.positions]:null;
+ if(ogSnakeAnimationFrame){cancelAnimationFrame(ogSnakeAnimationFrame);ogSnakeAnimationFrame=0;}
+
+ if(!partnerId)return;
+ activeExtraGame={type:state.type,finished:state.finished};gameState=null;
+ gamePanel.hidden=false;
+ gameTypePicker.hidden=true;gameBoard.hidden=true;extraGameChoices.hidden=false;
+ inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ activeGameTitle.textContent=gameTitles[state.type];extraGameChoices.replaceChildren();
+ ogAudioControl(extraGameChoices);
+ const info=document.createElement('p');info.className='galli-question';
+ info.textContent=state.finished?(state.winner===state.you?'You won! 🎉':'Stranger won!'):(state.canRoll?'Your turn — roll the dice':'Waiting for stranger to roll');
+ extraGameChoices.appendChild(info);
+ if(state.type==='snakes'){
+  const jumps={4:14,9:31,20:38,28:84,40:59,51:67,63:81,71:91,17:7,54:34,62:19,64:60,87:24,93:73,95:75,99:78};
+  const holder=document.createElement('div');holder.className='og-snakes-wrap';
+  const grid=document.createElement('div');grid.className='og-board-grid';
+  for(let row=9;row>=0;row--){const nums=Array.from({length:10},(_,i)=>row*10+(row%2===0?i+1:10-i));
+   for(const n of nums){const cell=document.createElement('span');cell.className='og-board-cell';
+    const num=document.createElement('b');num.textContent=n;cell.appendChild(num);
+    if(state.positions[0]===n||state.positions[1]===n){const marker=document.createElement('span');marker.className='og-snake-players';marker.textContent=(state.positions[0]===n?'🔵':'')+(state.positions[1]===n?'🔴':'');cell.appendChild(marker)}
+    grid.appendChild(cell);
+   }
+  }
+  holder.appendChild(grid);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 1000 1000');svg.setAttribute('class','og-snake-overlay');svg.setAttribute('aria-label','Snakes and ladders connect numbered squares');
+  const xy=n=>{const r=Math.floor((n-1)/10),c=(n-1)%10;return {x:((r%2===0?c:9-c)+.5)*100,y:(9-r+.5)*100}};
+  const el=(name,attrs)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',name);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));svg.appendChild(e);return e};
+  for(const [fromStr,to] of Object.entries(jumps)){const from=+fromStr,a=xy(from),b=xy(to),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),nx=-dy/len*12,ny=dx/len*12;
+   if(to>from){for(const side of [-1,1])el('line',{x1:a.x+nx*side,y1:a.y+ny*side,x2:b.x+nx*side,y2:b.y+ny*side,stroke:'#76502c','stroke-width':8,'stroke-linecap':'round'});
+    for(let t=.12;t<.98;t+=.115)el('line',{x1:a.x+dx*t+nx,y1:a.y+dy*t+ny,x2:a.x+dx*t-nx,y2:a.y+dy*t-ny,stroke:'#d79c4e','stroke-width':8,'stroke-linecap':'round'});
+   }else{
+    // Head at the higher square, tapered curving body ending at the lower square.
+    const bend=35*(from%2?1:-1), px=-dy/len,py=dx/len;
+    const c1={x:a.x+dx*.28+px*bend,y:a.y+dy*.28+py*bend};
+    const c2={x:a.x+dx*.72-px*bend,y:a.y+dy*.72-py*bend};
+    const curve=`M ${a.x} ${a.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${b.x} ${b.y}`;
+    // Body outline and belly, with repeating scales, rather than a rope.
+    el('path',{d:curve,fill:'none',stroke:'#173f2e','stroke-width':29,'stroke-linecap':'round'});
+    el('path',{d:curve,fill:'none',stroke:from%2?'#42a66d':'#e49c3f','stroke-width':23,'stroke-linecap':'round'});
+    el('path',{d:curve,fill:'none',stroke:from%2?'#a4d98b':'#ffe0a0','stroke-width':5,'stroke-linecap':'round','stroke-dasharray':'6 20',opacity:.9});
+    const headAngle=Math.atan2(dy,dx)*180/Math.PI;
+    const head=document.createElementNS('http://www.w3.org/2000/svg','g');head.setAttribute('transform',`translate(${a.x} ${a.y}) rotate(${headAngle})`);
+    const addHead=(name,attrs)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',name);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));head.appendChild(e);return e};
+    addHead('ellipse',{cx:0,cy:0,rx:27,ry:21,fill:from%2?'#42a66d':'#e49c3f',stroke:'#173f2e','stroke-width':4});
+    addHead('ellipse',{cx:19,cy:0,rx:18,ry:13,fill:from%2?'#60be7c':'#f0b557'});
+    for(const ey of [-12,12]){addHead('circle',{cx:3,cy:ey,r:6,fill:'#fff'});addHead('circle',{cx:5,cy:ey,r:3,fill:'#151b14'});}
+    addHead('circle',{cx:30,cy:-5,r:2.5,fill:'#263a22'});addHead('circle',{cx:30,cy:5,r:2.5,fill:'#263a22'});
+    addHead('path',{d:'M 35 0 L 49 0 M 49 0 L 57 -6 M 49 0 L 57 6',fill:'none',stroke:'#dd3c59','stroke-width':3,'stroke-linecap':'round'});
+    svg.appendChild(head);
+   }
+  }
+  holder.appendChild(svg);ogMakeDie(holder,state.canRoll&&!state.finished,()=>socket.emit('galli-board-roll',{}));extraGameChoices.appendChild(holder);
+  // Animate the exact jump from its starting square to its destination at a readable pace.
+  if(ogPriorPositions){
+   for(let player=0;player<2;player++){
+    const before=ogPriorPositions[player],after=state.positions[player];
+    if(before===after)continue;
+    const rolled=state.lastRoll||0,landing=before+rolled;
+    if(jumps[landing]!==after || landing===after)continue;
+    const start=xy(landing),end=xy(after),duration=1900;
+    const token=document.createElementNS('http://www.w3.org/2000/svg','g');
+    const disk=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    disk.setAttribute('r','23');disk.setAttribute('fill',player===0?'#1267d9':'#d63248');disk.setAttribute('stroke','#fff');disk.setAttribute('stroke-width','5');token.appendChild(disk);
+    const label=document.createElementNS('http://www.w3.org/2000/svg','text');label.textContent=player===0?'B':'R';label.setAttribute('text-anchor','middle');label.setAttribute('dominant-baseline','central');label.setAttribute('font-size','22');label.setAttribute('font-weight','800');label.setAttribute('fill','#fff');token.appendChild(label);
+    svg.appendChild(token);
+    // Hide the destination marker while the animated token is moving.
+    for(const cell of grid.children){const number=cell.querySelector('b');if(number&&+number.textContent===after){const marker=cell.querySelector('.og-snake-players');if(marker)marker.style.opacity='0';}}
+    const began=performance.now();
+    const bend=35*(landing%2?1:-1);
+    const dx=end.x-start.x,dy=end.y-start.y,dist=Math.hypot(dx,dy)||1;
+    const nx=-dy/dist,ny=dx/dist;
+    const frame=now=>{
+     if(!token.isConnected)return;
+     const t=Math.min(1,(now-began)/duration);
+     let x,y;
+     if(after<landing){const p0=start,p1={x:start.x+dx*.28+nx*bend,y:start.y+dy*.28+ny*bend},p2={x:start.x+dx*.72-nx*bend,y:start.y+dy*.72-ny*bend},p3=end,u=1-t;
+      x=u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x;
+      y=u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y;
+     }else{x=start.x+dx*t;y=start.y+dy*t;}
+     token.setAttribute('transform',`translate(${x} ${y})`);
+     if(t<1)ogSnakeAnimationFrame=requestAnimationFrame(frame);
+     else{token.remove();for(const cell of grid.children){const number=cell.querySelector('b');if(number&&+number.textContent===after){const marker=cell.querySelector('.og-snake-players');if(marker)marker.style.opacity='1';}}}
+    };
+    ogSnakeAnimationFrame=requestAnimationFrame(frame);
+   }
+  }
+  ogPreviousSnakeState={you:state.you,positions:[...state.positions]};
+
+ }else{
+  const path=[];
+  for(let y=14;y>=9;y--)path.push([6,y]);for(let x=5;x>=0;x--)path.push([x,8]);path.push([0,7],[0,6]);for(let x=1;x<=5;x++)path.push([x,6]);for(let y=5;y>=0;y--)path.push([6,y]);path.push([7,0],[8,0]);for(let y=1;y<=5;y++)path.push([8,y]);for(let x=9;x<=14;x++)path.push([x,6]);path.push([14,7],[14,8]);for(let x=13;x>=9;x--)path.push([x,8]);for(let y=9;y<=14;y++)path.push([8,y]);path.push([7,14]);
+  const board=document.createElement('div');board.className='og-ludo-board';
+  const coords=(player,pos)=>{if(pos===0)return null;if(pos===57)return [7,7];if(pos>=52)return [7,player===0?pos-51:14-(pos-51)];return path[((player===0?26:0)+pos-1)%52]};
+  for(let y=0;y<15;y++)for(let x=0;x<15;x++){
+   const cell=document.createElement('div');cell.className='og-ludo-square';cell.style.gridColumn=x+1;cell.style.gridRow=y+1;
+   const home=(x<6&&y<6)?'red':(x>8&&y<6)?'blue':(x<6&&y>8)?'green':(x>8&&y>8)?'yellow':null;
+   const isPath=path.some(c=>c[0]===x&&c[1]===y);
+   if(home)cell.classList.add('og-home-'+home);
+   if(x>=6&&x<=8&&y>=6&&y<=8)cell.classList.add('og-ludo-center');
+   if(isPath)cell.classList.add('og-ludo-path');
+   if(x===7&&y>=9&&y<=13)cell.classList.add('og-ludo-green-lane');
+   if(x===7&&y>=1&&y<=5)cell.classList.add('og-ludo-blue-lane');
+   if((x===6&&y===14)||(x===8&&y===0))cell.classList.add('og-ludo-start');
+   for(let player=0;player<2;player++)state.tokens[player].forEach((pos,i)=>{
+    const at=pos===0? (player===0?[[10,1],[13,1],[10,4],[13,4]][i]:[[1,10],[4,10],[1,13],[4,13]][i]):coords(player,pos);
+    if(pos!==0&&at&&at[0]===x&&at[1]===y){const token=document.createElement('span');token.className='og-ludo-token '+(player===0?'og-blue-token':'og-green-token');token.textContent=String(i+1);token.title=(player===state.you?'Your':'Stranger’s')+' token '+(i+1);cell.appendChild(token)}
+   });board.appendChild(cell);
+  }
+  // Decorative home trays and classic four-color central finish.
+  for(const color of ['red','blue','green','yellow']){
+   const base=document.createElement('div');base.className='og-ludo-base '+color;
+   for(let i=0;i<4;i++){
+    const dot=document.createElement('span');dot.className='base-dot';
+    if(color==='blue'||color==='green'){
+     const p=color==='blue'?0:1,home=state.tokens[p][i]===0;
+     dot.classList.add(home?'active':'moved');
+     if(home&&p===state.you&&state.canRoll&&!state.finished){
+      dot.setAttribute('role','button');dot.tabIndex=0;
+      if(ogSelectedLudoToken===i)dot.classList.add('selected');
+      const select=()=>{ogSelectedLudoToken=i;board.querySelectorAll('.base-dot.selected').forEach(d=>d.classList.remove('selected'));dot.classList.add('selected');extraGameChoices.querySelectorAll('.og-ludo-actions button').forEach((b,j)=>b.classList.toggle('selected',j===i));};
+      dot.addEventListener('click',select);dot.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select()}});
+     }
+     dot.title=color+' gotti '+(i+1)+(home?' at home':' on track');
+     dot.setAttribute('aria-label',dot.title);
+    }
+    base.appendChild(dot);
+   }
+   board.appendChild(base);
+  }
+  const center=document.createElementNS('http://www.w3.org/2000/svg','svg');center.setAttribute('viewBox','0 0 100 100');center.setAttribute('class','og-ludo-center-art');for(const [pts,color] of [['0,0 100,0 50,50','#086bdc'],['100,0 100,100 50,50','#f9d427'],['0,100 100,100 50,50','#079a28'],['0,0 0,100 50,50','#ed1515']]){const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');poly.setAttribute('points',pts);poly.setAttribute('fill',color);center.appendChild(poly)}board.appendChild(center);
+  ogMakeDie(board,state.canRoll&&!state.finished,()=>socket.emit('galli-board-roll',{token:ogSelectedLudoToken}));
+  extraGameChoices.appendChild(board);
+  const key=document.createElement('p');key.className='og-board-legend';key.textContent='🔵 Blue vs 🟢 Green · Select a token, then roll the dice on the board';extraGameChoices.appendChild(key);
+  if(state.canRoll&&!state.finished){const choices=document.createElement('div');choices.className='og-ludo-actions';state.tokens[state.you].forEach((pos,i)=>{
+   const b=document.createElement('button');b.textContent='Gotti '+(i+1)+(pos===0?' · Home':pos===57?' · Finished':'');b.disabled=pos===57;b.classList.toggle('selected',ogSelectedLudoToken===i);b.onclick=()=>{ogSelectedLudoToken=i;choices.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');b.blur()};choices.appendChild(b)});extraGameChoices.appendChild(choices)}
+ }
+ if(state.lastRoll){const d=document.createElement('p');d.textContent='🎲 Last roll: '+state.lastRoll;extraGameChoices.appendChild(d);}
+
+
+ playAgainGameBtn.hidden=!state.finished;playAgainGameBtn.disabled=false;
+ gameMessage.textContent='Two-player '+(state.type==='ludo'?'Ludo':'Snakes & Ladders');
+ // Rebuilding the controls must not scroll the mobile viewport to the top.
+ requestAnimationFrame(()=>{if(Math.abs(window.scrollY-ogScrollBefore)>2)window.scrollTo({top:ogScrollBefore,behavior:'instant'});});
+}
+socket.on('galli-board-state',renderBoardGame);
+
+socket.on("galli-pro-required",({feature}={})=>showProNotice(feature||"Pro feature"));
+socket.on('galli-pro-preview-status',({enabled})=>{window.OG_PRO_TEST_MODE=!!enabled;});
+
+const gameBoard=document.getElementById("gameBoard");
+const inviteGameBtn=document.getElementById("inviteGameBtn");
+const acceptGameBtn=document.getElementById("acceptGameBtn");
+const declineGameBtn=document.getElementById("declineGameBtn");
+const closeGameBtn=document.getElementById("closeGameBtn");
+const playAgainGameBtn=document.getElementById("playAgainGameBtn");
+const localReaction=document.getElementById("localReaction");
+const remoteReaction=document.getElementById("remoteReaction");
+let gameState=null, reactionsMuted=false, toastTimeout=null;
+gameBoard.hidden=true;
+function resetV4() {
+  gameBoard.hidden=true;
+  gameState=null;activeExtraGame=null;ogPreviousSnakeState=null;gamePanel.hidden=true;gamePanel.classList.remove("game-finished");reactionPanel.hidden=true;extraGameChoices.hidden=true;gameTypePicker.hidden=false;activeGameTitle.textContent="🎮 Choose a game";
+  playAgainGameBtn.hidden=true;
+  gameBoard.replaceChildren();gameMessage.textContent="Invite your stranger to play.";
+  inviteGameBtn.hidden=true;acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+  gamesBtn.disabled=!partnerId;
+}
+gamesBtn.onclick=()=>{
+  const opening=gamePanel.hidden;
+  gamePanel.hidden=!opening;
+  requestAnimationFrame(positionGameAtVideoSeam);
+  reactionPanel.hidden=true;
+  if(opening&&!gameState&&!activeExtraGame){
+    showGamePicker();
+  } else if(!opening && (gameState||activeExtraGame)){
+    // Closing an active game — notify partner so their panel also closes
+    socket.emit("galli-game-close");
+    resetV4();
+  }
+  // Mobile: after opening the game picker, smooth-scroll so the popup is fully visible
+  if (opening && window.matchMedia('(max-width: 900px)').matches) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        positionGameAtVideoSeam();
+        const rect = gamePanel.getBoundingClientRect();
+        const fullyVisible = rect.top >= 8 && rect.bottom <= window.innerHeight - 8 &&
+                             rect.left >= 0 && rect.right <= window.innerWidth;
+        if (!fullyVisible && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          const videoStage = document.getElementById('videoStage');
+          if (videoStage) {
+            videoStage.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+          }
+        }
+      });
+    });
+  }
+};
+
+inviteGameBtn.onclick=()=>{if(!partnerId)return;socket.emit("galli-game-invite",{type:selectedGameType});gameMessage.textContent="Waiting for your partner to accept...";inviteGameBtn.hidden=true;};
+acceptGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:true});acceptGameBtn.hidden=true;declineGameBtn.hidden=true;};
+declineGameBtn.onclick=()=>{socket.emit("galli-game-response",{accept:false});resetV4();};
+closeGameBtn.onclick=()=>{socket.emit("galli-game-close");resetV4();};
+playAgainGameBtn.onclick=()=>{if(partnerId&&((gameState&&(gameState.winner||gameState.draw))||(activeExtraGame&&activeExtraGame.finished))){playAgainGameBtn.disabled=true;socket.emit("galli-game-play-again");}};
+socket.on("galli-game-invite",({type="ttt"}={})=>{
+ selectedGameType=gameTitles[type]?type:"ttt";activeGameTitle.textContent=gameTitles[selectedGameType];gameTypePicker.hidden=true;extraGameChoices.hidden=true;
+ if(!partnerId)return;
+ gameBoard.hidden=true;
+ gamePanel.hidden=false;reactionPanel.hidden=true;inviteGameBtn.hidden=true;
+ acceptGameBtn.hidden=false;declineGameBtn.hidden=false;
+ gameMessage.textContent=`Your partner invited you to play ${gameTitles[selectedGameType].replace(/^[^ ]+ /,"")}.`;
+ // Auto-scroll and attention for mobile invitation popup
+ if (window.matchMedia('(max-width: 900px)').matches) {
+   requestAnimationFrame(() => {
+     positionGameAtVideoSeam();
+     const rect = gamePanel.getBoundingClientRect();
+     const fullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight && rect.left >= 0 && rect.right <= window.innerWidth;
+     if (!fullyVisible) {
+       const videoStage = document.getElementById('videoStage');
+       if (videoStage) {
+         videoStage.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+       }
+     }
+     gamePanel.classList.add('galli-invite-attention');
+     setTimeout(() => gamePanel.classList.remove('galli-invite-attention'), 1600);
+   });
+ }
+});
+socket.on("galli-game-pending",()=>{gameMessage.textContent="Waiting for your partner to accept...";});
+socket.on("galli-game-declined",()=>{resetV4();gamePanel.hidden=false;showGamePicker();gameMessage.textContent="Your partner declined. Choose a game to invite again.";});
+socket.on("galli-game-ended",()=>{resetV4();gameMessage.textContent="Game closed.";});
+socket.on("galli-game-state",state=>{
+ if(!partnerId)return;
+ gameBoard.hidden=false;extraGameChoices.hidden=true;gameTypePicker.hidden=true;activeGameTitle.textContent=gameTitles.ttt;activeExtraGame=null;
+ gameState=state;gamePanel.hidden=false;inviteGameBtn.hidden=true;
+ acceptGameBtn.hidden=true;declineGameBtn.hidden=true;
+ gameMessage.textContent=state.winner?(`${state.winner} WINS! 🎉`):state.draw?"IT'S A DRAW!":state.turn===state.you?"Your turn":"Partner's turn";
+ gamePanel.classList.toggle("game-finished",!!state.winner||!!state.draw);
+ playAgainGameBtn.hidden=!(state.winner||state.draw);playAgainGameBtn.disabled=false;
+ gameBoard.replaceChildren();
+ state.board.forEach((value,index)=>{
+  const b=document.createElement("button");
+  b.textContent=value||"·";
+  b.disabled=!!value||!!state.winner||state.draw||state.turn!==state.you;
+  b.setAttribute("aria-label",`Cell ${index+1}: ${value||"empty"}`);
+  b.onclick=()=>socket.emit("galli-game-move",{index});
+  gameBoard.appendChild(b);
+ });
+});
+const approvedReactions=["👍","👏","🎉","🙌","✨","😂"];
+approvedReactions.forEach(emoji=>{
+ const b=document.createElement("button");b.textContent=emoji;
+ b.setAttribute("aria-label","Send "+emoji+" reaction");
+ b.onclick=()=>{if(partnerId){socket.emit("galli-reaction",{emoji});showGalliReaction(emoji,"local");}};
+ document.getElementById("reactionChoices").appendChild(b);
+});
+muteReactionsBtn.onclick=()=>{
+ reactionsMuted=!reactionsMuted;
+ muteReactionsBtn.textContent=reactionsMuted?"🔕 Reactions Muted":"🔔 Reactions On";
+ muteReactionsBtn.setAttribute("aria-pressed",String(reactionsMuted));
+};
+const reactionTimers={local:null,remote:null};
+function showGalliReaction(emoji,side){
+ const target=side==="local"?localReaction:remoteReaction;
+ target.textContent="";
+ void target.offsetWidth;
+ target.textContent=emoji;
+ clearTimeout(reactionTimers[side]);
+ reactionTimers[side]=setTimeout(()=>target.textContent="",1800);
+}
+socket.on("galli-reaction",({emoji}={})=>{
+ if(reactionsMuted||!approvedReactions.includes(emoji)||!partnerId)return;
+ showGalliReaction(emoji,"remote");
+});
+
+
+// V5: transient partner-only text chat and optional text-based team badges.
+const myVideoChat=document.getElementById("myVideoChat");
+const peerVideoChat=document.getElementById("peerVideoChat");
+const textChatForm=document.getElementById("textChatForm");
+const textChatInput=document.getElementById("textChatInput");
+const textChatSend=document.getElementById("textChatSend");
+const textChatNotice=document.getElementById("textChatNotice");
+const teamBadgeSelect=document.getElementById("teamBadgeSelect");
+const myBadge=document.getElementById("myBadge");
+const peerBadge=document.getElementById("peerBadge");
+const badgeTeams=new Set(Array.from(teamBadgeSelect.options).map(o=>o.value));
+let selectedBadge="";
+let customBadgeData="";
+const nplLogoFiles={
+ "Biratnagar Kings":"biratnagar-kings.png",
+ "Chitwan Rhinos":"chitwan-rhinos.png",
+ "Janakpur Bolts":"janakpur-bolts.png",
+ "Karnali Yaks":"karnali-yaks.png",
+ "Kathmandu Gurkhas":"kathmandu-gorkhas.png",
+ "Kathmandu Gorkhas":"kathmandu-gorkhas.png",
+ "Lumbini Lions":"lumbini-lions.png",
+ "Pokhara Avengers":"pokhara-avengers.png",
+ "Sudurpaschim Royals":"sudurpaschim-royals.png"
+};
+function showBadge(el,team){
+ el.replaceChildren();
+ const isCustom=team==="__custom__";
+ el.classList.toggle("galli-custom-transparent",isCustom);
+ const file=nplLogoFiles[team];
+ el.hidden=!(file||(isCustom&&customBadgeData));
+ if(el.hidden)return;
+ const img=document.createElement("img");
+ img.alt=team+" logo";
+ img.src=isCustom?customBadgeData:"/assets/npl/"+file;
+ img.loading="eager";
+ img.onerror=()=>{img.onerror=null;if(!isCustom)img.src="/assets/npl/fallback.png";};
+ el.title=team;
+ el.setAttribute("aria-label",team+" supporter badge");
+ el.appendChild(img);
+}
+function showPeerCustomBadge(data){
+ peerBadge.replaceChildren();
+ peerBadge.classList.add("galli-custom-transparent");
+ if(!/^data:image\/png;base64,[A-Za-z0-9+/=]{1,65000}$/.test(data||"")){peerBadge.hidden=true;return;}
+ const img=document.createElement("img");img.alt="Custom supporter badge";img.src=data;
+ peerBadge.appendChild(img);peerBadge.hidden=false;
+}
+function resetSocial(){
+ myVideoChat.replaceChildren();peerVideoChat.replaceChildren();textChatInput.value="";textChatNotice.textContent="";
+ peerBadge.hidden=true;peerBadge.textContent="";peerBadge.classList.remove("galli-custom-transparent");
+ const active=!!partnerId;
+ textChatInput.disabled=!active;textChatSend.disabled=!active;
+}
+function appendText(message,mine){
+ for(const target of [myVideoChat,peerVideoChat]){
+  const line=document.createElement("div");line.className="galli-video-chat-line";
+  const speaker=document.createElement("strong");speaker.textContent=mine?"You: ":"Stranger: ";
+  line.append(speaker,document.createTextNode(message));target.appendChild(line);
+  while(target.childElementCount>6)target.firstElementChild.remove();
+  target.scrollTop=target.scrollHeight;
+ }
+}
+textChatForm.addEventListener("submit",event=>{
+ event.preventDefault();
+ if(!partnerId)return;
+ const message=textChatInput.value.trim();
+ if(!message||message.length>500)return;
+ socket.emit("galli-text",{message});textChatInput.value="";
+});
+socket.on("galli-text",({message}={})=>{
+ if(!partnerId||typeof message!=="string")return;
+ appendText(message,false);
+
+});
+socket.on("galli-text-sent",({message}={})=>{if(partnerId&&typeof message==="string")appendText(message,true);});
+socket.on("galli-text-warning",msg=>{textChatNotice.textContent=String(msg).slice(0,150);});
+const customBadgeUpload=document.getElementById("customBadgeUpload");
+const clearCustomBadge=document.getElementById("clearCustomBadge");
+const customBadgeStatus=document.getElementById("customBadgeStatus");
+const badgeEditPanel=document.getElementById("badgeEditPanel");
+const badgeBefore=document.getElementById("badgeBefore");
+const badgeAfter=document.getElementById("badgeAfter");
+const badgeTolerance=document.getElementById("badgeTolerance");
+const badgeToleranceValue=document.getElementById("badgeToleranceValue");
+const badgeKeepOriginal=document.getElementById("badgeKeepOriginal");
+let badgeOriginalPixels=null;
+function removeBadgeBackground(original,tolerance){
+ const W=96,H=96,src=original.data,out=new ImageData(new Uint8ClampedArray(src),W,H);
+ const px=out.data;
+ const color=(i)=>[src[i*4],src[i*4+1],src[i*4+2]];
+ const dist=(a,b)=>Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]),Math.abs(a[2]-b[2]));
+ // Sample only opaque perimeter pixels. Transparent padding must never be
+ // interpreted as a solid background color.
+ const edge=[];
+ for(let x=0;x<W;x+=3){edge.push(x,(H-1)*W+x);}
+ for(let y=0;y<H;y+=3){edge.push(y*W,y*W+W-1);}
+ const opaque=edge.filter(p=>src[p*4+3]>230);
+ if(opaque.length<12)return out;
+ const colors=opaque.map(color);
+ // Most frequent perimeter color cluster. Handles white, black, and arbitrary
+ // single-color backgrounds without assuming that the background is white.
+ let best=[],candidate=null;
+ for(let i=0;i<colors.length;i+=Math.max(1,Math.floor(colors.length/36))){
+  const cluster=colors.filter(c=>dist(c,colors[i])<=Math.max(10,tolerance*.6));
+  if(cluster.length>best.length){best=cluster;candidate=colors[i];}
+ }
+ const solid=best.length/opaque.length>=.72;
+ // Detect baked-in light/dark checkerboard, only if two recurring color
+ // clusters dominate the perimeter and alternate spatially.
+ let checker=false,second=null;
+ if(!solid&&candidate){
+  const rest=colors.filter(c=>dist(c,candidate)>tolerance);
+  if(rest.length){
+   let groups=[];
+   for(let i=0;i<rest.length;i+=Math.max(1,Math.floor(rest.length/24))){
+    const cl=rest.filter(c=>dist(c,rest[i])<=Math.max(10,tolerance*.6));
+    if(cl.length>groups.length){groups=cl;second=rest[i];}
+   }
+   const covered=opaque.filter(p=>dist(color(p),candidate)<=tolerance||dist(color(p),second)<=tolerance).length/opaque.length;
+   const sep=dist(candidate,second);
+   // Restrict checker detection to neutral gray/white tones to avoid
+   // accidentally removing multi-colored badge borders.
+   const neutral=c=>Math.max(...c)-Math.min(...c)<18;
+   checker=covered>.87&&best.length>opaque.length*.16&&groups.length>opaque.length*.16&&sep>18&&sep<160&&neutral(candidate)&&neutral(second);
+  }
+ }
+ if(!solid&&!checker)return out;
+ const isBg=p=>{
+  const i=p*4;if(src[i+3]<8)return true;
+  const c=color(p);
+  return dist(c,candidate)<=tolerance||(checker&&dist(c,second)<=tolerance);
+ };
+ // Flood fill from the perimeter: do not remove matching colors enclosed
+ // inside the logo. Preserve already-transparent pixels.
+ const seen=new Uint8Array(W*H),stack=[];
+ for(let x=0;x<W;x++){stack.push(x,(H-1)*W+x);}
+ for(let y=0;y<H;y++){stack.push(y*W,y*W+W-1);}
+ while(stack.length){
+  const p=stack.pop();if(seen[p])continue;seen[p]=1;
+  if(!isBg(p))continue;
+  px[p*4+3]=0;
+  const x=p%W,y=(p/W)|0;
+  if(x)stack.push(p-1);if(x<W-1)stack.push(p+1);
+  if(y)stack.push(p-W);if(y<H-1)stack.push(p+W);
+ }
+ return out;
+}
+function renderBadgePreview(){
+ if(!badgeOriginalPixels)return;
+ badgeToleranceValue.textContent=badgeTolerance.value;
+ const ctx=badgeAfter.getContext('2d');
+ ctx.clearRect(0,0,96,96);
+ ctx.putImageData(badgeKeepOriginal.checked?badgeOriginalPixels:removeBadgeBackground(badgeOriginalPixels,Number(badgeTolerance.value)),0,0);
+}
+badgeTolerance.addEventListener('input',renderBadgePreview);
+badgeKeepOriginal.addEventListener('change',renderBadgePreview);
+// Prevent free visitors from opening the operating system file picker.
+// The server separately verifies entitlement before accepting any badge data.
+const customBadgeLabel=document.querySelector('label[for="customBadgeUpload"]');
+if(customBadgeLabel)customBadgeLabel.addEventListener('click',(event)=>{
+ if(!ownerUnlocked){event.preventDefault();event.stopPropagation();showProNotice('Update Custom Badge');}
+});
+customBadgeUpload.addEventListener('click',(event)=>{
+ if(!ownerUnlocked){event.preventDefault();showProNotice('Update Custom Badge');}
+});
+customBadgeUpload.addEventListener("change",async()=>{
+ if(!ownerUnlocked){showProNotice("Update Custom Badge");customBadgeUpload.value="";return;}
+ const file=customBadgeUpload.files&&customBadgeUpload.files[0];
+ if(!file)return;
+ // Validate by extension AND known MIME when present; do not accept SVG or arbitrary files.
+ const ext=(file.name.split('.').pop()||'').toLowerCase();
+ const mimeByExt={png:['image/png'],jpg:['image/jpeg'],jpeg:['image/jpeg'],jfif:['image/jpeg'],webp:['image/webp'],gif:['image/gif'],bmp:['image/bmp','image/x-ms-bmp']};
+ if(!mimeByExt[ext]||(file.type&&!mimeByExt[ext].includes(file.type))){
+  customBadgeStatus.textContent="Supported: PNG, JPG, JPEG, JFIF, WebP, GIF, BMP.";customBadgeUpload.value="";return;
+ }
+ if(file.size>5*1024*1024){customBadgeStatus.textContent="Image must be under 5 MB.";customBadgeUpload.value="";return;}
+ try{
+  const bitmap=await createImageBitmap(file);
+  const ctx=badgeBefore.getContext("2d");ctx.clearRect(0,0,96,96);
+  const ratio=Math.min(96/bitmap.width,96/bitmap.height);
+  ctx.drawImage(bitmap,(96-bitmap.width*ratio)/2,(96-bitmap.height*ratio)/2,bitmap.width*ratio,bitmap.height*ratio);
+  if(bitmap.close)bitmap.close();
+  badgeOriginalPixels=ctx.getImageData(0,0,96,96);
+  badgeTolerance.value="32";badgeKeepOriginal.checked=false;
+  badgeEditPanel.hidden=false;renderBadgePreview();
+  customBadgeStatus.textContent="Preview background removal, then click Apply badge. GIF uses its first frame.";
+ }catch(e){customBadgeStatus.textContent=e.message||"Couldn't load image. Try PNG or JPEG.";}
+ customBadgeUpload.value="";
+});
+document.getElementById("badgeApply").addEventListener("click",()=>{
+ if(!badgeOriginalPixels)return;
+ const data=badgeAfter.toDataURL("image/png");
+ if(data.length>65000){customBadgeStatus.textContent="Badge is too complex; choose a simpler image.";return;}
+ customBadgeData=data;selectedBadge="__custom__";teamBadgeSelect.value="";
+ showBadge(myBadge,selectedBadge);
+ clearCustomBadge.hidden=false;badgeEditPanel.hidden=true;
+ customBadgeStatus.textContent="Custom PNG badge active";
+ if(socket.connected)socket.emit("galli-custom-badge",{data});
+});
+clearCustomBadge.addEventListener("click",()=>{
+ customBadgeData="";selectedBadge="";teamBadgeSelect.value="";clearCustomBadge.hidden=true;
+ customBadgeStatus.textContent="Badge removed";showBadge(myBadge,"");
+ if(socket.connected)socket.emit("galli-badge-select",{team:""});
+});
+socket.on("galli-custom-badge-peer",({data}={})=>{if(partnerId)showPeerCustomBadge(data);});
+teamBadgeSelect.addEventListener("change",()=>{
+ selectedBadge=teamBadgeSelect.value;
+ if(!badgeTeams.has(selectedBadge))return;
+ showBadge(myBadge,selectedBadge);
+ if(socket.connected)socket.emit("galli-badge-select",{team:selectedBadge});
+});
+socket.on("galli-badge-peer",({team}={})=>{
+ if(partnerId&&typeof team==="string"&&badgeTeams.has(team))showBadge(peerBadge,team);
+});
+socket.on("connect",()=>{if(selectedBadge==="__custom__"&&customBadgeData)socket.emit("galli-custom-badge",{data:customBadgeData});else socket.emit("galli-badge-select",{team:selectedBadge});});
+resetSocial();
+
+startBtn.addEventListener("click", startChat);
+nextBtn.addEventListener("click", nextChat);
+muteBtn.addEventListener("click", toggleMute);
+stopBtn.addEventListener("click", stopChat);
+
+remoteVideo.addEventListener("click", () => {
+  remoteVideo.play().catch(() => {});
+});
+
+window.addEventListener("pagehide", () => {
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+  }
+});
+
+// Face stickers: locally composited on the outgoing video track so the partner sees them.
+// FaceMesh is loaded on demand only when a sticker is selected.
+
+// FaceMesh preload with timing — single instance, started early
+let faceMeshPreload = null;
+let faceMeshInitStart = 0;
+function preloadFaceMesh() {
+  if (faceMeshPreload) return faceMeshPreload;
+  faceMeshInitStart = performance.now();
+  faceMeshPreload = (async () => {
+    console.log("[FaceStickers] Starting MediaPipe preload");
+    if (!window.FaceMesh) {
+      const t0 = performance.now();
+      await new Promise((resolve, reject) => {
+        const sc = document.createElement("script");
+        sc.src = "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js";
+        sc.onload = resolve;
+        sc.onerror = () => reject(new Error("Face tracking library unavailable"));
+        document.head.appendChild(sc);
+      });
+      console.log("[FaceStickers] face_mesh.js loaded in", (performance.now()-t0).toFixed(0), "ms");
+    }
+    const t1 = performance.now();
+    const mesh = new window.FaceMesh({
+      locateFile: file => "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/" + file
+    });
+    mesh.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: .5, minTrackingConfidence: .5 });
+    // Allow WASM + model fetch to begin
+    await new Promise(r => setTimeout(r, 300));
+    console.log("[FaceStickers] FaceMesh instance ready in", (performance.now()-t1).toFixed(0), "ms");
+    console.log("[FaceStickers] Total preload time:", (performance.now()-faceMeshInitStart).toFixed(0), "ms");
+    return mesh;
+  })();
+  return faceMeshPreload;
+}
+// Start as early as possible
+preloadFaceMesh().catch(e => console.warn("[FaceStickers] Early preload failed", e));
+
+// Warm-up: send one real camera frame so WASM/model fully initializes before user selects a sticker
+async function warmupFaceMesh() {
+  try {
+    const mesh = await preloadFaceMesh();
+    // Wait until video has a frame
+    if (localVideo.readyState < 2) {
+      await new Promise(resolve => {
+        const onReady = () => { localVideo.removeEventListener("loadeddata", onReady); resolve(); };
+        localVideo.addEventListener("loadeddata", onReady);
+        setTimeout(resolve, 2000); // safety timeout
+      });
+    }
+    if (!localVideo.videoWidth) return;
+    const t = performance.now();
+    console.log("[FaceStickers] Sending warm-up frame...");
+    await mesh.send({ image: localVideo });
+    console.log("[FaceStickers] Warm-up frame processed in", (performance.now()-t).toFixed(0), "ms");
+  } catch (e) {
+    console.warn("[FaceStickers] Warm-up failed", e);
+  }
+}
+
+const stickerSelect=document.getElementById("faceStickerSelect");
+const faceStickerButton=document.getElementById("faceStickerButton");
+const faceStickerMenu=document.getElementById("faceStickerMenu");
+function stickerMenuClose(){faceStickerMenu.hidden=true;faceStickerButton.setAttribute("aria-expanded","false");}
+function stickerMenuLabel(value){const b=faceStickerMenu.querySelector('[data-value="'+value+'"]');return b?b.textContent:"Off";}
+faceStickerButton.addEventListener("click",()=>{const open=faceStickerMenu.hidden;stickerMenuClose();if(open){faceStickerMenu.hidden=false;faceStickerButton.setAttribute("aria-expanded","true");}});
+faceStickerMenu.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;stickerSelect.value=b.dataset.value;faceStickerButton.textContent=b.textContent;stickerMenuClose();stickerSelect.dispatchEvent(new Event("change"));});
+document.addEventListener("click",e=>{if(!e.target.closest("#faceStickerPicker"))stickerMenuClose();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")stickerMenuClose();});
+
+const stickerStatus=document.getElementById("faceStickerStatus");
+const stickerPreview=document.getElementById("faceStickerPreview");
+const stickerPreviewCtx=stickerPreview.getContext("2d");
+const stickerComposite=document.createElement("canvas");
+const stickerCompositeCtx=stickerComposite.getContext("2d");
+let stickerOutgoingTrack=null,stickerCapture=null,stickerRaf=0,stickerFaceMesh=null;
+let stickerFace=null,stickerBusy=false,stickerLastDetect=0,stickerLoading=null;
+let stickerRunning=false;
+function stickerMessage(s){stickerStatus.textContent=s;}
+function stickerResize(){
+ const w=localVideo.videoWidth||640,h=localVideo.videoHeight||480;
+ if(stickerPreview.width!==w||stickerPreview.height!==h){
+  stickerPreview.width=stickerComposite.width=w;
+  stickerPreview.height=stickerComposite.height=h;
+ }
+}
+// Photo-derived transparent accessory artwork with landmark positioning.
+// Preloaded early so selection is instant.
+const faceArt={};
+const stickerNames=["thug","chaplin-hat","chaplin-moustache","aviator","wayfarer","shelby","steampunk","moustache","pirate-hat","pirate-eyepatch","cigar"];
+console.log("[FaceStickers] Preloading", stickerNames.length, "sticker images");
+for(const name of stickerNames){
+ const image=new Image();
+ image.onload=()=>console.log("[FaceStickers] Sticker ready:", name);
+ image.src="/assets/face-effects/"+name+".png?v=5730";
+ faceArt[name]=image;
+}
+let smoothFace=null;
+function stickerAsset(ctx,name,x,y,width,height){
+ const image=faceArt[name];if(image&&image.complete&&image.naturalWidth)ctx.drawImage(image,x,y,width,height);
+}
+function stickerDraw(ctx,face,mode,w,h){
+ if(!face||mode==="none")return;
+ const p=i=>({x:face[i].x*w,y:face[i].y*h});
+ const eyeL=p(33),eyeR=p(263),forehead=p(10),lip=p(13),chin=p(152);
+ const dx=eyeR.x-eyeL.x,dy=eyeR.y-eyeL.y;
+ const eyeDist=Math.hypot(dx,dy);if(eyeDist<12)return;
+ const cx=(eyeL.x+eyeR.x)/2,cy=(eyeL.y+eyeR.y)/2;
+ const roll=Math.atan2(dy,dx);
+ // Scale and follow tilt; slightly adjust for yaw based on relative nose position.
+ const nose=p(1);const yaw=Math.max(-.24,Math.min(.24,(nose.x-cx)/eyeDist));
+ ctx.save();ctx.translate(cx,cy);ctx.rotate(mode==="steampunk"?Math.max(-.18,Math.min(.18,roll*.42)):roll);ctx.scale(1-Math.abs(yaw)*.3,1);
+ const s=eyeDist;
+ if(["thug","aviator","wayfarer","steampunk"].includes(mode)){
+  const widths={thug:1.84,aviator:1.75,wayfarer:1.68,steampunk:1.68};
+  const heights={thug:.70,aviator:.72,wayfarer:.62,steampunk:.66};
+  const ww=s*widths[mode],hh=s*heights[mode];
+  stickerAsset(ctx,mode,-ww/2,mode==="steampunk"?-hh*.48:-hh*.40,ww,hh);
+ }
+ const headY=(forehead.y-cy)*Math.cos(roll)+(forehead.x-cx)*Math.sin(roll);
+ if(mode==="chaplin"){
+  stickerAsset(ctx,"chaplin-hat",-s*1.68,headY-s*1.25,s*3.35,s*1.68);
+  const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
+  stickerAsset(ctx,"chaplin-moustache",-s*.23,lipY-s*.31,s*.46,s*.22);
+ }
+ if(mode==="shelby")stickerAsset(ctx,"shelby",-s*1.47,headY-s*.95,s*2.94,s*1.39);
+
+if(mode==="moustache"){
+  const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
+  stickerAsset(ctx,"moustache",-s*.68,lipY-s*.22,s*1.36,s*.25);
+}
+
+ if(mode==="pirate"){
+  // Hat stays in the position that fit well
+  stickerAsset(ctx,"pirate-hat",-s*1.6,headY-s*1.05,s*3.2,s*1.65);
+  // Eyepatch covers exactly one eye (person's left / landmark 33)
+  const eyeLX=(eyeL.x-cx)*Math.cos(roll)+(eyeL.y-cy)*Math.sin(roll);
+  const eyeLY=(eyeL.y-cy)*Math.cos(roll)-(eyeL.x-cx)*Math.sin(roll);
+  const patchW=s*2.30, patchH=s*1.00;
+  stickerAsset(ctx,"pirate-eyepatch",eyeLX-patchW*.28-s*0.5,eyeLY-patchH*.45+s*.12,patchW,patchH);
+ }
+
+if(mode==="cigar"){
+  // Detect the midpoint between upper and lower lips
+  const upper=p(13), lower=p(14);
+
+  const lipX=(upper.x+lower.x)/2;
+  const lipY=(upper.y+lower.y)/2;
+
+  // Correct for face rotation
+  const mX=(lipX-cx)*Math.cos(roll)+(lipY-cy)*Math.sin(roll);
+  const mY=(lipY-cy)*Math.cos(roll)-(lipX-cx)*Math.sin(roll);
+
+  const cigarW=s*1.05;
+  const cigarH=s*.36;
+
+  ctx.save();
+  ctx.translate(mX,mY);
+
+  // Slight natural downward angle
+  ctx.rotate(0.12);
+
+  // Move cigar left so its right end meets the lips
+  stickerAsset(
+    ctx,
+    "cigar",
+    -cigarW*.95,
+    -cigarH*.5 + s*.15,
+    cigarW,
+    cigarH
+  );
+
+ 
+  // Realistic animated smoke from the burning cigar tip
+  const t = performance.now() / 1000;
+
+  for(let i = 0; i < 5; i++){
+    const phase = (t * 0.65 + i * 0.2) % 1;
+
+    // Smoke origin at the left tip
+    const px = -cigarW * 0.88 +
+      Math.sin(t * 1.8 + i) * s * 0.035;
+
+    // Smoke rises upward
+    const py = -phase * s * 0.65;
+
+    const rad = s * (0.018 + phase * 0.045);
+    const alpha = 0.20 * (1 - phase);
+
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(210,210,210,' + alpha + ')';
+    ctx.shadowBlur = s * 0.045;
+    ctx.shadowColor = 'rgba(220,220,220,0.35)';
+    ctx.arc(px, py, rad, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.shadowBlur = 0;
+
+  ctx.restore();
+}
+ctx.restore();
+}
+
+
+function stickerRender(t){
+ if(!stickerRunning)return;
+ stickerRaf=requestAnimationFrame(stickerRender);
+ if(!localStream||localVideo.readyState<2)return;
+ stickerResize();
+ const w=stickerPreview.width,h=stickerPreview.height;
+ stickerPreviewCtx.clearRect(0,0,w,h);
+ if(stickerSelect.value!=="none"){
+  stickerDraw(stickerPreviewCtx,stickerFace,stickerSelect.value,w,h);
+  stickerCompositeCtx.drawImage(localVideo,0,0,w,h);
+  stickerCompositeCtx.drawImage(stickerPreview,0,0);
+  if(stickerFaceMesh&&!stickerBusy&&t-stickerLastDetect>33){
+   stickerLastDetect=t;stickerBusy=true;
+   stickerFaceMesh.send({image:localVideo}).catch(()=>{}).finally(()=>{stickerBusy=false;});
+  }
+ }
+}
+function stickerReplaceTrack(track){
+ if(peer&&peer.connectionState!=="closed"){
+  const sender=peer.getSenders().find(s=>s.track&&s.track.kind==="video");
+  if(sender)sender.replaceTrack(track).catch(()=>stickerMessage("Couldn't send sticker to partner."));
+ }
+}
+async function stickerLoadMesh(){
+ if(stickerFaceMesh)return;
+ if(stickerLoading)return stickerLoading;
+ stickerLoading=(async()=>{
+  // Prefer the preloaded instance if available
+  let mesh = null;
+  try {
+    mesh = await preloadFaceMesh();
+  } catch(e) {
+    // Fallback to original on-demand load
+    if(!window.FaceMesh){
+     await new Promise((resolve,reject)=>{
+      const sc=document.createElement("script");
+      sc.src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js";
+      sc.onload=resolve;sc.onerror=()=>reject(new Error("Face tracking library unavailable"));
+      document.head.appendChild(sc);
+     });
+    }
+    mesh=new window.FaceMesh({locateFile:file=>"https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/"+file});
+    mesh.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:.5,minTrackingConfidence:.5});
+  }
+  if(!mesh) throw new Error("Failed to create FaceMesh");
+  mesh.onResults(result=>{const next=result.multiFaceLandmarks?.[0]||null;
+   if(!next){stickerFace=null;smoothFace=null;return;}
+   if(!smoothFace||smoothFace.length!==next.length)smoothFace=next.map(p=>({...p}));
+   else {
+    // Adaptive smoothing: respond quickly to large head movements while
+    // retaining a little filtering when the face is nearly stationary.
+    const anchor=1;
+    const movement=Math.hypot(next[anchor].x-smoothFace[anchor].x,
+                              next[anchor].y-smoothFace[anchor].y);
+    const alpha=movement>.018?.92:movement>.007?.78:.62;
+    const keep=1-alpha;
+    for(let i=0;i<next.length;i++){
+     smoothFace[i].x=smoothFace[i].x*keep+next[i].x*alpha;
+     smoothFace[i].y=smoothFace[i].y*keep+next[i].y*alpha;
+     smoothFace[i].z=smoothFace[i].z*keep+next[i].z*alpha;
+    }
+   }
+   stickerFace=smoothFace;});
+  stickerFaceMesh=mesh;
+ })();
+ try{await stickerLoading;}finally{stickerLoading=null;}
+}
+function startFaceEffects(){
+ if(stickerRunning)return;
+ stickerRunning=true;stickerRaf=requestAnimationFrame(stickerRender);
+ if(stickerSelect.value!=="none")stickerEnable();
+}
+async function stickerEnable(){
+ if(!localStream){stickerMessage("Start your camera first.");return;}
+ if(stickerSelect.value==="none"){stickerDisable();return;}
+ const selectTime = performance.now();
+ stickerMessage("Loading face tracking…");
+ try{
+  await stickerLoadMesh();
+  if(!localStream||stickerSelect.value==="none")return;
+  stickerResize();
+  if(!stickerOutgoingTrack){
+   stickerCapture=stickerComposite.captureStream(30);
+   stickerOutgoingTrack=stickerCapture.getVideoTracks()[0];
+  }
+  stickerReplaceTrack(stickerOutgoingTrack);
+  const elapsed = (performance.now() - selectTime).toFixed(0);
+  console.log("[FaceStickers] Sticker selection to ready:", elapsed, "ms");
+  stickerMessage("Sticker on · visible to your partner");
+ }catch(e){
+  console.error("[FaceStickers] Enable failed", e);
+  stickerMessage("Face tracking unavailable. Try again later.");
+  stickerSelect.value="none";if(faceStickerButton)faceStickerButton.textContent="Off";stickerDisable();
+ }
+}
+function stickerDisable(){
+ stickerFace=null;smoothFace=null;
+ if(localStream)stickerReplaceTrack(localStream.getVideoTracks()[0]);
+ stickerPreviewCtx.clearRect(0,0,stickerPreview.width,stickerPreview.height);
+ if(stickerOutgoingTrack){stickerOutgoingTrack.stop();stickerOutgoingTrack=null;}
+ stickerCapture=null;stickerMessage("");
+}
+function stopFaceEffects(){
+ stickerRunning=false;cancelAnimationFrame(stickerRaf);stickerDisable();
+}
+stickerSelect.addEventListener("change",()=>{
+ if(stickerSelect.value==="none")stickerDisable();
+ else if(localStream)stickerEnable();
+ else stickerMessage("Start your camera first.");
+});
+
+
+// v5.4.9 — brown Oxford shoe cursor with realistic shoe sole prints with alternating wide gait and a shoe cursor.
+(()=>{
+ const mq=matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)');
+ const shoeSVG=`<img src="/assets/shoe-cursor.png" alt="" draggable="false"/>`;
+ // Independent sole outlines and tread marks, inspired by conventional sneaker outsole patterns.
+ const soleSVG=`<svg viewBox="0 0 60 112" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs><clipPath id="galliToe"><path d="M30 2C12 2 5 14 5 34L8 68Q30 76 52 68L55 34C55 14 48 2 30 2Z"/></clipPath><clipPath id="galliHeel"><path d="M11 83Q30 76 49 83L51 94Q49 110 30 110Q11 110 9 94Z"/></clipPath></defs>
+<path d="M30 2C12 2 5 14 5 34L8 68Q30 76 52 68L55 34C55 14 48 2 30 2Z" fill="#101010"/>
+<g clip-path="url(#galliToe)" stroke="#ffe44a" stroke-width="2.6" fill="none">
+<path d="M13 2L18 14M25 0L26 12M38 0L36 12M49 5L44 17M5 18L17 23M55 18L43 23M4 31L17 33M56 31L43 33M4 44L18 43M56 44L42 43M6 56L19 54M54 56L41 54M9 67L20 64M51 67L40 64"/>
+<path d="M20 16Q30 11 40 16L38 60Q30 66 22 60Z" stroke-width="2"/>
+<path d="M22 20L30 26L38 20M21 29L30 35L39 29M21 38L30 44L39 38M22 47L30 53L38 47M23 56L30 61L37 56" stroke-width="2"/>
+<path d="M30 15L30 63" stroke-width="1.7"/>
+</g>
+<path d="M11 83Q30 76 49 83L51 94Q49 110 30 110Q11 110 9 94Z" fill="#101010"/>
+<g clip-path="url(#galliHeel)" stroke="#ffe44a" stroke-width="2.8" fill="none">
+<path d="M8 88L52 88M8 98L52 98M14 108L46 108M19 81L19 111M30 79L30 113M41 81L41 111"/>
+</g>
+</svg>`;
+ let shoe=null,last=null,step=0;const nodes=[];
+ const excluded='video,.video-box,#videoStage,button,a,input,select,textarea,[role="dialog"],.modal,.game-popup,.game-modal';
+ function allowed(x,y){const el=document.elementFromPoint(x,y);return el&&!el.closest(excluded);}
+ function cursor(){
+  if(shoe)return shoe;
+  shoe=document.createElement('div');shoe.className='galli-shoe-cursor';shoe.innerHTML=shoeSVG;
+  document.body.append(shoe);return shoe;
+ }
+ function footprint(x,y,angle){
+  if(!allowed(x,y))return;
+  const side=(step++%2===0?-1:1);
+  const r=angle*Math.PI/180;
+  const gap=22; // alternating left/right walking gait
+  const xx=x-Math.sin(r)*side*gap,yy=y+Math.cos(r)*side*gap;
+  const el=document.createElement('div');el.className='galli-shoeprint';el.innerHTML=soleSVG;
+  el.style.left=xx+'px';el.style.top=yy+'px';
+  el.style.transform=`translate(-50%,-50%) rotate(${angle+90+side*8}deg) scaleX(${side})`;
+  document.body.append(el);nodes.push(el);
+  if(nodes.length>8)nodes.shift().remove();
+  el.addEventListener('animationend',()=>{el.remove();const i=nodes.indexOf(el);if(i>=0)nodes.splice(i,1)},{once:true});
+ }
+ document.addEventListener('pointermove',e=>{
+  if(!mq.matches||e.pointerType!=='mouse')return;
+  const s=cursor();s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';s.style.display='block';
+  const pt={x:e.clientX,y:e.clientY};
+  if(!last){last=pt;return;}
+  const dx=pt.x-last.x,dy=pt.y-last.y;
+  if(Math.hypot(dx,dy)<58)return;
+  footprint(pt.x,pt.y,Math.atan2(dy,dx)*180/Math.PI);last=pt;
+ },{passive:true});
+ document.addEventListener('pointerdown',e=>{
+  if(!mq.matches||e.pointerType!=='mouse'||e.button!==0)return;
+  const s=cursor();s.classList.remove('stomp');void s.offsetWidth;s.classList.add('stomp');
+ },{passive:true});
+ document.addEventListener('pointerout',e=>{if(!e.relatedTarget&&shoe)shoe.style.display='none';});
+ window.addEventListener('blur',()=>{last=null;if(shoe)shoe.style.display='none';});
+})();
+</script>
+</body>
+</html>
