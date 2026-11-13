@@ -2376,7 +2376,7 @@ function stickerDraw(ctx,face,mode,w,h){
   const eyeLX=(eyeL.x-cx)*Math.cos(roll)+(eyeL.y-cy)*Math.sin(roll);
   const eyeLY=(eyeL.y-cy)*Math.cos(roll)-(eyeL.x-cx)*Math.sin(roll);
   const patchW=s*2.30, patchH=s*1.00;
-  stickerAsset(ctx,"pirate-eyepatch",eyeLX-patchW*.28-s*0.5,eyeLY-patchH*.45,patchW,patchH);
+  stickerAsset(ctx,"pirate-eyepatch",eyeLX-patchW*.28-s*0.5,eyeLY-patchH*.45+s*.05,patchW,patchH);
  }
 
 if(mode==="cigar"){
