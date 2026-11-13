@@ -2365,10 +2365,12 @@ function stickerDraw(ctx,face,mode,w,h){
   stickerAsset(ctx,"chaplin-moustache",-s*.23,lipY-s*.31,s*.46,s*.22);
  }
  if(mode==="shelby")stickerAsset(ctx,"shelby",-s*1.47,headY-s*.95,s*2.94,s*1.39);
- if(mode==="moustache"){
+
+if(mode==="moustache"){
   const lipY=(lip.y-cy)*Math.cos(roll)+(lip.x-cx)*Math.sin(roll);
-  stickerAsset(ctx,"moustache",-s*.68,lipY-s*.22,s*1.36,s*.384);
- }
+  stickerAsset(ctx,"moustache",-s*.68,lipY-s*.22,s*1.36,s*.25);
+}
+
  if(mode==="pirate"){
   // Hat stays in the position that fit well
   stickerAsset(ctx,"pirate-hat",-s*1.6,headY-s*1.05,s*3.2,s*1.65);
