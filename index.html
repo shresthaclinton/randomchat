@@ -820,47 +820,93 @@ footer { line-height:1.8; }
 .galli-seo p{margin:0 0 10px;color:#2a2a2a}
 .galli-seo a{color:#126e32}
 
+/* V5.9: GET PRO beside the intro heading */
 
-/* V5.8: Get Pro sits outside the video frames, above the user's camera.
-   Its visual size is doubled and uses a rounded-rectangle shape. */
-#videoStage{
-  position:relative!important;
-  padding-top:68px!important;
+#galliIntroBanner {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 18px;
+  align-items: start;
+  position: relative !important;
 }
-#videoStage > .galli-get-pro{
-  position:absolute!important;
-  top:0!important;
-  right:0!important;
-  left:auto!important;
-  z-index:200!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:12px!important;
-  min-height:56px!important;
-  padding:18px 24px!important;
-  border:2px solid #fff0a6!important;
-  border-radius:12px!important;
-  background:linear-gradient(135deg,#ffe979,#ffbf28)!important;
-  color:#211707!important;
-  box-shadow:0 4px 14px #0008!important;
-  font-size:22px!important;
-  line-height:1!important;
-  font-weight:950!important;
-  letter-spacing:.6px!important;
+
+#galliIntroBanner > .tagline {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  margin: 0 0 12px !important;
 }
-#videoStage > .galli-get-pro:hover{
-  transform:translateY(-2px);
-  box-shadow:0 7px 18px #0009!important;
+
+#galliIntroBanner > .galli-get-pro {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  justify-self: end;
+  z-index: 200 !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: 12px !important;
+  min-height: 56px !important;
+  padding: 18px 24px !important;
+  margin: 0 !important;
+
+  border: 2px solid #fff0a6 !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #ffe979, #ffbf28) !important;
+  color: #211707 !important;
+
+  box-shadow: 0 4px 14px #0008 !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: .6px !important;
+  white-space: nowrap;
 }
-@media(max-width:600px){
-  #videoStage{padding-top:64px!important}
-  #videoStage > .galli-get-pro{
-    min-height:52px!important;
-    padding:16px 20px!important;
-    font-size:20px!important;
+
+#galliIntroBanner > .galli-get-pro:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 18px #0009 !important;
+}
+
+#galliIntroBanner > .subtitle {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0 0 20px !important;
+}
+
+/* Remove extra space above video boxes */
+#videoStage {
+  padding-top: 0 !important;
+}
+
+@media (max-width: 600px) {
+  #galliIntroBanner {
+    column-gap: 8px;
+  }
+
+  #galliIntroBanner > .tagline {
+    font-size: clamp(19px, 5.4vw, 26px) !important;
+    letter-spacing: -.7px;
+  }
+
+  #galliIntroBanner > .galli-get-pro {
+    min-height: 46px !important;
+    padding: 12px 13px !important;
+    font-size: 16px !important;
+    gap: 6px !important;
   }
 }
+
 
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
