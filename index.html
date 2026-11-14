@@ -819,6 +819,49 @@ footer { line-height:1.8; }
 .galli-seo h2{font-size:20px;margin:22px 0 8px}
 .galli-seo p{margin:0 0 10px;color:#2a2a2a}
 .galli-seo a{color:#126e32}
+
+
+/* V5.8: Get Pro sits outside the video frames, above the user's camera.
+   Its visual size is doubled and uses a rounded-rectangle shape. */
+#videoStage{
+  position:relative!important;
+  padding-top:68px!important;
+}
+#videoStage > .galli-get-pro{
+  position:absolute!important;
+  top:0!important;
+  right:0!important;
+  left:auto!important;
+  z-index:200!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:12px!important;
+  min-height:56px!important;
+  padding:18px 24px!important;
+  border:2px solid #fff0a6!important;
+  border-radius:12px!important;
+  background:linear-gradient(135deg,#ffe979,#ffbf28)!important;
+  color:#211707!important;
+  box-shadow:0 4px 14px #0008!important;
+  font-size:22px!important;
+  line-height:1!important;
+  font-weight:950!important;
+  letter-spacing:.6px!important;
+}
+#videoStage > .galli-get-pro:hover{
+  transform:translateY(-2px);
+  box-shadow:0 7px 18px #0009!important;
+}
+@media(max-width:600px){
+  #videoStage{padding-top:64px!important}
+  #videoStage > .galli-get-pro{
+    min-height:52px!important;
+    padding:16px 20px!important;
+    font-size:20px!important;
+  }
+}
+
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 <style>
@@ -893,6 +936,9 @@ footer { line-height:1.8; }
   </div>
   <div id="galliMobileAdPosition" aria-label="Mobile advertising position" hidden></div>
   <div class="videos" id="videoStage">
+    <button type="button" class="galli-get-pro" id="galliGetProBtn" aria-label="Get Online Galli Pro">
+      👑 GET PRO
+    </button>
 
     <div class="video-box">
       <video id="remoteVideo" autoplay playsinline></video>
@@ -909,9 +955,6 @@ footer { line-height:1.8; }
 
     <div class="video-box">
       <video id="localVideo" autoplay muted playsinline></video>
-      <button type="button" class="galli-get-pro" id="galliGetProBtn" aria-label="Get Online Galli Pro">
-        👑 GET PRO
-      </button>
       <canvas id="faceStickerPreview" aria-hidden="true"></canvas>
       <div class="reaction-in-video" id="localReaction" aria-live="polite"></div>
       <div class="placeholder" id="localPlaceholder">
