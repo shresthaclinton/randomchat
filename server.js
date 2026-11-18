@@ -1006,6 +1006,31 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("nsfw-local-violation", async (data = {}) => {
+    const clientId = socket.data.clientId;
+    if (!clientId) return;
+    const until = Date.now() + 365 * 24 * 60 * 60 * 1000; // 1 year pending review
+    bannedIds.set(clientId, until);
+    await pool.query(`INSERT INTO moderation_bans (client_id, until_at) VALUES ($1, $2) ON CONFLICT (client_id) DO UPDATE SET until_at = EXCLUDED.until_at`, [clientId, new Date(until)]);
+    await pool.query(`INSERT INTO moderation_reports (reason, reporter, reported, reported_client_id, description, status) VALUES ($1, $2, $3, $4, $5, $6)`,
+      ["NSFW auto-detection (local)", "system", clientId, clientId, JSON.stringify(data), "confirmed"]);
+    socket.emit("moderation-warning", "Access suspended due to community guidelines violation.");
+    socket.disconnect(true);
+    console.log("NSFW_LOCAL_BAN", clientId);
+  });
+
+  socket.on("nsfw-remote-report", async (data = {}) => {
+    const partner = partners.get(socket.id);
+    if (!partner) return;
+    const other = io.sockets.sockets.get(partner);
+    if (!other || !other.data.clientId) return;
+    const reportedId = other.data.clientId;
+    await pool.query(`INSERT INTO moderation_reports (reason, reporter, reported, reported_client_id, reporter_client_id, description, status) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      ["NSFW auto-detection (remote)", socket.data.clientId || "unknown", reportedId, reportedId, socket.data.clientId, JSON.stringify(data), "pending"]);
+    console.log("NSFW_REMOTE_REPORT", reportedId);
+    // Optional: temporary protective disconnect already handled client-side
+  });
+
   socket.on("disconnect", () => {
     socket.data.ready = false;
     leavePartner(socket);
