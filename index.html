@@ -2777,3 +2777,154 @@ stickerSelect.addEventListener("change",()=>{
 </script>
 </body>
 </html>
+
+<style>
+@media (max-width: 600px) {
+  /* Hide original reaction buttons and mute toggle on mobile */
+  .galli-inline-reactions .v4-reactions,
+  #muteReactionsBtn { display: none !important; }
+
+  /* Hide original badge select */
+  #teamBadgeSelect,
+  .galli-badge-select-label { display: none !important; }
+
+  /* Compact reaction trigger */
+  .mobile-reactions-btn {
+    background: #333;
+    color: #fff;
+    border: 1px solid #777;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .mobile-reactions-popup {
+    position: absolute;
+    bottom: 48px;
+    left: 0;
+    background: #1a1a1a;
+    border: 2px solid #ffe247;
+    border-radius: 12px;
+    padding: 8px;
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    z-index: 1000;
+    max-width: 90vw;
+  }
+  .mobile-reactions-popup.show { display: flex; }
+  .mobile-reactions-popup button {
+    font-size: 24px;
+    min-width: 40px;
+    min-height: 40px;
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 8px;
+    color: #fff;
+  }
+
+  /* Badge popup */
+  .mobile-support-btn {
+    background: #fff;
+    color: #111;
+    border: 0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 700;
+  }
+  .mobile-badge-popup {
+    position: absolute;
+    bottom: 48px;
+    left: 0;
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 1000;
+    max-height: 50vh;
+    overflow-y: auto;
+    min-width: 160px;
+  }
+  .mobile-badge-popup.show { display: flex; }
+  .mobile-badge-popup button {
+    background: #f5f5f5;
+    border: 0;
+    padding: 8px 12px;
+    text-align: left;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .mobile-badge-popup button:hover { background: #ffe247; }
+
+  /* Place custom badge beside support */
+  .galli-upload-label { margin-left: 6px; }
+}
+</style>
+
+<script>
+(function() {
+  if (window.innerWidth > 600) return; // mobile only
+
+  // Reactions compact button
+  const reactionContainer = document.querySelector('.galli-inline-reactions');
+  if (reactionContainer) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'mobile-reactions-btn';
+    btn.textContent = '😊 Reactions';
+    const popup = document.createElement('div');
+    popup.className = 'mobile-reactions-popup';
+
+    // Move existing reaction buttons into popup
+    const choices = document.getElementById('reactionChoices');
+    if (choices) {
+      Array.from(choices.children).forEach(child => popup.appendChild(child));
+    }
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      popup.classList.toggle('show');
+    });
+    document.addEventListener('click', () => popup.classList.remove('show'));
+
+    reactionContainer.insertBefore(btn, reactionContainer.firstChild);
+    reactionContainer.appendChild(popup);
+  }
+
+  // Badge compact button
+  const supportLabel = document.querySelector('.galli-badge-select-label');
+  const badgeSelect = document.getElementById('teamBadgeSelect');
+  if (supportLabel && badgeSelect) {
+    const supportBtn = document.createElement('button');
+    supportBtn.type = 'button';
+    supportBtn.className = 'mobile-support-btn';
+    supportBtn.textContent = '🏅 My Support';
+    const badgePopup = document.createElement('div');
+    badgePopup.className = 'mobile-badge-popup';
+
+    // Populate from select options
+    Array.from(badgeSelect.options).forEach(opt => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = opt.textContent;
+      b.addEventListener('click', () => {
+        badgeSelect.value = opt.value;
+        badgeSelect.dispatchEvent(new Event('change'));
+        badgePopup.classList.remove('show');
+      });
+      badgePopup.appendChild(b);
+    });
+
+    supportBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      badgePopup.classList.toggle('show');
+    });
+    document.addEventListener('click', () => badgePopup.classList.remove('show'));
+
+    supportLabel.parentNode.insertBefore(supportBtn, supportLabel);
+    supportLabel.parentNode.appendChild(badgePopup);
+  }
+})();
+</script>
