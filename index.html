@@ -548,7 +548,7 @@ footer { line-height:1.8; }
 .galli-face-effects{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:8px 0 6px;font-weight:700}
 .galli-face-effects select{background:#fff;color:#111;border-radius:8px;padding:8px;max-width:185px}
 #faceStickerStatus{font-size:12px;color:#f7d96b;font-weight:400}
-#faceStickerPreview{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;transform:scaleX(-1);object-fit:fill}
+#faceStickerPreview{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;transform:scaleX(-1);object-fit:cover}
 .galli-sticker-picker{position:relative;display:inline-block}
 .galli-sticker-picker select{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 #faceStickerButton{background:#fff;color:#111;border:0;border-radius:8px;padding:8px 10px;font-weight:700;max-width:160px;text-align:left}
@@ -2513,7 +2513,7 @@ function stickerDraw(ctx,face,mode,w,h){
  // Scale and follow tilt; slightly adjust for yaw based on relative nose position.
  const nose=p(1);const yaw=Math.max(-.24,Math.min(.24,(nose.x-cx)/eyeDist));
  ctx.save();ctx.translate(cx,cy);ctx.rotate(mode==="steampunk"?Math.max(-.18,Math.min(.18,roll*.42)):roll);ctx.scale(1-Math.abs(yaw)*.3,1);
- const s=eyeDist;
+ const s=eyeDist * (window.innerWidth <= 600 ? 0.85 : 1);
  if(["thug","aviator","wayfarer","steampunk"].includes(mode)){
   const widths={thug:1.84,aviator:1.75,wayfarer:1.68,steampunk:1.68};
   const heights={thug:.70,aviator:.72,wayfarer:.62,steampunk:.66};
