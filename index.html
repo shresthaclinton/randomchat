@@ -2779,8 +2779,8 @@ stickerSelect.addEventListener("change",()=>{
 (function() {
   let model = null, localInterval = null, remoteInterval = null;
   let localStrikes = 0, remoteStrikes = 0;
-  const STRIKE_THRESHOLD = 2, CHECK_INTERVAL = 2000;
-  const PORN_THRESHOLD = 0.65, HENTAI_THRESHOLD = 0.60;
+  const STRIKE_THRESHOLD = 1, CHECK_INTERVAL = 1500;
+  const PORN_THRESHOLD = 0.40, HENTAI_THRESHOLD = 0.35;
   function log(msg, ...a) { console.log("%c[NSFW]", "color:#ff6b6b;font-weight:bold", msg, ...a); }
   async function loadModel() {
     if (model) return model;
@@ -2794,7 +2794,13 @@ stickerSelect.addEventListener("change",()=>{
     if (!model || !video || video.readyState < 2 || !video.videoWidth) return;
     const c = document.createElement("canvas"); c.width = c.height = 224;
     const ctx = c.getContext("2d");
-    try { ctx.drawImage(video, 0, 0, 224, 224); } catch(e) { return; }
+    try {
+      // Center crop for better face/body focus
+      const vw = video.videoWidth, vh = video.videoHeight;
+      const size = Math.min(vw, vh);
+      const sx = (vw - size) / 2, sy = (vh - size) / 2;
+      ctx.drawImage(video, sx, sy, size, size, 0, 0, 224, 224);
+    } catch(e) { return; }
     model.classify(c).then(preds => {
       const porn = preds.find(p => p.className === "Porn");
       const hentai = preds.find(p => p.className === "Hentai");
