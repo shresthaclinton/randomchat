@@ -1252,7 +1252,7 @@ footer { line-height:1.8; }
 <script src="/nsfw-detection.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket = io();
+const socket = io(); window.socket = socket;
 const entryGate = document.getElementById("entryGate");
 const adultConsent = document.getElementById("adultConsent");
 const confirmEntryBtn = document.getElementById("confirmEntryBtn");
@@ -1267,8 +1267,8 @@ confirmEntryBtn.addEventListener("click", () => {
   startBtn.focus();
 });
 
-const localVideo = document.getElementById("localVideo");
-const remoteVideo = document.getElementById("remoteVideo");
+const localVideo = document.getElementById("localVideo"); window.localVideo = localVideo;
+const remoteVideo = document.getElementById("remoteVideo"); window.remoteVideo = remoteVideo;
 const localPlaceholder = document.getElementById("localPlaceholder");
 const remotePlaceholder = document.getElementById("remotePlaceholder");
 
@@ -1300,7 +1300,7 @@ function requestMatch() {
 
 const statusBox = document.getElementById("status");
 
-let localStream = null;
+let localStream = null; window.localStream = localStream;
 let peer = null;
 let partnerId = null;
 let isMuted = false;
@@ -2573,7 +2573,7 @@ if(mode==="cigar"){
     cigarH
   );
 
- 
+
   // Realistic animated smoke from the burning cigar tip
   const t = performance.now() / 1000;
 
