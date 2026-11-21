@@ -2785,7 +2785,7 @@ stickerSelect.addEventListener("change",()=>{
   async function loadModel() {
     if (model) return model;
     if (typeof nsfwjs === "undefined") { log("nsfwjs missing"); return null; }
-    try { log("Loading model..."); model = await nsfwjs.load("https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@master/example/nsfw_demo/public/model/"); log("Model loaded"); return model; }
+    try { log("Loading model..."); model = await nsfwjs.load("https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@master/models/mobilenet_v2/"); log("Model loaded"); return model; }
     catch (e) { log("Model failed", e); return null; }
   }
   function getLV() { return window.localVideo || document.getElementById("localVideo"); }
