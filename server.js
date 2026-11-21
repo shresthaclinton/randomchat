@@ -351,13 +351,13 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === "GET" && url.pathname === "/sitemap.xml") {
     const base = (process.env.PUBLIC_BASE_URL || "https://onlinegalli.com").replace(/\/$/, "");
-    const urls = ["/", "/about", "/privacy", "/terms", "/guidelines"].map(route => `  <url><loc>${base}${route}</loc></url>`).join("\n");
+    const urls = ["/", "/about", "/how-to-use", "/safety", "/vs-omegle", "/nepali-video-chat", "/privacy", "/terms", "/guidelines"].map(route => `  <url><loc>${base}${route}</loc></url>`).join("\n");
     const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
     res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" });
     res.end(body);
     return;
   }
-  const policyPages = { "/about": "about.html", "/privacy": "privacy.html", "/terms": "terms.html", "/guidelines": "guidelines.html" };
+  const policyPages = { "/about": "about.html", "/privacy": "privacy.html", "/terms": "terms.html", "/guidelines": "guidelines.html", "/how-to-use": "how-to-use.html", "/safety": "safety.html", "/vs-omegle": "vs-omegle.html", "/nepali-video-chat": "nepali-video-chat.html" };
   if (req.method === "GET" && policyPages[url.pathname]) {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
     fs.createReadStream(path.join(__dirname, policyPages[url.pathname])).pipe(res);
