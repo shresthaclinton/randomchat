@@ -35,9 +35,9 @@
       const porn = predictions.find(p => p.className === "Porn");
       const hentai = predictions.find(p => p.className === "Hentai");
       const sexy = predictions.find(p => p.className === "Sexy");
-      console.log("[NSFW]", isLocal ? "LOCAL" : "REMOTE", 
+      console.log("[NSFW]", isLocal ? "LOCAL" : "REMOTE",
         predictions.map(p => p.className + ":" + (p.probability*100).toFixed(0) + "%").join(" "));
-      
+
       const isViolation = (porn && porn.probability > PORN_THRESHOLD) ||
                           (hentai && hentai.probability > HENTAI_THRESHOLD);
       if (isViolation) {
