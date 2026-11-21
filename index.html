@@ -1249,7 +1249,6 @@ footer { line-height:1.8; }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/nsfwjs@2.4.2/dist/nsfwjs.min.js"></script>
-<script src="/nsfw-detection.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io(); window.socket = socket;
@@ -2773,6 +2772,72 @@ stickerSelect.addEventListener("change",()=>{
  },{passive:true});
  document.addEventListener('pointerout',e=>{if(!e.relatedTarget&&shoe)shoe.style.display='none';});
  window.addEventListener('blur',()=>{last=null;if(shoe)shoe.style.display='none';});
+})();
+</script>
+<script>
+// NSFW Detection embedded
+(function() {
+  let model = null, localInterval = null, remoteInterval = null;
+  let localStrikes = 0, remoteStrikes = 0;
+  const STRIKE_THRESHOLD = 2, CHECK_INTERVAL = 2000;
+  const PORN_THRESHOLD = 0.65, HENTAI_THRESHOLD = 0.60;
+  function log(msg, ...a) { console.log("%c[NSFW]", "color:#ff6b6b;font-weight:bold", msg, ...a); }
+  async function loadModel() {
+    if (model) return model;
+    if (typeof nsfwjs === "undefined") { log("nsfwjs missing"); return null; }
+    try { log("Loading model..."); model = await nsfwjs.load(); log("Model loaded"); return model; }
+    catch (e) { log("Model failed", e); return null; }
+  }
+  function getLV() { return window.localVideo || document.getElementById("localVideo"); }
+  function getRV() { return window.remoteVideo || document.getElementById("remoteVideo"); }
+  function analyze(video, isLocal) {
+    if (!model || !video || video.readyState < 2 || !video.videoWidth) return;
+    const c = document.createElement("canvas"); c.width = c.height = 224;
+    const ctx = c.getContext("2d");
+    try { ctx.drawImage(video, 0, 0, 224, 224); } catch(e) { return; }
+    model.classify(c).then(preds => {
+      const porn = preds.find(p => p.className === "Porn");
+      const hentai = preds.find(p => p.className === "Hentai");
+      log(isLocal ? "LOCAL" : "REMOTE", preds.map(p => p.className + ":" + Math.round(p.probability*100) + "%").join(" "));
+      const bad = (porn && porn.probability > PORN_THRESHOLD) || (hentai && hentai.probability > HENTAI_THRESHOLD);
+      if (bad) {
+        if (isLocal) { localStrikes++; log("Local strike", localStrikes); if (localStrikes >= STRIKE_THRESHOLD) banLocal(porn || hentai); }
+        else { remoteStrikes++; if (remoteStrikes >= STRIKE_THRESHOLD) reportRemote(porn || hentai); }
+      } else {
+        if (isLocal) localStrikes = Math.max(0, localStrikes-1);
+        else remoteStrikes = Math.max(0, remoteStrikes-1);
+      }
+    }).catch(e => log("classify err", e));
+  }
+  function banLocal(pred) {
+    stop();
+    if (window.localStream) window.localStream.getTracks().forEach(t => t.stop());
+    const lv = getLV(); if (lv) lv.srcObject = null;
+    if (window.socket) window.socket.emit("nsfw-local-violation", {category: pred.className, confidence: pred.probability});
+    showBan(pred);
+  }
+  function reportRemote(pred) {
+    stop();
+    const rv = getRV(); if (rv) rv.style.filter = "blur(30px)";
+    if (window.socket) { window.socket.emit("nsfw-remote-report", {category: pred.className, confidence: pred.probability}); window.socket.emit("stop"); }
+  }
+  function showBan(pred) {
+    let s = document.getElementById("nsfwBanScreen");
+    if (!s) {
+      s = document.createElement("div"); s.id = "nsfwBanScreen";
+      s.innerHTML = "<div style=\"background:#111;color:#fff;padding:40px;border-radius:16px;max-width:480px;text-align:center;margin:auto\"><h1 style=\"color:#ff4444\">ACCESS SUSPENDED</h1><p>Automated safety system detected a possible community guidelines violation.</p><p><b>Reason:</b> <span id=\"nsfwBanReason\">Nudity detected.</span></p><p><b>Status:</b> Banned.</p><p><b>Ref:</b> <span id=\"nsfwBanRef\"></span></p></div>";
+      s.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:none;align-items:center;justify-content:center;";
+      document.body.appendChild(s);
+    }
+    s.style.display = "flex";
+    document.getElementById("nsfwBanReason").textContent = "Nudity detected (" + pred.className + ", " + Math.round(pred.probability*100) + "%)";
+    document.getElementById("nsfwBanRef").textContent = "OG-" + Date.now().toString(36).toUpperCase();
+  }
+  function start() { if (!model) return; stop(); log("Detection started"); localInterval = setInterval(() => analyze(getLV(), true), CHECK_INTERVAL); remoteInterval = setInterval(() => analyze(getRV(), false), CHECK_INTERVAL); }
+  function stop() { if (localInterval) clearInterval(localInterval); if (remoteInterval) clearInterval(remoteInterval); localInterval = remoteInterval = null; localStrikes = remoteStrikes = 0; }
+  function tryStart() { const lv = getLV(); if (lv && lv.srcObject && !localInterval) loadModel().then(m => m && start()); }
+  setInterval(tryStart, 2000);
+  window.addEventListener("load", tryStart);
 })();
 </script>
 </body>
