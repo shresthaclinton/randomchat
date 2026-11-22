@@ -357,7 +357,7 @@ const server = http.createServer(async (req, res) => {
     res.end(body);
     return;
   }
-  
+
   if (req.method === "GET" && url.pathname === "/seo-style.css") {
     const cssPath = path.join(__dirname, "seo-style.css");
     fs.stat(cssPath, (err, stat) => {
