@@ -2785,7 +2785,7 @@ stickerSelect.addEventListener("change",()=>{
   async function loadModel() {
     if (model) return model;
     if (typeof nsfwjs === "undefined") { log("nsfwjs missing"); return null; }
-    try { log("Loading model..."); model = await nsfwjs.load("https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@master/models/mobilenet_v2/"); log("Model loaded"); return model; }
+    try { log("Loading model..."); model = await nsfwjs.load(); log("Model loaded"); return model; }
     catch (e) { log("Model failed", e); return null; }
   }
   function getLV() { return window.localVideo || document.getElementById("localVideo"); }
@@ -2841,7 +2841,13 @@ stickerSelect.addEventListener("change",()=>{
   }
   function start() { if (!model) return; stop(); log("Detection started"); localInterval = setInterval(() => analyze(getLV(), true), CHECK_INTERVAL); remoteInterval = setInterval(() => analyze(getRV(), false), CHECK_INTERVAL); }
   function stop() { if (localInterval) clearInterval(localInterval); if (remoteInterval) clearInterval(remoteInterval); localInterval = remoteInterval = null; localStrikes = remoteStrikes = 0; }
-  function tryStart() { const lv = getLV(); if (lv && lv.srcObject && !localInterval) loadModel().then(m => m && start()); }
+  function tryStart() {
+    const lv = getLV();
+    if (lv && lv.srcObject && !localInterval) {
+      log("Camera detected, starting detection...");
+      loadModel().then(m => { if (m) start(); else log("Model not ready"); });
+    }
+  }
   setInterval(tryStart, 2000);
   window.addEventListener("load", tryStart);
 })();
