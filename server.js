@@ -357,6 +357,17 @@ const server = http.createServer(async (req, res) => {
     res.end(body);
     return;
   }
+  
+  if (req.method === "GET" && url.pathname === "/seo-style.css") {
+    const cssPath = path.join(__dirname, "seo-style.css");
+    fs.stat(cssPath, (err, stat) => {
+      if (err || !stat.isFile()) { res.writeHead(404); res.end("Not found"); return; }
+      res.writeHead(200, { "Content-Type": "text/css; charset=utf-8", "Cache-Control": "public, max-age=3600" });
+      fs.createReadStream(cssPath).pipe(res);
+    });
+    return;
+  }
+
   const policyPages = { "/about": "about.html", "/privacy": "privacy.html", "/terms": "terms.html", "/guidelines": "guidelines.html", "/how-to-use": "how-to-use.html", "/safety": "safety.html", "/vs-omegle": "vs-omegle.html", "/nepali-video-chat": "nepali-video-chat.html" };
   if (req.method === "GET" && policyPages[url.pathname]) {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
