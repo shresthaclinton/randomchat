@@ -368,6 +368,22 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+
+  // Serve self-hosted NSFW model files
+  if (req.method === "GET" && url.pathname.startsWith("/models/nsfw/")) {
+    const fileName = url.pathname.slice("/models/nsfw/".length);
+    if (!/^[a-zA-Z0-9._-]+$/.test(fileName)) { res.writeHead(400); res.end("Bad request"); return; }
+    const modelPath = path.join(__dirname, "models", "nsfw", fileName);
+    fs.stat(modelPath, (err, stat) => {
+      if (err || !stat.isFile()) { res.writeHead(404); res.end("Not found"); return; }
+      const ext = path.extname(fileName);
+      const type = ext === ".json" ? "application/json" : "application/octet-stream";
+      res.writeHead(200, { "Content-Type": type, "Content-Length": stat.size, "Cache-Control": "public, max-age=86400", "Access-Control-Allow-Origin": "*" });
+      fs.createReadStream(modelPath).pipe(res);
+    });
+    return;
+  }
+
   const policyPages = { "/about": "about.html", "/privacy": "privacy.html", "/terms": "terms.html", "/guidelines": "guidelines.html", "/how-to-use": "how-to-use.html", "/safety": "safety.html", "/vs-omegle": "vs-omegle.html", "/nepali-video-chat": "nepali-video-chat.html" };
   if (req.method === "GET" && policyPages[url.pathname]) {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
