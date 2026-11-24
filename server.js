@@ -1052,10 +1052,18 @@ io.on("connection", (socket) => {
     const other = io.sockets.sockets.get(partner);
     if (!other || !other.data.clientId) return;
     const reportedId = other.data.clientId;
+    const confidence = typeof data.confidence === "number" ? data.confidence : 0;
     await pool.query(`INSERT INTO moderation_reports (reason, reporter, reported, reported_client_id, reporter_client_id, description, status) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      ["NSFW auto-detection (remote)", socket.data.clientId || "unknown", reportedId, reportedId, socket.data.clientId, JSON.stringify(data), "pending"]);
-    console.log("NSFW_REMOTE_REPORT", reportedId);
-    // Optional: temporary protective disconnect already handled client-side
+      ["NSFW auto-detection (remote)", socket.data.clientId || "unknown", reportedId, reportedId, socket.data.clientId, JSON.stringify(data), confidence > 0.6 ? "confirmed" : "pending"]);
+    // Temporary ban for high-confidence remote reports (24 hours)
+    if (confidence > 0.55) {
+      const until = Date.now() + 24 * 60 * 60 * 1000;
+      bannedIds.set(reportedId, until);
+      await pool.query(`INSERT INTO moderation_bans (client_id, until_at) VALUES ($1, $2) ON CONFLICT (client_id) DO UPDATE SET until_at = GREATEST(moderation_bans.until_at, EXCLUDED.until_at)`, [reportedId, new Date(until)]);
+      other.emit("moderation-warning", "Access temporarily suspended due to community guidelines violation.");
+      other.disconnect(true);
+    }
+    console.log("NSFW_REMOTE_REPORT", reportedId, "confidence", confidence);
   });
 
   socket.on("disconnect", () => {

@@ -2775,72 +2775,146 @@ stickerSelect.addEventListener("change",()=>{
 })();
 </script>
 <script>
-// NSFW Detection embedded
+// NSFW Detection - multi-region sampling for better genital detection
 (function() {
-  let model = null, localInterval = null, remoteInterval = null;
+  let model = null;
+  let localInterval = null, remoteInterval = null;
+  let localBusy = false, remoteBusy = false;
   let localStrikes = 0, remoteStrikes = 0;
-  const STRIKE_THRESHOLD = 1, CHECK_INTERVAL = 1500;
-  const PORN_THRESHOLD = 0.40, HENTAI_THRESHOLD = 0.35;
+  const STRIKE_THRESHOLD = 2;
+  const CHECK_INTERVAL = 1800;
+  const PORN_THRESHOLD = 0.35;
+  const HENTAI_THRESHOLD = 0.30;
+
   function log(msg, ...a) { console.log("%c[NSFW]", "color:#ff6b6b;font-weight:bold", msg, ...a); }
+
   async function loadModel() {
     if (model) return model;
     if (typeof nsfwjs === "undefined") { log("nsfwjs missing"); return null; }
-    try { log("Loading model..."); model = await nsfwjs.load("/models/nsfw/"); log("Model loaded"); return model; }
-    catch (e) { log("Model failed", e); return null; }
+    try {
+      log("Loading model...");
+      model = await nsfwjs.load("/models/nsfw/");
+      log("Model loaded");
+      return model;
+    } catch (e) {
+      log("Model failed", e);
+      return null;
+    }
   }
+
   function getLV() { return window.localVideo || document.getElementById("localVideo"); }
   function getRV() { return window.remoteVideo || document.getElementById("remoteVideo"); }
-  function analyze(video, isLocal) {
-    if (!model || !video || video.readyState < 2 || !video.videoWidth) return;
-    const c = document.createElement("canvas"); c.width = c.height = 224;
+
+  function sampleRegions(video) {
+    const regions = [];
+    const vw = video.videoWidth, vh = video.videoHeight;
+    if (!vw || !vh) return regions;
+    const c = document.createElement("canvas");
+    c.width = c.height = 224;
     const ctx = c.getContext("2d");
-    try {
-      // Center crop for better face/body focus
-      const vw = video.videoWidth, vh = video.videoHeight;
-      const size = Math.min(vw, vh);
-      const sx = (vw - size) / 2, sy = (vh - size) / 2;
-      ctx.drawImage(video, sx, sy, size, size, 0, 0, 224, 224);
-    } catch(e) { return; }
-    model.classify(c).then(preds => {
-      const porn = preds.find(p => p.className === "Porn");
-      const hentai = preds.find(p => p.className === "Hentai");
-      log(isLocal ? "LOCAL" : "REMOTE", preds.map(p => p.className + ":" + Math.round(p.probability*100) + "%").join(" "));
-      const bad = (porn && porn.probability > PORN_THRESHOLD) || (hentai && hentai.probability > HENTAI_THRESHOLD);
-      if (bad) {
-        if (isLocal) { localStrikes++; log("Local strike", localStrikes); if (localStrikes >= STRIKE_THRESHOLD) banLocal(porn || hentai); }
-        else { remoteStrikes++; if (remoteStrikes >= STRIKE_THRESHOLD) reportRemote(porn || hentai); }
-      } else {
-        if (isLocal) localStrikes = Math.max(0, localStrikes-1);
-        else remoteStrikes = Math.max(0, remoteStrikes-1);
-      }
-    }).catch(e => log("classify err", e));
+    // Full frame
+    ctx.drawImage(video, 0, 0, 224, 224);
+    regions.push(c);
+    // Center crop
+    const size = Math.min(vw, vh);
+    const sx = (vw - size) / 2, sy = (vh - size) / 2;
+    const c2 = document.createElement("canvas");
+    c2.width = c2.height = 224;
+    c2.getContext("2d").drawImage(video, sx, sy, size, size, 0, 0, 224, 224);
+    regions.push(c2);
+    // Lower third (common for body/genital framing)
+    const c3 = document.createElement("canvas");
+    c3.width = c3.height = 224;
+    c3.getContext("2d").drawImage(video, 0, vh * 0.45, vw, vh * 0.55, 0, 0, 224, 224);
+    regions.push(c3);
+    return regions;
   }
+
+  async function analyze(video, isLocal) {
+    if (!model || !video || video.readyState < 2 || !video.videoWidth) return;
+    if (isLocal ? localBusy : remoteBusy) return;
+    if (isLocal) localBusy = true; else remoteBusy = true;
+    try {
+      const regions = sampleRegions(video);
+      let maxPorn = 0, maxHentai = 0, bestPred = null;
+      for (const canvas of regions) {
+        const preds = await model.classify(canvas);
+        const porn = preds.find(p => p.className === "Porn");
+        const hentai = preds.find(p => p.className === "Hentai");
+        if (porn && porn.probability > maxPorn) { maxPorn = porn.probability; bestPred = porn; }
+        if (hentai && hentai.probability > maxHentai) { maxHentai = hentai.probability; if (!bestPred || hentai.probability > bestPred.probability) bestPred = hentai; }
+      }
+      log(isLocal ? "LOCAL" : "REMOTE", "Porn:" + Math.round(maxPorn*100) + "% Hentai:" + Math.round(maxHentai*100) + "%");
+      const bad = maxPorn > PORN_THRESHOLD || maxHentai > HENTAI_THRESHOLD;
+      if (bad && bestPred) {
+        if (isLocal) {
+          localStrikes++;
+          log("Local strike", localStrikes);
+          if (localStrikes >= STRIKE_THRESHOLD) banLocal(bestPred);
+        } else {
+          remoteStrikes++;
+          if (remoteStrikes >= STRIKE_THRESHOLD) reportRemote(bestPred);
+        }
+      } else {
+        if (isLocal) localStrikes = Math.max(0, localStrikes - 1);
+        else remoteStrikes = Math.max(0, remoteStrikes - 1);
+      }
+    } catch (e) {
+      log("analyze error", e);
+    } finally {
+      if (isLocal) localBusy = false; else remoteBusy = false;
+    }
+  }
+
   function banLocal(pred) {
     stop();
     if (window.localStream) window.localStream.getTracks().forEach(t => t.stop());
     const lv = getLV(); if (lv) lv.srcObject = null;
-    if (window.socket) window.socket.emit("nsfw-local-violation", {category: pred.className, confidence: pred.probability});
+    if (window.socket) window.socket.emit("nsfw-local-violation", { category: pred.className, confidence: pred.probability, strikes: localStrikes });
     showBan(pred);
   }
+
   function reportRemote(pred) {
     stop();
-    const rv = getRV(); if (rv) rv.style.filter = "blur(30px)";
-    if (window.socket) { window.socket.emit("nsfw-remote-report", {category: pred.className, confidence: pred.probability}); window.socket.emit("stop"); }
+    const rv = getRV();
+    if (rv) rv.style.filter = "blur(40px)";
+    if (window.socket) {
+      window.socket.emit("nsfw-remote-report", { category: pred.className, confidence: pred.probability, strikes: remoteStrikes });
+      window.socket.emit("stop");
+    }
   }
+
   function showBan(pred) {
     let s = document.getElementById("nsfwBanScreen");
     if (!s) {
-      s = document.createElement("div"); s.id = "nsfwBanScreen";
-      s.innerHTML = "<div style=\"background:#111;color:#fff;padding:40px;border-radius:16px;max-width:480px;text-align:center;margin:auto\"><h1 style=\"color:#ff4444\">ACCESS SUSPENDED</h1><p>Automated safety system detected a possible community guidelines violation.</p><p><b>Reason:</b> <span id=\"nsfwBanReason\">Nudity detected.</span></p><p><b>Status:</b> Banned.</p><p><b>Ref:</b> <span id=\"nsfwBanRef\"></span></p></div>";
+      s = document.createElement("div");
+      s.id = "nsfwBanScreen";
+      s.innerHTML = '<div style="background:#111;color:#fff;padding:40px;border-radius:16px;max-width:480px;text-align:center;margin:auto"><h1 style="color:#ff4444">ACCESS SUSPENDED</h1><p>Automated safety system detected a possible community guidelines violation.</p><p><b>Reason:</b> <span id="nsfwBanReason">Nudity detected.</span></p><p><b>Status:</b> Banned.</p><p><b>Ref:</b> <span id="nsfwBanRef"></span></p></div>';
       s.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:none;align-items:center;justify-content:center;";
       document.body.appendChild(s);
     }
     s.style.display = "flex";
-    document.getElementById("nsfwBanReason").textContent = "Nudity detected (" + pred.className + ", " + Math.round(pred.probability*100) + "%)";
-    document.getElementById("nsfwBanRef").textContent = "OG-" + Date.now().toString(36).toUpperCase();
+    const reason = document.getElementById("nsfwBanReason");
+    const ref = document.getElementById("nsfwBanRef");
+    if (reason) reason.textContent = "Nudity detected (" + pred.className + ", " + Math.round(pred.probability * 100) + "%)";
+    if (ref) ref.textContent = "OG-" + Date.now().toString(36).toUpperCase();
   }
-  function start() { if (!model) return; stop(); log("Detection started"); localInterval = setInterval(() => analyze(getLV(), true), CHECK_INTERVAL); remoteInterval = setInterval(() => analyze(getRV(), false), CHECK_INTERVAL); }
-  function stop() { if (localInterval) clearInterval(localInterval); if (remoteInterval) clearInterval(remoteInterval); localInterval = remoteInterval = null; localStrikes = remoteStrikes = 0; }
+
+  function start() {
+    if (!model) return;
+    stop();
+    log("Detection started (multi-region)");
+    localInterval = setInterval(() => analyze(getLV(), true), CHECK_INTERVAL);
+    remoteInterval = setInterval(() => analyze(getRV(), false), CHECK_INTERVAL);
+  }
+
+  function stop() {
+    if (localInterval) clearInterval(localInterval);
+    if (remoteInterval) clearInterval(remoteInterval);
+    localInterval = remoteInterval = null;
+    localStrikes = remoteStrikes = 0;
+  }
+
   function tryStart() {
     const lv = getLV();
     if (lv && lv.srcObject && !localInterval) {
@@ -2848,9 +2922,11 @@ stickerSelect.addEventListener("change",()=>{
       loadModel().then(m => { if (m) start(); else log("Model not ready"); });
     }
   }
+
   setInterval(tryStart, 2000);
   window.addEventListener("load", tryStart);
 })();
+</script>
 </script>
 
 <section style="margin:40px auto;max-width:720px;padding:0 16px;font-size:15px">
