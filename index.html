@@ -2888,9 +2888,10 @@ stickerSelect.addEventListener("change",()=>{
     font-weight: 700;
     font-size: 14px;
   }
+  .mobile-reactions-btn { position: relative; }
   .mobile-reactions-popup {
     position: absolute;
-    bottom: 48px;
+    bottom: calc(100% + 8px);
     left: 0;
     background: #1a1a1a;
     border: 2px solid #ffe247;
@@ -2901,6 +2902,7 @@ stickerSelect.addEventListener("change",()=>{
     gap: 6px;
     z-index: 1000;
     max-width: 90vw;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
   }
   .mobile-reactions-popup.show { display: flex; }
   .mobile-reactions-popup button {
@@ -2922,9 +2924,10 @@ stickerSelect.addEventListener("change",()=>{
     padding: 8px 12px;
     font-weight: 700;
   }
+  .mobile-support-btn { position: relative; }
   .mobile-badge-popup {
     position: absolute;
-    bottom: 48px;
+    bottom: calc(100% + 8px);
     left: 0;
     background: #fff;
     border-radius: 12px;
@@ -2935,7 +2938,8 @@ stickerSelect.addEventListener("change",()=>{
     z-index: 1000;
     max-height: 50vh;
     overflow-y: auto;
-    min-width: 160px;
+    min-width: 180px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
   }
   .mobile-badge-popup.show { display: flex; }
   .mobile-badge-popup button {
@@ -2979,8 +2983,12 @@ stickerSelect.addEventListener("change",()=>{
     });
     document.addEventListener('click', () => popup.classList.remove('show'));
 
-    reactionContainer.insertBefore(btn, reactionContainer.firstChild);
-    reactionContainer.appendChild(popup);
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "relative";
+    wrapper.style.display = "inline-block";
+    wrapper.appendChild(btn);
+    wrapper.appendChild(popup);
+    reactionContainer.insertBefore(wrapper, reactionContainer.firstChild);
   }
 
   // Badge compact button
@@ -3013,8 +3021,12 @@ stickerSelect.addEventListener("change",()=>{
     });
     document.addEventListener('click', () => badgePopup.classList.remove('show'));
 
-    supportLabel.parentNode.insertBefore(supportBtn, supportLabel);
-    supportLabel.parentNode.appendChild(badgePopup);
+    const supportWrapper = document.createElement("div");
+    supportWrapper.style.position = "relative";
+    supportWrapper.style.display = "inline-block";
+    supportWrapper.appendChild(supportBtn);
+    supportWrapper.appendChild(badgePopup);
+    supportLabel.parentNode.insertBefore(supportWrapper, supportLabel);
   }
 })();
 </script>
