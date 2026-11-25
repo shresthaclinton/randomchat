@@ -962,6 +962,13 @@ label[for="faceStickerSelect"].active { background: #ffe247; }
   .mobile-nav-btn:disabled{opacity:.3;pointer-events:none}
 }
 @media(min-width:601px){.mobile-video-controls{display:none}}
+
+.galli-inline-reactions, #reactionChoices, #muteReactionsBtn { display: none !important; }
+.chat-emoji-btn { background: transparent; border: 0; font-size: 22px; cursor: pointer; padding: 4px 8px; }
+.chat-emoji-panel { position: absolute; bottom: 100%; right: 0; background: #1a1a1a; border: 2px solid #ffe247; border-radius: 12px; padding: 8px; display: none; flex-wrap: wrap; gap: 4px; z-index: 100; max-width: 280px; }
+.chat-emoji-panel.show { display: flex; }
+.chat-emoji-panel button { font-size: 24px; background: #333; border: 0; border-radius: 6px; padding: 6px; cursor: pointer; }
+.chat-form-wrap { position: relative; display: flex; align-items: center; }
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 <style>
@@ -1095,8 +1102,25 @@ label[for="faceStickerSelect"].active { background: #ffe247; }
   </div>
 <section class="galli-social" aria-label="Chat and My Support">
  <form id="textChatForm" class="galli-chat-form galli-chat-bar">
+  <div class="chat-form-wrap">
   <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Say hello to your stranger" disabled>
+  <button type="button" class="chat-emoji-btn" id="chatEmojiBtn" aria-label="Emoji">😊</button>
+  <div class="chat-emoji-panel" id="chatEmojiPanel">
+    <button type="button" data-emoji="😊">😊</button>
+    <button type="button" data-emoji="😂">😂</button>
+    <button type="button" data-emoji="❤️">❤️</button>
+    <button type="button" data-emoji="👍">👍</button>
+    <button type="button" data-emoji="👋">👋</button>
+    <button type="button" data-emoji="🎉">🎉</button>
+    <button type="button" data-emoji="🔥">🔥</button>
+    <button type="button" data-emoji="😎">😎</button>
+    <button type="button" data-emoji="😢">😢</button>
+    <button type="button" data-emoji="🙏">🙏</button>
+    <button type="button" data-emoji="💯">💯</button>
+    <button type="button" data-emoji="✨">✨</button>
+  </div>
   <button type="submit" id="textChatSend" disabled>Send ➤</button>
+  </div>
  </form>
 
 <div class="galli-inline-reactions" aria-label="Quick reactions">
@@ -3168,6 +3192,33 @@ stickerSelect.addEventListener("change",()=>{
   // Previous is not supported - keep disabled
   if (prevBtn) {
     prevBtn.title = "Previous not available";
+  }
+})();
+</script>
+
+
+<script>
+(function(){
+  const btn = document.getElementById("chatEmojiBtn");
+  const panel = document.getElementById("chatEmojiPanel");
+  const input = document.getElementById("textChatInput");
+  if (btn && panel && input) {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      panel.classList.toggle("show");
+    };
+    panel.querySelectorAll("button").forEach(b => {
+      b.onclick = (e) => {
+        e.preventDefault();
+        input.value += b.dataset.emoji;
+        input.focus();
+        panel.classList.remove("show");
+      };
+    });
+    document.addEventListener("click", (e) => {
+      if (!panel.contains(e.target) && e.target !== btn) panel.classList.remove("show");
+    });
   }
 })();
 </script>
