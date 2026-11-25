@@ -49,6 +49,47 @@ async function initializeDatabase() {
   await pool.query(`CREATE TABLE IF NOT EXISTS analytics_chats (
     id TEXT PRIMARY KEY, started_at TIMESTAMPTZ NOT NULL, ended_at TIMESTAMPTZ,
     duration_seconds INTEGER, client_a TEXT, client_b TEXT)`);
+
+  // Virtual gifting tables
+  await pool.query(`CREATE TABLE IF NOT EXISTS galli_wallets (
+    client_id TEXT PRIMARY KEY,
+    balance INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS galli_gifts (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    emoji TEXT NOT NULL,
+    price INTEGER NOT NULL
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS galli_gift_transactions (
+    id SERIAL PRIMARY KEY,
+    sender_id TEXT NOT NULL,
+    recipient_id TEXT NOT NULL,
+    gift_id TEXT NOT NULL,
+    price INTEGER NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS galli_coin_transactions (
+    id SERIAL PRIMARY KEY,
+    client_id TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    reason TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+  // Seed gift catalogue
+  await pool.query(`INSERT INTO galli_gifts (id, name, emoji, price) VALUES
+    ('yellow-flower', 'Yellow Flower', '🌼', 5),
+    ('tea', 'Tea', '🍵', 10),
+    ('chocolate', 'Chocolate', '🍫', 20),
+    ('cupcake', 'Cupcake', '🧁', 20),
+    ('friendship-band', 'Friendship Band', '🤝', 20),
+    ('coffee', 'Coffee', '☕', 30),
+    ('bouquet', 'Yellow Flower Bouquet', '💐', 50),
+    ('brownie', 'Brownie', '🍫', 50),
+    ('gift-box', 'Chocolate Gift Box', '🍬', 100)
+  ON CONFLICT (id) DO NOTHING`);
+
   await pool.query(`CREATE INDEX IF NOT EXISTS analytics_chats_started_idx ON analytics_chats(started_at)`);
   const [savedReports, savedBans, savedBlocks] = await Promise.all([
     pool.query(`SELECT id, time, reason, reporter, reported, reported_client_id, reporter_client_id, description, status FROM moderation_reports ORDER BY id DESC LIMIT 500`),
@@ -1064,6 +1105,63 @@ io.on("connection", (socket) => {
       other.disconnect(true);
     }
     console.log("NSFW_REMOTE_REPORT", reportedId, "confidence", confidence);
+  });
+
+
+  // Virtual gift sending
+  socket.on("galli-send-gift", async (data = {}) => {
+    const senderId = socket.data.clientId;
+    if (!senderId || typeof data.giftId !== "string") return;
+    const partner = partners.get(socket.id);
+    if (!partner) return;
+    const other = io.sockets.sockets.get(partner);
+    if (!other || !other.data.clientId || other.data.clientId === senderId) return;
+    const recipientId = other.data.clientId;
+    // Rate limit
+    if (rateLimited(reactionTimes, socket.id, 3, 10000)) return;
+    try {
+      const giftRes = await pool.query("SELECT price, name, emoji FROM galli_gifts WHERE id = $1", [data.giftId]);
+      if (!giftRes.rows.length) return;
+      const gift = giftRes.rows[0];
+      const price = gift.price;
+      // Atomic deduction
+      const walletRes = await pool.query(
+        "UPDATE galli_wallets SET balance = balance - $1, updated_at = NOW() WHERE client_id = $2 AND balance >= $1 RETURNING balance",
+        [price, senderId]
+      );
+      if (!walletRes.rows.length) {
+        socket.emit("galli-gift-error", { error: "Insufficient coins" });
+        return;
+      }
+      await pool.query(
+        "INSERT INTO galli_gift_transactions (sender_id, recipient_id, gift_id, price) VALUES ($1, $2, $3, $4)",
+        [senderId, recipientId, data.giftId, price]
+      );
+      await pool.query(
+        "INSERT INTO galli_coin_transactions (client_id, amount, reason) VALUES ($1, $2, $3)",
+        [senderId, -price, "gift:" + data.giftId]
+      );
+      const payload = { giftId: data.giftId, name: gift.name, emoji: gift.emoji, from: "Stranger" };
+      socket.emit("galli-gift-sent", { ...payload, balance: walletRes.rows[0].balance });
+      other.emit("galli-gift-received", payload);
+      console.log("GIFT_SENT", senderId, "->", recipientId, data.giftId);
+    } catch (e) {
+      console.error("GIFT_ERROR", e.message);
+      socket.emit("galli-gift-error", { error: "Failed to send gift" });
+    }
+  });
+
+  socket.on("galli-get-balance", async () => {
+    const clientId = socket.data.clientId;
+    if (!clientId) return;
+    try {
+      let res = await pool.query("SELECT balance FROM galli_wallets WHERE client_id = $1", [clientId]);
+      if (!res.rows.length) {
+        await pool.query("INSERT INTO galli_wallets (client_id, balance) VALUES ($1, 100) ON CONFLICT DO NOTHING", [clientId]);
+        res = await pool.query("SELECT balance FROM galli_wallets WHERE client_id = $1", [clientId]);
+      }
+      socket.emit("galli-balance", { balance: res.rows[0]?.balance || 0 });
+    } catch (e) { console.error("BALANCE_ERROR", e.message); }
   });
 
   socket.on("disconnect", () => {

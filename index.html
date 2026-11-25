@@ -2941,6 +2941,88 @@ stickerSelect.addEventListener("change",()=>{
   </ul>
 </section>
 
+
+<style>
+.galli-gift-btn{background:#ffe247;color:#171717;border:0;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer}
+.galli-gift-panel{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:none;align-items:center;justify-content:center}
+.galli-gift-panel.show{display:flex}
+.galli-gift-box{background:#fff;border-radius:16px;padding:16px;max-width:420px;width:92%;max-height:80vh;overflow-y:auto}
+.galli-gift-box h3{margin:0 0 12px;text-align:center}
+.galli-gift-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.galli-gift-item{background:#f7f7f7;border:0;border-radius:12px;padding:12px 6px;text-align:center;cursor:pointer;font-size:13px}
+.galli-gift-item:hover{background:#ffe247}
+.galli-gift-item .emoji{font-size:32px;display:block}
+.galli-gift-item .price{color:#666;font-size:12px}
+.galli-gift-anim{position:fixed;inset:0;pointer-events:none;z-index:1500;display:flex;align-items:center;justify-content:center}
+.galli-gift-anim .gift-pop{font-size:80px;animation:giftPop 2.5s ease-out forwards}
+@keyframes giftPop{0%{transform:scale(.3);opacity:0}20%{transform:scale(1.2);opacity:1}80%{opacity:1}100%{transform:scale(1);opacity:0}}
+.galli-gift-label{position:absolute;bottom:20%;background:rgba(0,0,0,.75);color:#fff;padding:8px 16px;border-radius:20px;font-weight:700}
+</style>
+<div class="galli-gift-panel" id="giftPanel">
+  <div class="galli-gift-box">
+    <h3>🎁 Send a Gift <span id="giftBalance" style="float:right;font-size:14px">🪙 —</span></h3>
+    <div class="galli-gift-grid" id="giftGrid"></div>
+    <button type="button" onclick="document.getElementById('giftPanel').classList.remove('show')" style="margin-top:12px;width:100%;padding:10px;border:0;border-radius:8px;background:#333;color:#fff">Close</button>
+  </div>
+</div>
+<div class="galli-gift-anim" id="giftAnim"></div>
+<script>
+(function(){
+  const gifts = [
+    {id:"yellow-flower",name:"Yellow Flower",emoji:"🌼",price:5},
+    {id:"tea",name:"Tea",emoji:"🍵",price:10},
+    {id:"chocolate",name:"Chocolate",emoji:"🍫",price:20},
+    {id:"cupcake",name:"Cupcake",emoji:"🧁",price:20},
+    {id:"friendship-band",name:"Friendship Band",emoji:"🤝",price:20},
+    {id:"coffee",name:"Coffee",emoji:"☕",price:30},
+    {id:"bouquet",name:"Yellow Flower Bouquet",emoji:"💐",price:50},
+    {id:"brownie",name:"Brownie",emoji:"🍫",price:50},
+    {id:"gift-box",name:"Chocolate Gift Box",emoji:"🍬",price:100}
+  ];
+  const grid = document.getElementById("giftGrid");
+  gifts.forEach(g => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "galli-gift-item";
+    btn.innerHTML = '<span class="emoji">'+g.emoji+'</span>'+g.name+'<div class="price">🪙 '+g.price+'</div>';
+    btn.onclick = () => sendGift(g.id);
+    grid.appendChild(btn);
+  });
+  function sendGift(id) {
+    if (window.socket) window.socket.emit("galli-send-gift", { giftId: id });
+    document.getElementById("giftPanel").classList.remove("show");
+  }
+  function showGiftAnim(gift, from) {
+    const el = document.getElementById("giftAnim");
+    el.innerHTML = '<div class="gift-pop">'+gift.emoji+'</div><div class="galli-gift-label">'+from+' sent '+gift.name+'</div>';
+    setTimeout(() => el.innerHTML = "", 2600);
+  }
+  if (window.socket) {
+    window.socket.on("galli-gift-sent", data => {
+      showGiftAnim(data, "You");
+      document.getElementById("giftBalance").textContent = "🪙 " + data.balance;
+    });
+    window.socket.on("galli-gift-received", data => showGiftAnim(data, data.from || "Stranger"));
+    window.socket.on("galli-gift-error", data => alert(data.error || "Could not send gift"));
+    window.socket.on("galli-balance", data => document.getElementById("giftBalance").textContent = "🪙 " + data.balance);
+    window.socket.emit("galli-get-balance");
+  }
+  // Add gift button to controls
+  const controls = document.querySelector(".galli-inline-reactions") || document.querySelector(".controls");
+  if (controls) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "galli-gift-btn";
+    btn.textContent = "🎁 Gift";
+    btn.onclick = () => {
+      document.getElementById("giftPanel").classList.add("show");
+      if (window.socket) window.socket.emit("galli-get-balance");
+    };
+    controls.appendChild(btn);
+  }
+})();
+</script>
+
 </body>
 </html>
 
