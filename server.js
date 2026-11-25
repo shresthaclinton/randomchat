@@ -1164,6 +1164,13 @@ io.on("connection", (socket) => {
     } catch (e) { console.error("BALANCE_ERROR", e.message); }
   });
 
+
+  socket.on("galli-sticker-state", (data = {}) => {
+    const partner = partners.get(socket.id);
+    if (!partner) return;
+    io.to(partner).emit("galli-sticker-state", data);
+  });
+
   socket.on("disconnect", () => {
     socket.data.ready = false;
     leavePartner(socket);
