@@ -1116,7 +1116,7 @@ footer { line-height:1.8; }
    <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
   </select>
   <label class="galli-upload-label" for="customBadgeUpload">📤 Update Custom Badge <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></label>
-  <input id="customBadgeUpload" type="file" accept=".png,.jpg,.jpeg,.jfif,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp" aria-label="Upload custom image badge" /><small class="galli-badge-format-help" style="display:block;font-size:10px;opacity:.8">PNG · JPG/JPEG · JFIF · WebP · GIF (still) · BMP · max 5 MB</small>
+  <input id="customBadgeUpload" type="file" accept=".png,.jpg,.jpeg,.jfif,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp" aria-label="Upload custom image badge" /><small class="galli-badge-format-help" style="display:none">PNG · JPG/JPEG · JFIF · WebP · GIF (still) · BMP · max 5 MB</small>
   <div id="badgeEditPanel" hidden><div class="badge-preview-row"><div><small>Original</small><canvas id="badgeBefore" width="96" height="96"></canvas></div><div><small>Background removed</small><canvas id="badgeAfter" width="96" height="96"></canvas></div></div><label for="badgeTolerance">Removal strength <output id="badgeToleranceValue">32</output><input id="badgeTolerance" type="range" min="8" max="85" value="32" step="1"></label><label><input id="badgeKeepOriginal" type="checkbox"> Keep original background</label><button type="button" id="badgeApply">Apply badge</button></div>
   <button id="clearCustomBadge" type="button" class="galli-clear-badge" hidden>Remove badge</button>
   <span id="customBadgeStatus" role="status" aria-live="polite"></span>
@@ -2949,10 +2949,13 @@ stickerSelect.addEventListener("change",()=>{
 .galli-gift-box{background:#fff;border-radius:16px;padding:16px;max-width:420px;width:92%;max-height:80vh;overflow-y:auto}
 .galli-gift-box h3{margin:0 0 12px;text-align:center}
 .galli-gift-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.galli-gift-item{background:#f7f7f7;border:0;border-radius:12px;padding:12px 6px;text-align:center;cursor:pointer;font-size:13px}
+.galli-gift-item{background:#f7f7f7;border:0;border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .galli-gift-item:hover{background:#ffe247}
-.galli-gift-item .emoji{font-size:32px;display:block}
-.galli-gift-item .price{color:#666;font-size:12px}
+.galli-gift-item .gift-icon{width:48px;height:48px;object-fit:contain}
+.galli-gift-item .coin-icon{width:16px;height:16px;vertical-align:middle}
+.galli-gift-item .gift-name{font-weight:700;font-size:12px;color:#171717}
+.galli-gift-item .price{color:#666;font-size:12px;display:flex;align-items:center;gap:3px}
+.galli-gift-item .coin{font-size:14px}
 .galli-gift-anim{position:fixed;inset:0;pointer-events:none;z-index:1500;display:flex;align-items:center;justify-content:center}
 .galli-gift-anim .gift-pop{font-size:80px;animation:giftPop 2.5s ease-out forwards}
 @keyframes giftPop{0%{transform:scale(.3);opacity:0}20%{transform:scale(1.2);opacity:1}80%{opacity:1}100%{transform:scale(1);opacity:0}}
@@ -2980,11 +2983,17 @@ stickerSelect.addEventListener("change",()=>{
     {id:"gift-box",name:"Chocolate Gift Box",emoji:"🍬",price:100}
   ];
   const grid = document.getElementById("giftGrid");
+  const emojiMap = {
+    "🌼": "1f33c", "🍵": "1f375", "🍫": "1f36b", "🧁": "1f9c1",
+    "🤝": "1f91d", "☕": "2615", "💐": "1f490", "🍬": "1f36c"
+  };
   gifts.forEach(g => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "galli-gift-item";
-    btn.innerHTML = '<span class="emoji">'+g.emoji+'</span>'+g.name+'<div class="price">🪙 '+g.price+'</div>';
+    const code = emojiMap[g.emoji] || "1f381";
+    const img = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/" + code + ".png";
+    btn.innerHTML = '<img src="'+img+'" alt="" class="gift-icon"><span class="gift-name">'+g.name+'</span><div class="price"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1fa99.png" alt="" class="coin-icon"> '+g.price+' coins</div>';
     btn.onclick = () => sendGift(g.id);
     grid.appendChild(btn);
   });
@@ -3013,7 +3022,7 @@ stickerSelect.addEventListener("change",()=>{
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "galli-gift-btn";
-    btn.textContent = "🎁 Gift";
+    btn.textContent = "🎁 Send Gifts";
     btn.onclick = () => {
       document.getElementById("giftPanel").classList.add("show");
       if (window.socket) window.socket.emit("galli-get-balance");
