@@ -469,7 +469,7 @@ footer { line-height:1.8; }
  .galli-inline-reactions .v4-reactions button{font-size:21px;min-width:35px;min-height:35px}
 }
 
-/* V5.3: chat above main controls; My Support beside quick reactions. */
+/* V5.3: chat above main controls; NPL Support beside quick reactions. */
 .galli-social{margin:10px 0 12px!important}
 .galli-inline-reactions{display:flex!important;align-items:center!important;gap:7px!important;flex-wrap:wrap!important}
 .galli-inline-reactions .v4-reactions{flex:0 1 auto!important}
@@ -536,7 +536,7 @@ footer { line-height:1.8; }
  .container>aside .safety{margin-top:15px}
 }
 
-/* Keep Face Stickers and My Support next to the reactions, on one responsive row. */
+/* Keep Face Stickers and NPL Support next to the reactions, on one responsive row. */
 .galli-inline-reactions{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
 .galli-inline-reactions .v4-reactions{flex:0 1 auto}
 .galli-inline-reactions .galli-face-effects{display:flex;align-items:center;flex-wrap:wrap;margin:0;gap:6px}
@@ -1131,7 +1131,7 @@ label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-
 
 
   </div>
-<section class="galli-social" aria-label="Chat and My Support">
+<section class="galli-social" aria-label="Chat and NPL Support">
  <form id="textChatForm" class="galli-chat-form galli-chat-bar">
   <div class="chat-form-wrap">
   <input id="textChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Say hello..." aria-label="Say hello to your stranger" disabled>
@@ -1189,13 +1189,13 @@ label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-
  <span id="faceStickerStatus" role="status" aria-live="polite"></span>
 </div>
  <div class="galli-social-tabs">
-  <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 My Support</label>
-  <select id="teamBadgeSelect" aria-label="Choose My Support">
+  <label class="galli-badge-select-label" for="teamBadgeSelect">🏏 NPL Support</label>
+  <select id="teamBadgeSelect" aria-label="Choose NPL Support">
    <option value="">No badge</option><option>Biratnagar Kings</option><option>Chitwan Rhinos</option>
    <option>Janakpur Bolts</option><option>Kathmandu Gurkhas</option><option>Karnali Yaks</option>
    <option>Lumbini Lions</option><option>Pokhara Avengers</option><option>Sudurpaschim Royals</option>
   </select>
-  <label class="galli-upload-label" for="customBadgeUpload">📤 Update Custom Badge <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></label>
+  <label class="galli-upload-label" for="customBadgeUpload">📤 Custom Badge <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></label>
   <input id="customBadgeUpload" type="file" accept=".png,.jpg,.jpeg,.jfif,.webp,.gif,.bmp,image/png,image/jpeg,image/webp,image/gif,image/bmp" aria-label="Upload custom image badge" /><small class="galli-badge-format-help" style="display:none">PNG · JPG/JPEG · JFIF · WebP · GIF (still) · BMP · max 5 MB</small>
   <div id="badgeEditPanel" hidden><div class="badge-preview-row"><div><small>Original</small><canvas id="badgeBefore" width="96" height="96"></canvas></div><div><small>Background removed</small><canvas id="badgeAfter" width="96" height="96"></canvas></div></div><label for="badgeTolerance">Removal strength <output id="badgeToleranceValue">32</output><input id="badgeTolerance" type="range" min="8" max="85" value="32" step="1"></label><label><input id="badgeKeepOriginal" type="checkbox"> Keep original background</label><button type="button" id="badgeApply">Apply badge</button></div>
   <button id="clearCustomBadge" type="button" class="galli-clear-badge" hidden>Remove badge</button>
@@ -2410,13 +2410,13 @@ badgeKeepOriginal.addEventListener('change',renderBadgePreview);
 // The server separately verifies entitlement before accepting any badge data.
 const customBadgeLabel=document.querySelector('label[for="customBadgeUpload"]');
 if(customBadgeLabel)customBadgeLabel.addEventListener('click',(event)=>{
- if(!ownerUnlocked){event.preventDefault();event.stopPropagation();showProNotice('Update Custom Badge');}
+ if(!ownerUnlocked){event.preventDefault();event.stopPropagation();showProNotice('Custom Badge');}
 });
 customBadgeUpload.addEventListener('click',(event)=>{
- if(!ownerUnlocked){event.preventDefault();showProNotice('Update Custom Badge');}
+ if(!ownerUnlocked){event.preventDefault();showProNotice('Custom Badge');}
 });
 customBadgeUpload.addEventListener("change",async()=>{
- if(!ownerUnlocked){showProNotice("Update Custom Badge");customBadgeUpload.value="";return;}
+ if(!ownerUnlocked){showProNotice("Custom Badge");customBadgeUpload.value="";return;}
  const file=customBadgeUpload.files&&customBadgeUpload.files[0];
  if(!file)return;
  // Validate by extension AND known MIME when present; do not accept SVG or arbitrary files.
@@ -2986,14 +2986,14 @@ stickerSelect.addEventListener("change",()=>{
     };
   }
 
-  // Create My Support button for desktop
+  // Create NPL Support button for desktop
   const badgeSelect = document.getElementById("teamBadgeSelect");
   const badgeLabel = document.querySelector(".galli-badge-select-label");
   if (badgeSelect && badgeLabel) {
     const supportBtn = document.createElement("button");
     supportBtn.type = "button";
     supportBtn.className = "mobile-support-btn";
-    supportBtn.textContent = "🏏 My Support";
+    supportBtn.textContent = "🏏 NPL Support";
     supportBtn.style.cssText = "background:#ffe247;color:#171717;border:0;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer";
     const popup = document.createElement("div");
     popup.className = "mobile-badge-popup";
@@ -3177,43 +3177,6 @@ stickerSelect.addEventListener("change",()=>{
   #teamBadgeSelect,
   .galli-badge-select-label { display: none !important; }
 
-  /* Compact reaction trigger */
-  .mobile-reactions-btn {
-    background: #333;
-    color: #fff;
-    border: 1px solid #777;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-weight: 700;
-    font-size: 14px;
-  }
-  .mobile-reactions-btn { position: relative; }
-  .mobile-reactions-popup {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 0;
-    background: #1a1a1a;
-    border: 2px solid #ffe247;
-    border-radius: 12px;
-    padding: 8px;
-    display: none;
-    flex-wrap: wrap;
-    gap: 6px;
-    z-index: 1000;
-    max-width: 90vw;
-    box-shadow: 0 8px 24px rgba(0,0,0,.4);
-  }
-  .mobile-reactions-popup.show { display: flex; }
-  .mobile-reactions-popup button {
-    font-size: 24px;
-    min-width: 40px;
-    min-height: 40px;
-    background: #333;
-    border: 1px solid #555;
-    border-radius: 8px;
-    color: #fff;
-  }
-
   /* Badge popup */
   .mobile-support-btn {
     background: #fff;
@@ -3260,36 +3223,6 @@ stickerSelect.addEventListener("change",()=>{
 (function() {
   if (window.innerWidth > 600) return; // mobile only
 
-  // Reactions compact button
-  const reactionContainer = document.querySelector('.galli-inline-reactions');
-  if (reactionContainer) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'mobile-reactions-btn';
-    btn.textContent = '😊 Reactions';
-    const popup = document.createElement('div');
-    popup.className = 'mobile-reactions-popup';
-
-    // Move existing reaction buttons into popup
-    const choices = document.getElementById('reactionChoices');
-    if (choices) {
-      Array.from(choices.children).forEach(child => popup.appendChild(child));
-    }
-
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      popup.classList.toggle('show');
-    });
-    document.addEventListener('click', () => popup.classList.remove('show'));
-
-    const wrapper = document.createElement("div");
-    wrapper.style.position = "relative";
-    wrapper.style.display = "inline-block";
-    wrapper.appendChild(btn);
-    wrapper.appendChild(popup);
-    reactionContainer.insertBefore(wrapper, reactionContainer.firstChild);
-  }
-
   // Badge compact button
   const supportLabel = document.querySelector('.galli-badge-select-label');
   const badgeSelect = document.getElementById('teamBadgeSelect');
@@ -3297,7 +3230,7 @@ stickerSelect.addEventListener("change",()=>{
     const supportBtn = document.createElement('button');
     supportBtn.type = 'button';
     supportBtn.className = 'mobile-support-btn';
-    supportBtn.textContent = '🏅 My Support';
+    supportBtn.textContent = '🏅 NPL Support';
     const badgePopup = document.createElement('div');
     badgePopup.className = 'mobile-badge-popup';
 
