@@ -950,8 +950,6 @@ footer { line-height:1.8; }
 }
 
 
-label[for="faceStickerSelect"] { cursor: pointer; background: #fff; color: #111; border-radius: 8px; padding: 8px 12px; font-weight: 700; display: inline-block; }
-label[for="faceStickerSelect"].active { background: #ffe247; }
 
 @media(max-width:600px){
   .mobile-video-controls{position:absolute;inset:0;pointer-events:none;z-index:10}
@@ -977,7 +975,7 @@ label[for="faceStickerSelect"].active { background: #ffe247; }
 
 /* Force visibility of main controls */
 .galli-inline-reactions { display: flex !important; flex-wrap: wrap; align-items: center; gap: 8px; }
-label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-gift-btn, .mobile-support-btn { display: inline-block !important; visibility: visible !important; }
+#faceStickerButton, .galli-upload-label, .galli-gift-btn, .mobile-support-btn { display: inline-block !important; visibility: visible !important; }
 #teamBadgeSelect { display: none !important; }
 .galli-badge-select-label { display: none !important; }
 
@@ -995,6 +993,10 @@ label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-
   .controls #nextBtn { display: none !important; }
   #gamesBtn { order: 10 !important; }
 }
+/* Face Stickers: the button itself opens the sticker list */
+#faceStickerButton{max-width:none;white-space:nowrap;text-align:center;cursor:pointer;padding:8px 12px}
+#faceStickerButton.active{background:#ffe247}
+@media(max-width:600px){#faceStickerButton{max-width:none;font-size:12px;padding:8px 10px}}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 <style>
@@ -1158,11 +1160,10 @@ label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-
   <div id="reactionChoices" class="v4-reactions"></div>
   <button type="button" id="muteReactionsBtn" aria-pressed="false">🔔 Reactions On</button>
  <div class="galli-face-effects" aria-label="Face stickers">
- <label for="faceStickerSelect">🎭 Face Stickers</label>
  <div class="galli-sticker-picker" id="faceStickerPicker">
-  <button type="button" id="faceStickerButton" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose a face sticker">Off</button>
+  <button type="button" id="faceStickerButton" aria-haspopup="listbox" aria-expanded="false" aria-label="Face Stickers">🎭 Face Stickers</button>
   <div class="galli-sticker-menu" id="faceStickerMenu" role="listbox" hidden>
-   <button type="button" data-value="none" role="option">Off</button>
+   <button type="button" data-value="none" role="option">🚫 No Sticker</button>
    <button type="button" data-value="thug" role="option">🕶️ Thug Life</button>
    <button type="button" data-value="chaplin" role="option">🎩 Charlie Chaplin</button>
    <button type="button" data-value="aviator" role="option">🕶️ Aviator Sunglasses</button>
@@ -2551,7 +2552,7 @@ const faceStickerMenu=document.getElementById("faceStickerMenu");
 function stickerMenuClose(){faceStickerMenu.hidden=true;faceStickerButton.setAttribute("aria-expanded","false");}
 function stickerMenuLabel(value){const b=faceStickerMenu.querySelector('[data-value="'+value+'"]');return b?b.textContent:"Off";}
 faceStickerButton.addEventListener("click",()=>{const open=faceStickerMenu.hidden;stickerMenuClose();if(open){faceStickerMenu.hidden=false;faceStickerButton.setAttribute("aria-expanded","true");}});
-faceStickerMenu.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;stickerSelect.value=b.dataset.value;faceStickerButton.textContent=b.textContent;stickerMenuClose();stickerSelect.dispatchEvent(new Event("change"));});
+faceStickerMenu.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;stickerSelect.value=b.dataset.value;faceStickerButton.classList.toggle("active",b.dataset.value!=="none");stickerMenuClose();stickerSelect.dispatchEvent(new Event("change"));});
 document.addEventListener("click",e=>{if(!e.target.closest("#faceStickerPicker"))stickerMenuClose();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")stickerMenuClose();});
 
@@ -2782,7 +2783,7 @@ async function stickerEnable(){
  }catch(e){
   console.error("[FaceStickers] Enable failed", e);
   stickerMessage("Face tracking unavailable. Try again later.");
-  stickerSelect.value="none";if(faceStickerButton)faceStickerButton.textContent="Off";stickerDisable();
+  stickerSelect.value="none";if(faceStickerButton)faceStickerButton.classList.remove("active");stickerDisable();
  }
 }
 function stickerDisable(){
@@ -2972,20 +2973,6 @@ stickerSelect.addEventListener("change",()=>{
   const reactionsBtn = document.getElementById("muteReactionsBtn");
   if (reactionsBtn) reactionsBtn.style.display = "none";
 
-  // Make Face Stickers label act as toggle
-  const stickerLabel = document.querySelector('label[for="faceStickerSelect"]');
-  const stickerSelect = document.getElementById("faceStickerSelect");
-  if (stickerLabel && stickerSelect) {
-    stickerLabel.style.cursor = "pointer";
-    stickerLabel.onclick = (e) => {
-      e.preventDefault();
-      const current = stickerSelect.value;
-      stickerSelect.value = current ? "" : "thug";
-      stickerSelect.dispatchEvent(new Event("change"));
-      stickerLabel.style.opacity = current ? "1" : "0.6";
-    };
-  }
-
   // Create NPL Support button for desktop
   const badgeSelect = document.getElementById("teamBadgeSelect");
   const badgeLabel = document.querySelector(".galli-badge-select-label");
@@ -3020,22 +3007,8 @@ stickerSelect.addEventListener("change",()=>{
 </script>
 
 <script>
-// Face Stickers as toggle button + partner visibility
+// Partner sticker visibility
 (function(){
-  const label = document.querySelector('label[for="faceStickerSelect"]');
-  const select = document.getElementById("faceStickerSelect");
-  const btn = document.getElementById("faceStickerButton");
-  if (label && select) {
-    label.style.cursor = "pointer";
-    label.onclick = (e) => {
-      e.preventDefault();
-      const menu = document.getElementById("faceStickerMenu");
-      if (menu) {
-        menu.hidden = !menu.hidden;
-      }
-    };
-  }
-
   // Receive partner sticker state
   if (window.socket) {
     window.socket.on("galli-sticker-state", (data) => {
