@@ -989,7 +989,10 @@ label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-
 }
 
 @media(max-width:600px){
-  #previousCornerBtn, #nextBtn { display: none !important; }
+  #previousCornerBtn,
+  .controls #previousCornerBtn,
+  #nextBtn,
+  .controls #nextBtn { display: none !important; }
   #gamesBtn { order: 10 !important; }
 }
 </style>
@@ -2855,7 +2858,6 @@ stickerSelect.addEventListener("change",()=>{
 })();
 </script>
 <script src="/nsfw-detection.js"></script>
-</script>
 
 <section style="margin:40px auto;max-width:720px;padding:0 16px;font-size:15px">
   <h2>Learn more</h2>
@@ -3074,8 +3076,11 @@ stickerSelect.addEventListener("change",()=>{
     prevBtn.disabled = false;
     prevBtn.onclick = (e) => {
       e.stopPropagation();
-      const mainPrev = document.getElementById("previousCornerBtn");
-      if (mainPrev) mainPrev.click();
+      if (!ownerUnlocked) {
+        showProNotice("Previous");
+        return;
+      }
+      socket.emit("galli-previous-request");
     };
   }
 })();
