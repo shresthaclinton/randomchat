@@ -997,8 +997,16 @@ footer { line-height:1.8; }
 #faceStickerButton{max-width:none;white-space:nowrap;text-align:center;cursor:pointer;padding:8px 12px}
 #faceStickerButton.active{background:#ffe247}
 @media(max-width:600px){#faceStickerButton{max-width:none;font-size:12px;padding:8px 10px}}
+/* Send Gifts + Play Games placement (moved by script) */
+.galli-face-effects #gamesBtn,.galli-face-effects .galli-gift-btn{padding:8px 12px;font-size:13px;min-height:0;white-space:nowrap}
+#faceStickerStatus:empty{display:none}
+.galli-chat-form #gamesBtn,.galli-chat-form .galli-gift-btn{white-space:nowrap;font-weight:800}
+@media(max-width:600px){
+  .galli-face-effects #gamesBtn,.galli-face-effects .galli-gift-btn{font-size:12px;padding:8px 9px}
+  #faceStickerStatus{flex-basis:100%}
+}
 </style>
-<meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
+<meta name="online-galli-build" content="v5.9.1-gifts-games-moved"/>
 <style>
 .og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#f5c518}.og-connect-cell.og-drop-new{position:relative;overflow:visible;z-index:2}
 .og-connect-cell.og-drop-new::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--drop-color);border:1px solid rgba(0,0,0,.12);pointer-events:none;animation:ogConnectDrop .65s cubic-bezier(.22,.78,.35,1) both;will-change:transform}
@@ -1221,7 +1229,7 @@ footer { line-height:1.8; }
     <button class="stop" id="stopBtn">▶ Enter the Galli</button>
     <button id="reportBtn" disabled>⚑ Report</button>
     <button id="blockBtn" disabled>🚫 Block User</button>
-    <button id="gamesBtn" disabled aria-label="Play Games: choose from five games">🎮 Play Games ▸</button>
+    <button id="gamesBtn" type="button" disabled aria-label="Play Games: choose from five games">🎮 Play Games ▸</button>
   </div>
   <div id="galliMobileBottomAds" aria-label="Advertising and safety information"></div>
 
@@ -3126,14 +3134,21 @@ stickerSelect.addEventListener("change",()=>{
 
 
 <script>
+// Send Gifts + Play Games: beside Face Stickers on mobile, beside Send on desktop.
 (function(){
-  if (window.innerWidth > 600) return;
-  const gamesBtn = document.getElementById("gamesBtn");
-  const giftBtn = document.querySelector(".galli-gift-btn");
-  const container = document.querySelector(".galli-inline-reactions") || document.querySelector(".galli-social");
-  if (gamesBtn && giftBtn && container) {
-    giftBtn.parentNode.insertBefore(gamesBtn, giftBtn.nextSibling);
+  const games=document.getElementById("gamesBtn");
+  const gift=document.querySelector(".galli-gift-btn");
+  const form=document.getElementById("textChatForm");
+  const picker=document.getElementById("faceStickerPicker");
+  if(!games||!gift||!form||!picker)return;
+  games.type="button";
+  const mq=window.matchMedia("(max-width: 600px)");
+  function place(){
+    if(mq.matches) picker.after(gift,games);   // mobile: right after the Face Stickers button
+    else form.append(gift,games);              // desktop: right after the Send button
   }
+  place();
+  if(mq.addEventListener) mq.addEventListener("change",place); else mq.addListener(place);
 })();
 </script>
 
