@@ -980,6 +980,13 @@ label[for="faceStickerSelect"].active { background: #ffe247; }
 label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-gift-btn, .mobile-support-btn { display: inline-block !important; visibility: visible !important; }
 #teamBadgeSelect { display: none !important; }
 .galli-badge-select-label { display: none !important; }
+
+#startBtn { display: none !important; }
+#stopBtn { display: inline-block !important; }
+
+@media(max-width:600px){
+  #muteReactionsBtn, #reportBtn, #blockBtn, #muteBtn { display: none !important; }
+}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 <style>
@@ -1202,7 +1209,7 @@ label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-
     <button id="previousCornerBtn" type="button" class="pro-locked">↩ Previous <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button>
     <button class="next" id="nextBtn" disabled>⏭ Next Corner</button>
     <button id="muteBtn" disabled>🎤 Mute</button>
-    <button class="stop" id="stopBtn" disabled>🚪 Exit Galli</button>
+    <button class="stop" id="stopBtn">▶ Enter the Galli</button>
     <button id="reportBtn" disabled>⚑ Report</button>
     <button id="blockBtn" disabled>🚫 Block User</button>
     <button id="gamesBtn" disabled aria-label="Play Games: choose from five games">🎮 Play Games ▸</button>
@@ -1497,6 +1504,7 @@ async function startChat() {
     nextBtn.disabled = false;
     muteBtn.disabled = false;
     stopBtn.disabled = false;
+    stopBtn.textContent = "🚪 Exit Galli";
 
     status("Preparing connection...");
     await loadIceServers();
@@ -1526,7 +1534,9 @@ function stopChat() {
   startBtn.disabled = false;
   nextBtn.disabled = true;
   muteBtn.disabled = true;
-  stopBtn.disabled = true;
+  stopBtn.disabled = false;
+  stopBtn.textContent = "▶ Enter the Galli";
+  stopBtn.onclick = () => { if (startBtn) startBtn.click(); };
 
   isMuted = false;
   muteBtn.textContent = "🎤 Mute";
@@ -3121,6 +3131,84 @@ stickerSelect.addEventListener("change",()=>{
   document.addEventListener("click", () => {
     if (reportMenu) reportMenu.classList.remove("show");
   });
+})();
+</script>
+
+
+<script>
+// Switch Exit/Enter button text
+(function(){
+  const stopBtn = document.getElementById("stopBtn");
+  const startBtn = document.getElementById("startBtn");
+  if (!stopBtn) return;
+
+  const originalStop = stopBtn.onclick || null;
+
+  // Override to change text
+  const updateButton = (inChat) => {
+    if (inChat) {
+      stopBtn.textContent = "🚪 Exit Galli";
+      stopBtn.disabled = false;
+    } else {
+      stopBtn.textContent = "▶ Enter the Galli";
+      stopBtn.disabled = false;
+      stopBtn.onclick = () => {
+        if (startBtn) startBtn.click();
+      };
+    }
+  };
+
+  // Watch for chat state changes via button disabled state
+  const observer = new MutationObserver(() => {
+    const inChat = !stopBtn.disabled && stopBtn.textContent.includes("Exit");
+    // This is a simple approach - the existing logic handles enable/disable
+  });
+
+  // Simpler: intercept the existing stopChat and start
+  const origStopClick = stopBtn.onclick;
+  stopBtn.addEventListener("click", function handler() {
+    if (stopBtn.textContent.includes("Enter")) {
+      if (startBtn) startBtn.click();
+    }
+  });
+
+  // When video starts (startBtn clicked), change stopBtn to Exit
+  if (startBtn) {
+    startBtn.addEventListener("click", () => {
+      setTimeout(() => {
+        stopBtn.textContent = "🚪 Exit Galli";
+        stopBtn.disabled = false;
+      }, 100);
+    });
+  }
+
+  // When stop is clicked and it's Exit, change back to Enter
+  stopBtn.addEventListener("click", () => {
+    if (stopBtn.textContent.includes("Exit")) {
+      setTimeout(() => {
+        stopBtn.textContent = "▶ Enter the Galli";
+      }, 100);
+    }
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  const stopBtn = document.getElementById("stopBtn");
+  const startBtn = document.getElementById("startBtn");
+  if (!stopBtn || !startBtn) return;
+
+  stopBtn.onclick = function(e) {
+    e.preventDefault();
+    if (stopBtn.textContent.includes("Enter")) {
+      startBtn.click();
+    } else {
+      // Call original stop
+      if (typeof stopChat === "function") stopChat();
+    }
+  };
 })();
 </script>
 
