@@ -1202,7 +1202,7 @@ label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-
     <button id="previousCornerBtn" type="button" class="pro-locked">↩ Previous <span class="pro-corner-tag" aria-label="Pro feature">PRO</span></button>
     <button class="next" id="nextBtn" disabled>⏭ Next Corner</button>
     <button id="muteBtn" disabled>🎤 Mute</button>
-    <button class="stop" id="stopBtn" disabled>🚪 Exit Galli</button>
+    <button class="stop" id="stopBtn">▶ Enter the Galli</button>
     <button id="reportBtn" disabled>⚑ Report</button>
     <button id="blockBtn" disabled>🚫 Block User</button>
     <button id="gamesBtn" disabled aria-label="Play Games: choose from five games">🎮 Play Games ▸</button>
@@ -1497,6 +1497,7 @@ async function startChat() {
     nextBtn.disabled = false;
     muteBtn.disabled = false;
     stopBtn.disabled = false;
+    stopBtn.textContent = "🚪 Exit Galli";
 
     status("Preparing connection...");
     await loadIceServers();
@@ -1526,7 +1527,9 @@ function stopChat() {
   startBtn.disabled = false;
   nextBtn.disabled = true;
   muteBtn.disabled = true;
-  stopBtn.disabled = true;
+  stopBtn.disabled = false;
+  stopBtn.textContent = "▶ Enter the Galli";
+  stopBtn.onclick = () => { if (startBtn) startBtn.click(); };
 
   isMuted = false;
   muteBtn.textContent = "🎤 Mute";
