@@ -980,6 +980,9 @@ label[for="faceStickerSelect"].active { background: #ffe247; }
 label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-gift-btn, .mobile-support-btn { display: inline-block !important; visibility: visible !important; }
 #teamBadgeSelect { display: none !important; }
 .galli-badge-select-label { display: none !important; }
+
+#startBtn { display: none !important; }
+#stopBtn { display: inline-block !important; }
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 <style>
@@ -3183,6 +3186,25 @@ stickerSelect.addEventListener("change",()=>{
       }, 100);
     }
   });
+})();
+</script>
+
+
+<script>
+(function(){
+  const stopBtn = document.getElementById("stopBtn");
+  const startBtn = document.getElementById("startBtn");
+  if (!stopBtn || !startBtn) return;
+
+  stopBtn.onclick = function(e) {
+    e.preventDefault();
+    if (stopBtn.textContent.includes("Enter")) {
+      startBtn.click();
+    } else {
+      // Call original stop
+      if (typeof stopChat === "function") stopChat();
+    }
+  };
 })();
 </script>
 
