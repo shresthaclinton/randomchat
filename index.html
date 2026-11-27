@@ -3069,9 +3069,14 @@ stickerSelect.addEventListener("change",()=>{
     };
   }
 
-  // Previous is not supported - keep disabled
+  // Previous triggers the main previous button (Pro gated)
   if (prevBtn) {
-    prevBtn.title = "Previous not available";
+    prevBtn.disabled = false;
+    prevBtn.onclick = (e) => {
+      e.stopPropagation();
+      const mainPrev = document.getElementById("previousCornerBtn");
+      if (mainPrev) mainPrev.click();
+    };
   }
 })();
 </script>
