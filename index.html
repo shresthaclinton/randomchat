@@ -1544,7 +1544,6 @@ function stopChat() {
   muteBtn.disabled = true;
   stopBtn.disabled = false;
   stopBtn.textContent = "▶ Enter the Galli";
-  stopBtn.onclick = () => { if (startBtn) startBtn.click(); };
 
   isMuted = false;
   muteBtn.textContent = "🎤 Mute";
@@ -2471,7 +2470,10 @@ resetSocial();
 startBtn.addEventListener("click", startChat);
 nextBtn.addEventListener("click", nextChat);
 muteBtn.addEventListener("click", toggleMute);
-stopBtn.addEventListener("click", stopChat);
+stopBtn.addEventListener("click", () => {
+  if (localStream) stopChat();                 // in a chat -> exit
+  else if (!startBtn.disabled) startBtn.click(); // not in a chat -> enter
+});
 
 remoteVideo.addEventListener("click", () => {
   remoteVideo.play().catch(() => {});
@@ -3146,84 +3148,6 @@ stickerSelect.addEventListener("change",()=>{
   document.addEventListener("click", () => {
     if (reportMenu) reportMenu.classList.remove("show");
   });
-})();
-</script>
-
-
-<script>
-// Switch Exit/Enter button text
-(function(){
-  const stopBtn = document.getElementById("stopBtn");
-  const startBtn = document.getElementById("startBtn");
-  if (!stopBtn) return;
-
-  const originalStop = stopBtn.onclick || null;
-
-  // Override to change text
-  const updateButton = (inChat) => {
-    if (inChat) {
-      stopBtn.textContent = "🚪 Exit Galli";
-      stopBtn.disabled = false;
-    } else {
-      stopBtn.textContent = "▶ Enter the Galli";
-      stopBtn.disabled = false;
-      stopBtn.onclick = () => {
-        if (startBtn) startBtn.click();
-      };
-    }
-  };
-
-  // Watch for chat state changes via button disabled state
-  const observer = new MutationObserver(() => {
-    const inChat = !stopBtn.disabled && stopBtn.textContent.includes("Exit");
-    // This is a simple approach - the existing logic handles enable/disable
-  });
-
-  // Simpler: intercept the existing stopChat and start
-  const origStopClick = stopBtn.onclick;
-  stopBtn.addEventListener("click", function handler() {
-    if (stopBtn.textContent.includes("Enter")) {
-      if (startBtn) startBtn.click();
-    }
-  });
-
-  // When video starts (startBtn clicked), change stopBtn to Exit
-  if (startBtn) {
-    startBtn.addEventListener("click", () => {
-      setTimeout(() => {
-        stopBtn.textContent = "🚪 Exit Galli";
-        stopBtn.disabled = false;
-      }, 100);
-    });
-  }
-
-  // When stop is clicked and it's Exit, change back to Enter
-  stopBtn.addEventListener("click", () => {
-    if (stopBtn.textContent.includes("Exit")) {
-      setTimeout(() => {
-        stopBtn.textContent = "▶ Enter the Galli";
-      }, 100);
-    }
-  });
-})();
-</script>
-
-
-<script>
-(function(){
-  const stopBtn = document.getElementById("stopBtn");
-  const startBtn = document.getElementById("startBtn");
-  if (!stopBtn || !startBtn) return;
-
-  stopBtn.onclick = function(e) {
-    e.preventDefault();
-    if (stopBtn.textContent.includes("Enter")) {
-      startBtn.click();
-    } else {
-      // Call original stop
-      if (typeof stopChat === "function") stopChat();
-    }
-  };
 })();
 </script>
 
