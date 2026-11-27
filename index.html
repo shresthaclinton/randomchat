@@ -2830,10 +2830,7 @@ stickerSelect.addEventListener("change",()=>{
 })();
 </script>
 <script>
-// NSFW Detection (patched)
-// Paste this INSIDE the existing <script> ... </script> that currently holds the
-// NSFW block, replacing everything between the tags. Also delete the stray
-// second </script> after it.
+// NSFW Detection
 (function () {
   const DEBUG = /[?&]nsfwtest=1/.test(location.search); // logs all 5 classes
   const STRIKE_THRESHOLD = 2;
