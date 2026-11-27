@@ -425,6 +425,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+
+  if (req.method === "GET" && url.pathname === "/nsfw-detection.js") {
+    const jsPath = path.join(__dirname, "nsfw-detection.js");
+    fs.stat(jsPath, (err, stat) => {
+      if (err || !stat.isFile()) { res.writeHead(404); res.end("Not found"); return; }
+      res.writeHead(200, { "Content-Type": "application/javascript; charset=utf-8", "Cache-Control": "public, max-age=3600" });
+      fs.createReadStream(jsPath).pipe(res);
+    });
+    return;
+  }
+
   const policyPages = { "/about": "about.html", "/privacy": "privacy.html", "/terms": "terms.html", "/guidelines": "guidelines.html", "/how-to-use": "how-to-use.html", "/safety": "safety.html", "/vs-omegle": "vs-omegle.html", "/nepali-video-chat": "nepali-video-chat.html" };
   if (req.method === "GET" && policyPages[url.pathname]) {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "X-Content-Type-Options": "nosniff" });
