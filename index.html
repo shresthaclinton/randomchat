@@ -3371,36 +3371,6 @@ stickerSelect.addEventListener("change",()=>{
 (function() {
   if (window.innerWidth > 600) return; // mobile only
 
-  // Reactions compact button
-  const reactionContainer = document.querySelector('.galli-inline-reactions');
-  if (reactionContainer) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'mobile-reactions-btn';
-    btn.textContent = '😊 Reactions';
-    const popup = document.createElement('div');
-    popup.className = 'mobile-reactions-popup';
-
-    // Move existing reaction buttons into popup
-    const choices = document.getElementById('reactionChoices');
-    if (choices) {
-      Array.from(choices.children).forEach(child => popup.appendChild(child));
-    }
-
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      popup.classList.toggle('show');
-    });
-    document.addEventListener('click', () => popup.classList.remove('show'));
-
-    const wrapper = document.createElement("div");
-    wrapper.style.position = "relative";
-    wrapper.style.display = "inline-block";
-    wrapper.appendChild(btn);
-    wrapper.appendChild(popup);
-    reactionContainer.insertBefore(wrapper, reactionContainer.firstChild);
-  }
-
   // Badge compact button
   const supportLabel = document.querySelector('.galli-badge-select-label');
   const badgeSelect = document.getElementById('teamBadgeSelect');
