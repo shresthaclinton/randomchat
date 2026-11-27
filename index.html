@@ -987,6 +987,11 @@ label[for="faceStickerSelect"], #faceStickerButton, .galli-upload-label, .galli-
 @media(max-width:600px){
   #muteReactionsBtn, #reportBtn, #blockBtn, #muteBtn { display: none !important; }
 }
+
+@media(max-width:600px){
+  #previousCornerBtn, #nextBtn { display: none !important; }
+  #gamesBtn { order: 10 !important; }
+}
 </style>
 <meta name="online-galli-build" content="v5.5.0-reference-footprints"/>
 <style>
@@ -3209,6 +3214,19 @@ stickerSelect.addEventListener("change",()=>{
       if (typeof stopChat === "function") stopChat();
     }
   };
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.innerWidth > 600) return;
+  const gamesBtn = document.getElementById("gamesBtn");
+  const giftBtn = document.querySelector(".galli-gift-btn");
+  const container = document.querySelector(".galli-inline-reactions") || document.querySelector(".galli-social");
+  if (gamesBtn && giftBtn && container) {
+    giftBtn.parentNode.insertBefore(gamesBtn, giftBtn.nextSibling);
+  }
 })();
 </script>
 
