@@ -2830,59 +2830,92 @@ stickerSelect.addEventListener("change",()=>{
 })();
 </script>
 <script>
-// NSFW Detection - multi-region sampling for better genital detection
-(function() {
-  let model = null;
-  let localInterval = null, remoteInterval = null;
-  let localBusy = false, remoteBusy = false;
-  let localStrikes = 0, remoteStrikes = 0;
+// NSFW Detection (patched)
+// Paste this INSIDE the existing <script> ... </script> that currently holds the
+// NSFW block, replacing everything between the tags. Also delete the stray
+// second </script> after it.
+(function () {
+  const DEBUG = /[?&]nsfwtest=1/.test(location.search); // logs all 5 classes
   const STRIKE_THRESHOLD = 2;
   const CHECK_INTERVAL = 1800;
   const PORN_THRESHOLD = 0.35;
   const HENTAI_THRESHOLD = 0.30;
+  // "Sexy" alone is common for swimwear/lingerie, so it only counts when
+  // combined with Porn. Tune this against real samples before relying on it.
+  const PORN_PLUS_SEXY_THRESHOLD = 0.75;
+  const MAX_LOAD_ATTEMPTS = 3;
+
+  let model = null;
+  let modelPromise = null;
+  let loadAttempts = 0;
+  let localInterval = null, remoteInterval = null;
+  let localBusy = false, remoteBusy = false;
+  let localStrikes = 0, remoteStrikes = 0;
 
   function log(msg, ...a) { console.log("%c[NSFW]", "color:#ff6b6b;font-weight:bold", msg, ...a); }
+  function logError(msg, ...a) { console.error("[NSFW]", msg, ...a); }
 
-  async function loadModel() {
-    if (model) return model;
-    if (typeof nsfwjs === "undefined") { log("nsfwjs missing"); return null; }
-    try {
-      log("Loading model...");
-      model = await nsfwjs.load("/models/nsfw/");
-      log("Model loaded");
-      return model;
-    } catch (e) {
-      log("Model failed", e);
-      return null;
-    }
+  // Load once; share the in-flight promise so concurrent callers don't load twice.
+  function loadModel() {
+    if (model) return Promise.resolve(model);
+    if (modelPromise) return modelPromise;
+    if (loadAttempts >= MAX_LOAD_ATTEMPTS) return Promise.resolve(null);
+    loadAttempts++;
+    modelPromise = (async () => {
+      if (typeof nsfwjs === "undefined") {
+        logError("nsfwjs library missing (CDN blocked or failed). Detection is OFF.");
+        return null;
+      }
+      try {
+        log("Loading model... attempt " + loadAttempts);
+        const m = await nsfwjs.load("/models/nsfw/");
+        model = m;
+        const backend = (typeof tf !== "undefined" && tf.getBackend) ? tf.getBackend() : "unknown";
+        log("Model loaded. tfjs backend: " + backend + (typeof tf !== "undefined" && tf.version_core ? ", tfjs " + tf.version_core : ""));
+        return m;
+      } catch (e) {
+        logError("Model load failed. Detection is OFF.", e);
+        return null;
+      } finally {
+        modelPromise = null; // allow a bounded retry if it failed
+      }
+    })();
+    return modelPromise;
   }
 
   function getLV() { return window.localVideo || document.getElementById("localVideo"); }
   function getRV() { return window.remoteVideo || document.getElementById("remoteVideo"); }
 
-  function sampleRegions(video) {
-    const regions = [];
-    const vw = video.videoWidth, vh = video.videoHeight;
-    if (!vw || !vh) return regions;
+  // One reusable canvas per region.
+  const canvases = [0, 1, 2].map(() => {
     const c = document.createElement("canvas");
     c.width = c.height = 224;
-    const ctx = c.getContext("2d");
-    // Full frame
-    ctx.drawImage(video, 0, 0, 224, 224);
-    regions.push(c);
-    // Center crop
+    return c;
+  });
+
+  // Draw a source rectangle into 224x224 preserving aspect ratio (letterboxed).
+  function drawFit(video, canvas, sx, sy, sw, sh) {
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, 224, 224);
+    const scale = Math.min(224 / sw, 224 / sh);
+    const dw = sw * scale, dh = sh * scale;
+    ctx.drawImage(video, sx, sy, sw, sh, (224 - dw) / 2, (224 - dh) / 2, dw, dh);
+  }
+
+  function sampleRegions(video) {
+    const vw = video.videoWidth, vh = video.videoHeight;
+    if (!vw || !vh) return [];
     const size = Math.min(vw, vh);
-    const sx = (vw - size) / 2, sy = (vh - size) / 2;
-    const c2 = document.createElement("canvas");
-    c2.width = c2.height = 224;
-    c2.getContext("2d").drawImage(video, sx, sy, size, size, 0, 0, 224, 224);
-    regions.push(c2);
-    // Lower third (common for body/genital framing)
-    const c3 = document.createElement("canvas");
-    c3.width = c3.height = 224;
-    c3.getContext("2d").drawImage(video, 0, vh * 0.45, vw, vh * 0.55, 0, 0, 224, 224);
-    regions.push(c3);
-    return regions;
+    drawFit(video, canvases[0], 0, 0, vw, vh);                                   // full frame
+    drawFit(video, canvases[1], (vw - size) / 2, (vh - size) / 2, size, size);    // center square
+    drawFit(video, canvases[2], 0, vh * 0.45, vw, vh * 0.55);                     // lower region
+    return canvases;
+  }
+
+  function prob(preds, name) {
+    const p = preds.find(x => x.className === name);
+    return p ? p.probability : 0;
   }
 
   async function analyze(video, isLocal) {
@@ -2890,32 +2923,42 @@ stickerSelect.addEventListener("change",()=>{
     if (isLocal ? localBusy : remoteBusy) return;
     if (isLocal) localBusy = true; else remoteBusy = true;
     try {
-      const regions = sampleRegions(video);
-      let maxPorn = 0, maxHentai = 0, bestPred = null;
-      for (const canvas of regions) {
-        const preds = await model.classify(canvas);
-        const porn = preds.find(p => p.className === "Porn");
-        const hentai = preds.find(p => p.className === "Hentai");
-        if (porn && porn.probability > maxPorn) { maxPorn = porn.probability; bestPred = porn; }
-        if (hentai && hentai.probability > maxHentai) { maxHentai = hentai.probability; if (!bestPred || hentai.probability > bestPred.probability) bestPred = hentai; }
+      let worst = null; // {className, probability}
+      let maxPorn = 0, maxHentai = 0, maxCombo = 0, maxSexy = 0, maxNeutral = 0, maxDrawing = 0;
+      for (const canvas of sampleRegions(video)) {
+        const preds = await model.classify(canvas, 5);
+        const porn = prob(preds, "Porn"), hentai = prob(preds, "Hentai"), sexy = prob(preds, "Sexy");
+        maxPorn = Math.max(maxPorn, porn);
+        maxHentai = Math.max(maxHentai, hentai);
+        maxSexy = Math.max(maxSexy, sexy);
+        maxNeutral = Math.max(maxNeutral, prob(preds, "Neutral"));
+        maxDrawing = Math.max(maxDrawing, prob(preds, "Drawing"));
+        maxCombo = Math.max(maxCombo, porn + sexy);
+        if (!worst || porn > worst.probability) worst = { className: "Porn", probability: porn };
+        if (hentai > worst.probability) worst = { className: "Hentai", probability: hentai };
       }
-      log(isLocal ? "LOCAL" : "REMOTE", "Porn:" + Math.round(maxPorn*100) + "% Hentai:" + Math.round(maxHentai*100) + "%");
-      const bad = maxPorn > PORN_THRESHOLD || maxHentai > HENTAI_THRESHOLD;
-      if (bad && bestPred) {
+      const pct = n => Math.round(n * 100) + "%";
+      log(isLocal ? "LOCAL" : "REMOTE",
+        "Porn:" + pct(maxPorn) + " Hentai:" + pct(maxHentai) +
+        (DEBUG ? " Sexy:" + pct(maxSexy) + " Neutral:" + pct(maxNeutral) + " Drawing:" + pct(maxDrawing) + " Porn+Sexy:" + pct(maxCombo) : ""));
+
+      const bad = maxPorn > PORN_THRESHOLD || maxHentai > HENTAI_THRESHOLD || maxCombo > PORN_PLUS_SEXY_THRESHOLD;
+      if (bad && worst) {
         if (isLocal) {
           localStrikes++;
           log("Local strike", localStrikes);
-          if (localStrikes >= STRIKE_THRESHOLD) banLocal(bestPred);
+          if (localStrikes >= STRIKE_THRESHOLD) banLocal(worst);
         } else {
           remoteStrikes++;
-          if (remoteStrikes >= STRIKE_THRESHOLD) reportRemote(bestPred);
+          log("Remote strike", remoteStrikes);
+          if (remoteStrikes >= STRIKE_THRESHOLD) reportRemote(worst);
         }
       } else {
         if (isLocal) localStrikes = Math.max(0, localStrikes - 1);
         else remoteStrikes = Math.max(0, remoteStrikes - 1);
       }
     } catch (e) {
-      log("analyze error", e);
+      logError("analyze error", e);
     } finally {
       if (isLocal) localBusy = false; else remoteBusy = false;
     }
@@ -2958,7 +3001,9 @@ stickerSelect.addEventListener("change",()=>{
   function start() {
     if (!model) return;
     stop();
-    log("Detection started (multi-region)");
+    // Clear the blur left by a previous remote report so the next partner is visible.
+    const rv = getRV(); if (rv) rv.style.filter = "";
+    log("Detection started");
     localInterval = setInterval(() => analyze(getLV(), true), CHECK_INTERVAL);
     remoteInterval = setInterval(() => analyze(getRV(), false), CHECK_INTERVAL);
   }
@@ -2973,14 +3018,17 @@ stickerSelect.addEventListener("change",()=>{
   function tryStart() {
     const lv = getLV();
     if (lv && lv.srcObject && !localInterval) {
-      log("Camera detected, starting detection...");
-      loadModel().then(m => { if (m) start(); else log("Model not ready"); });
+      loadModel().then(m => {
+        // Re-check: another tryStart may have started detection while loading.
+        if (m && !localInterval && getLV() && getLV().srcObject) start();
+      });
     }
   }
 
   setInterval(tryStart, 2000);
   window.addEventListener("load", tryStart);
 })();
+
 </script>
 </script>
 
