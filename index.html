@@ -1048,8 +1048,22 @@ footer { line-height:1.8; }
   .galli-box-actions #muteBtn,.galli-box-actions #reportBtn,.galli-box-actions #blockBtn{background:#3a3a3a;color:#fff;border:1px solid #666}
   .galli-box-actions #previousCornerBtn{background:#fff4b3;color:#171717;border:2px solid #171717}
 }
+/* Desktop: the box has exactly two rows. Row 1 = chat + Gifts + Games.
+   Row 2 = Enter, Face Stickers, NPL Support, Custom Badge, Previous, Next, Mute, Report, Block. */
+@media(min-width:601px){
+  .galli-box-actions{display:contents}
+  #customBadgeUpload{display:none!important}   /* the Custom Badge button still opens the picker */
+  .galli-inline-reactions{gap:5px!important}
+  .galli-inline-reactions .galli-face-effects,.galli-inline-reactions .galli-social-tabs{gap:5px!important}
+  .galli-inline-reactions > #stopBtn,
+  .galli-box-actions button,
+  .galli-inline-reactions #faceStickerButton,
+  .galli-inline-reactions .mobile-support-btn,
+  .galli-inline-reactions .galli-upload-label{padding:7px 8px!important;font-size:12px!important;min-height:0!important}
+  .galli-box-actions .pro-corner-tag,.galli-inline-reactions .pro-corner-tag{font-size:8px}
+}
 </style>
-<meta name="online-galli-build" content="v5.9.8-pc-buttons-in-box"/>
+<meta name="online-galli-build" content="v5.9.9-two-rows"/>
 <style>
 .og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#f5c518}.og-connect-cell.og-drop-new{position:relative;overflow:visible;z-index:2}
 .og-connect-cell.og-drop-new::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--drop-color);border:1px solid rgba(0,0,0,.12);pointer-events:none;animation:ogConnectDrop .65s cubic-bezier(.22,.78,.35,1) both;will-change:transform}
