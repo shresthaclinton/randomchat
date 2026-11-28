@@ -1010,8 +1010,11 @@ footer { line-height:1.8; }
 #stopBtn:hover:not(:disabled){background:#10702f;filter:none}
 #stopBtn.in-galli{background:#a92828;border-color:#7d1a1a}
 #stopBtn.in-galli:hover:not(:disabled){background:#8f2020}
+/* Mobile: Enter/Exit button sits inside the box, left of NPL Support */
+.galli-social-tabs #stopBtn{padding:8px 12px;font-size:13px;white-space:nowrap;min-height:0;font-weight:800;border-radius:9px;flex:0 0 auto}
+@media(max-width:600px){.galli-social-tabs #stopBtn{font-size:12px;padding:8px 10px}}
 </style>
-<meta name="online-galli-build" content="v5.9.2-enter-exit-colors"/>
+<meta name="online-galli-build" content="v5.9.3-enter-in-box"/>
 <style>
 .og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#f5c518}.og-connect-cell.og-drop-new{position:relative;overflow:visible;z-index:2}
 .og-connect-cell.og-drop-new::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--drop-color);border:1px solid rgba(0,0,0,.12);pointer-events:none;animation:ogConnectDrop .65s cubic-bezier(.22,.78,.35,1) both;will-change:transform}
@@ -3147,12 +3150,22 @@ stickerSelect.addEventListener("change",()=>{
   const gift=document.querySelector(".galli-gift-btn");
   const form=document.getElementById("textChatForm");
   const picker=document.getElementById("faceStickerPicker");
+  const enter=document.getElementById("stopBtn");            // Enter / Exit Galli button
+  const tabs=document.querySelector(".galli-social-tabs");   // row holding NPL Support
   if(!games||!gift||!form||!picker)return;
   games.type="button";
+  // remember where the Enter/Exit button lives on desktop so it can go back there
+  const enterHome=enter?document.createComment("enter-exit home"):null;
+  if(enter&&enterHome)enter.parentNode.insertBefore(enterHome,enter);
   const mq=window.matchMedia("(max-width: 600px)");
   function place(){
-    if(mq.matches) picker.after(gift,games);   // mobile: right after the Face Stickers button
-    else form.append(gift,games);              // desktop: right after the Send button
+    if(mq.matches){
+      picker.after(gift,games);                // mobile: right after the Face Stickers button
+      if(enter&&tabs)tabs.prepend(enter);      // mobile: Enter/Exit inside the box, left of NPL Support
+    }else{
+      form.append(gift,games);                 // desktop: right after the Send button
+      if(enter&&enterHome&&enterHome.parentNode)enterHome.after(enter); // desktop: back in the controls row
+    }
   }
   place();
   if(mq.addEventListener) mq.addEventListener("change",place); else mq.addListener(place);
