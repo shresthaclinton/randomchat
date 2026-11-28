@@ -1037,7 +1037,7 @@ footer { line-height:1.8; }
   .galli-social-tabs .galli-upload-label{padding:7px 6px}
 }
 </style>
-<meta name="online-galli-build" content="v5.9.5-mobile-centered"/>
+<meta name="online-galli-build" content="v5.9.6-mobile-mailto"/>
 <style>
 .og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#f5c518}.og-connect-cell.og-drop-new{position:relative;overflow:visible;z-index:2}
 .og-connect-cell.og-drop-new::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--drop-color);border:1px solid rgba(0,0,0,.12);pointer-events:none;animation:ogConnectDrop .65s cubic-bezier(.22,.78,.35,1) both;will-change:transform}
@@ -3192,6 +3192,31 @@ stickerSelect.addEventListener("change",()=>{
   }
   place();
   if(mq.addEventListener) mq.addEventListener("change",place); else mq.addListener(place);
+})();
+</script>
+<script>
+// "Book Your Spot": desktop keeps the Gmail compose page (new tab);
+// phones/tablets use a mailto: link so the device's own mail app opens with the address filled in.
+(function(){
+  const MAIL="contact@onlinegalli.com", SUBJECT="Book a Spot on Online Galli";
+  const mailto="mailto:"+MAIL+"?subject="+encodeURIComponent(SUBJECT);
+  const mq=window.matchMedia("(max-width: 600px), (pointer: coarse)");
+  function apply(){
+    document.querySelectorAll(".galli-led-cta").forEach(a=>{
+      if(!a.dataset.gmailHref) a.dataset.gmailHref=a.getAttribute("href"); // remember desktop link
+      if(mq.matches){
+        a.setAttribute("href",mailto);
+        a.removeAttribute("target");
+        a.removeAttribute("rel");
+      }else{
+        a.setAttribute("href",a.dataset.gmailHref);
+        a.setAttribute("target","_blank");
+        a.setAttribute("rel","noopener noreferrer");
+      }
+    });
+  }
+  apply();
+  if(mq.addEventListener) mq.addEventListener("change",apply); else mq.addListener(apply);
 })();
 </script>
 
