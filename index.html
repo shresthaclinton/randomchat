@@ -1040,8 +1040,16 @@ footer { line-height:1.8; }
    and hide the status line under the controls. */
 @media(max-width:600px){.galli-sticker-menu{left:0;right:auto}}
 #faceStickerStatus{display:none!important}
+/* Desktop: every control button lives inside the dark box. Enter/Exit starts the second row. */
+@media(min-width:601px){
+  .galli-inline-reactions > #stopBtn,
+  .galli-box-actions button{padding:8px 12px!important;font-size:13px!important;min-height:0!important;white-space:nowrap;border-radius:9px;font-weight:800;flex:0 0 auto}
+  .galli-box-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex-basis:100%;margin-top:2px}
+  .galli-box-actions #muteBtn,.galli-box-actions #reportBtn,.galli-box-actions #blockBtn{background:#3a3a3a;color:#fff;border:1px solid #666}
+  .galli-box-actions #previousCornerBtn{background:#fff4b3;color:#171717;border:2px solid #171717}
+}
 </style>
-<meta name="online-galli-build" content="v5.9.7-stickers-fit"/>
+<meta name="online-galli-build" content="v5.9.8-pc-buttons-in-box"/>
 <style>
 .og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#f5c518}.og-connect-cell.og-drop-new{position:relative;overflow:visible;z-index:2}
 .og-connect-cell.og-drop-new::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--drop-color);border:1px solid rgba(0,0,0,.12);pointer-events:none;animation:ogConnectDrop .65s cubic-bezier(.22,.78,.35,1) both;will-change:transform}
@@ -1065,86 +1073,6 @@ footer { line-height:1.8; }
   }
 }
 </style>
-
-<style id="galli-controls-inside-existing-box">
-/* Put the existing main controls directly into the existing Chat / reactions box.
-   No new panel, background, border, or wrapper is created. */
-.galli-inline-reactions > .controls {
-  display: contents !important;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-.galli-inline-reactions > .controls > .galli-enter-wrap {
-  order: 100 !important;
-  flex: 0 1 220px !important;
-  min-width: 180px !important;
-  margin: 0 !important;
-}
-.galli-inline-reactions > .controls > button {
-  order: 101 !important;
-  flex: 0 1 auto !important;
-  min-width: max-content;
-  margin: 0 !important;
-}
-.galli-inline-reactions #gamesBtn { order: 102 !important; }
-.galli-inline-reactions #stopBtn { order: 103 !important; }
-.galli-inline-reactions #status { margin-top: 3px; }
-@media (max-width: 600px) {
-  .galli-inline-reactions > .controls > .galli-enter-wrap {
-    flex-basis: 100% !important;
-    min-width: 0 !important;
-  }
-  .galli-inline-reactions > .controls > button {
-    flex: 1 1 auto !important;
-  }
-}
-</style>
-
-
-<style id="galli-two-row-button-layout">
-/* Keep the existing reactions/stickers/support panel; fit its controls into two rows. */
-.galli-inline-reactions {
-  display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  grid-auto-flow: row !important;
-  align-items: center !important;
-  gap: 7px !important;
-  width: 100% !important;
-}
-.galli-inline-reactions > .controls { display: contents !important; }
-.galli-inline-reactions > .galli-face-effects,
-.galli-inline-reactions > .galli-social-tabs,
-.galli-inline-reactions > .controls > .galli-enter-wrap,
-.galli-inline-reactions > .controls > button {
-  min-width: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  margin: 0 !important;
-}
-.galli-inline-reactions > .controls > .galli-enter-wrap { flex: initial !important; }
-.galli-inline-reactions > .controls > button { flex: initial !important; white-space: nowrap; padding: 8px 5px !important; font-size: 12px !important; }
-.galli-inline-reactions .galli-face-effects,
-.galli-inline-reactions .galli-social-tabs { display: flex !important; flex-wrap: nowrap !important; align-items: center !important; gap: 4px !important; }
-.galli-inline-reactions .galli-face-effects > *,
-.galli-inline-reactions .galli-social-tabs > * { min-width: 0; }
-.galli-inline-reactions #faceStickerButton,
-.galli-inline-reactions .galli-social-tabs #stopBtn,
-.galli-inline-reactions .galli-social-tabs .mobile-support-btn,
-.galli-inline-reactions .galli-social-tabs .galli-upload-label { width: 100% !important; box-sizing: border-box !important; white-space: nowrap; padding: 8px 4px !important; font-size: 11px !important; }
-.galli-inline-reactions #teamBadgeSelect { min-width: 0 !important; max-width: 100% !important; }
-.galli-inline-reactions #status { font-size: 10px; line-height: 1.2; overflow-wrap: anywhere; }
-@media (max-width: 600px) {
-  .galli-inline-reactions { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
-  .galli-inline-reactions > .controls > button { font-size: 11px !important; padding: 8px 3px !important; }
-  .galli-inline-reactions .galli-face-effects,
-  .galli-inline-reactions .galli-social-tabs { gap: 3px !important; }
-}
-</style>
-
 </head>
 
 <body>
@@ -3261,20 +3189,29 @@ stickerSelect.addEventListener("change",()=>{
   const tabs=document.querySelector(".galli-social-tabs");   // row holding NPL Support
   if(!games||!gift||!form||!picker)return;
   games.type="button";
-  // remember where the Enter/Exit button lives on desktop so it can go back there
-  const enterHome=enter?document.createComment("enter-exit home"):null;
-  if(enter&&enterHome)enter.parentNode.insertBefore(enterHome,enter);
+  const inline=document.querySelector(".galli-inline-reactions"); // the box row holding Face Stickers / NPL Support
+  // remember where each control button originally lived so phones can get them back
+  const ids=["previousCornerBtn","nextBtn","muteBtn","reportBtn","blockBtn"];
+  const others=ids.map(id=>document.getElementById(id)).filter(Boolean);
+  function anchorFor(el){const c=document.createComment("home:"+el.id);el.parentNode.insertBefore(c,el);return c;}
+  const enterHome=enter?anchorFor(enter):null;
+  const homes=new Map(others.map(el=>[el,anchorFor(el)]));
+  // desktop: second row of the box, after Face Stickers etc.: Previous / Next / Mute / Report / Block
+  const actions=document.createElement("div");
+  actions.className="galli-box-actions";
   const mq=window.matchMedia("(max-width: 600px)");
   function place(){
     if(mq.matches){
       picker.after(gift,games);                // mobile: right after the Face Stickers button
       if(enter&&tabs)tabs.prepend(enter);      // mobile: Enter/Exit inside the box, left of NPL Support
+      others.forEach(el=>homes.get(el).after(el)); // mobile: other buttons back in the (hidden) controls row
+      actions.remove();
     }else{
       form.append(gift,games);                 // desktop: right after the Send button
-      if(enter&&enterHome&&enterHome.parentNode)enterHome.after(enter); // desktop: back in the controls row
+      if(enter&&inline)inline.prepend(enter);  // desktop: Enter/Exit at the far left of the box's second row
+      if(inline){inline.append(actions);actions.append(...others);} // desktop: the rest in the box too
     }
-  }
-  place();
+  }  place();
   if(mq.addEventListener) mq.addEventListener("change",place); else mq.addListener(place);
 })();
 </script>
@@ -3402,19 +3339,3 @@ stickerSelect.addEventListener("change",()=>{
   }
 })();
 </script>
-<script id="galli-controls-placement">
-(function () {
-  function placeControlsInExistingBox() {
-    const row = document.querySelector('.galli-inline-reactions');
-    const controls = document.querySelector('.controls');
-    if (!row || !controls || controls.parentElement === row) return;
-    row.appendChild(controls);
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', placeControlsInExistingBox, { once: true });
-  } else {
-    placeControlsInExistingBox();
-  }
-})();
-</script>
-
