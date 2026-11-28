@@ -1040,64 +1040,6 @@ footer { line-height:1.8; }
    and hide the status line under the controls. */
 @media(max-width:600px){.galli-sticker-menu{left:0;right:auto}}
 #faceStickerStatus{display:none!important}
-
-
-/* V5.8 — desktop controls grouped in one visible box.
-   Keep the main Enter button at the far left of the second row. */
-@media (min-width: 901px) {
-  .controls {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    align-items: center;
-    gap: 10px !important;
-    margin-top: 16px;
-    padding: 14px;
-    background: #fff3a8;
-    border: 2px solid #171717;
-    border-radius: 14px;
-    box-shadow: 0 4px 0 rgba(23,23,23,.16);
-  }
-
-  .controls .galli-enter-wrap {
-    grid-column: 1;
-    grid-row: 2;
-    min-width: 0;
-    max-width: none;
-    width: 100%;
-  }
-
-  .controls .galli-enter-wrap #startBtn {
-    width: 100%;
-    min-height: 48px;
-  }
-
-  .controls .galli-enter-wrap #status {
-    max-width: none;
-  }
-
-  .controls > button {
-    width: 100%;
-    min-width: 0;
-    min-height: 48px;
-    white-space: normal;
-    padding: 11px 8px !important;
-  }
-
-  .controls #gamesBtn {
-    margin-left: 0 !important;
-  }
-}
-
-/* Keep the control group visually contained on smaller screens too. */
-@media (max-width: 900px) {
-  .controls {
-    padding: 10px;
-    background: #fff3a8;
-    border: 2px solid #171717;
-    border-radius: 14px;
-  }
-}
-
 </style>
 <meta name="online-galli-build" content="v5.9.7-stickers-fit"/>
 <style>
@@ -1123,6 +1065,44 @@ footer { line-height:1.8; }
   }
 }
 </style>
+
+<style id="galli-controls-inside-existing-box">
+/* Put the existing main controls directly into the existing Chat / reactions box.
+   No new panel, background, border, or wrapper is created. */
+.galli-inline-reactions > .controls {
+  display: contents !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.galli-inline-reactions > .controls > .galli-enter-wrap {
+  order: 100 !important;
+  flex: 0 1 220px !important;
+  min-width: 180px !important;
+  margin: 0 !important;
+}
+.galli-inline-reactions > .controls > button {
+  order: 101 !important;
+  flex: 0 1 auto !important;
+  min-width: max-content;
+  margin: 0 !important;
+}
+.galli-inline-reactions #gamesBtn { order: 102 !important; }
+.galli-inline-reactions #stopBtn { order: 103 !important; }
+.galli-inline-reactions #status { margin-top: 3px; }
+@media (max-width: 600px) {
+  .galli-inline-reactions > .controls > .galli-enter-wrap {
+    flex-basis: 100% !important;
+    min-width: 0 !important;
+  }
+  .galli-inline-reactions > .controls > button {
+    flex: 1 1 auto !important;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -3380,3 +3360,19 @@ stickerSelect.addEventListener("change",()=>{
   }
 })();
 </script>
+<script id="galli-controls-placement">
+(function () {
+  function placeControlsInExistingBox() {
+    const row = document.querySelector('.galli-inline-reactions');
+    const controls = document.querySelector('.controls');
+    if (!row || !controls || controls.parentElement === row) return;
+    row.appendChild(controls);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', placeControlsInExistingBox, { once: true });
+  } else {
+    placeControlsInExistingBox();
+  }
+})();
+</script>
+
