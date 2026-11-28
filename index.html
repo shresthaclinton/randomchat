@@ -1103,6 +1103,48 @@ footer { line-height:1.8; }
 }
 </style>
 
+
+<style id="galli-two-row-button-layout">
+/* Keep the existing reactions/stickers/support panel; fit its controls into two rows. */
+.galli-inline-reactions {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  grid-auto-flow: row !important;
+  align-items: center !important;
+  gap: 7px !important;
+  width: 100% !important;
+}
+.galli-inline-reactions > .controls { display: contents !important; }
+.galli-inline-reactions > .galli-face-effects,
+.galli-inline-reactions > .galli-social-tabs,
+.galli-inline-reactions > .controls > .galli-enter-wrap,
+.galli-inline-reactions > .controls > button {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+.galli-inline-reactions > .controls > .galli-enter-wrap { flex: initial !important; }
+.galli-inline-reactions > .controls > button { flex: initial !important; white-space: nowrap; padding: 8px 5px !important; font-size: 12px !important; }
+.galli-inline-reactions .galli-face-effects,
+.galli-inline-reactions .galli-social-tabs { display: flex !important; flex-wrap: nowrap !important; align-items: center !important; gap: 4px !important; }
+.galli-inline-reactions .galli-face-effects > *,
+.galli-inline-reactions .galli-social-tabs > * { min-width: 0; }
+.galli-inline-reactions #faceStickerButton,
+.galli-inline-reactions .galli-social-tabs #stopBtn,
+.galli-inline-reactions .galli-social-tabs .mobile-support-btn,
+.galli-inline-reactions .galli-social-tabs .galli-upload-label { width: 100% !important; box-sizing: border-box !important; white-space: nowrap; padding: 8px 4px !important; font-size: 11px !important; }
+.galli-inline-reactions #teamBadgeSelect { min-width: 0 !important; max-width: 100% !important; }
+.galli-inline-reactions #status { font-size: 10px; line-height: 1.2; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .galli-inline-reactions { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+  .galli-inline-reactions > .controls > button { font-size: 11px !important; padding: 8px 3px !important; }
+  .galli-inline-reactions .galli-face-effects,
+  .galli-inline-reactions .galli-social-tabs { gap: 3px !important; }
+}
+</style>
+
 </head>
 
 <body>
