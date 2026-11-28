@@ -1046,7 +1046,7 @@ footer { line-height:1.8; }
   .galli-box-actions button{padding:8px 12px!important;font-size:13px!important;min-height:0!important;white-space:nowrap;border-radius:9px;font-weight:800;flex:0 0 auto}
   .galli-box-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex-basis:100%;margin-top:2px}
   .galli-box-actions #muteBtn,.galli-box-actions #reportBtn,.galli-box-actions #blockBtn{background:#3a3a3a;color:#fff;border:1px solid #666}
-  .galli-box-actions #previousCornerBtn{background:#fff4b3;color:#171717;border:2px solid #171717}
+  .galli-box-actions #previousCornerBtn,.galli-inline-reactions > #previousCornerBtn{background:#fff4b3;color:#171717;border:2px solid #171717}
 }
 /* Desktop: the box has exactly two rows. Row 1 = chat + Gifts + Games.
    Row 2 = Enter, Face Stickers, NPL Support, Custom Badge, Previous, Next, Mute, Report, Block. */
@@ -1056,6 +1056,8 @@ footer { line-height:1.8; }
   .galli-inline-reactions{gap:5px!important}
   .galli-inline-reactions .galli-face-effects,.galli-inline-reactions .galli-social-tabs{gap:5px!important}
   .galli-inline-reactions > #stopBtn,
+  .galli-inline-reactions > #previousCornerBtn,
+  .galli-inline-reactions > #nextBtn,
   .galli-box-actions button,
   .galli-inline-reactions #faceStickerButton,
   .galli-inline-reactions .mobile-support-btn,
@@ -1063,7 +1065,7 @@ footer { line-height:1.8; }
   .galli-box-actions .pro-corner-tag,.galli-inline-reactions .pro-corner-tag{font-size:8px}
 }
 </style>
-<meta name="online-galli-build" content="v5.9.9-two-rows"/>
+<meta name="online-galli-build" content="v5.9.10-prev-next-by-enter"/>
 <style>
 .og-connect-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;background:#1565c0;padding:7px;border-radius:12px;width:min(100%,370px);margin:auto}.og-connect-cell{aspect-ratio:1;border-radius:50%;background:white;border:1px solid #9bbad6;padding:0!important;min-height:0!important}.og-connect-cell.og-disc-red{background:#e53e3e}.og-connect-cell.og-disc-blue{background:#1475f5}.og-connect-cell.og-disc-yellow{background:#f5c518}.og-connect-cell.og-drop-new{position:relative;overflow:visible;z-index:2}
 .og-connect-cell.og-drop-new::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--drop-color);border:1px solid rgba(0,0,0,.12);pointer-events:none;animation:ogConnectDrop .65s cubic-bezier(.22,.78,.35,1) both;will-change:transform}
@@ -3222,8 +3224,15 @@ stickerSelect.addEventListener("change",()=>{
       actions.remove();
     }else{
       form.append(gift,games);                 // desktop: right after the Send button
-      if(enter&&inline)inline.prepend(enter);  // desktop: Enter/Exit at the far left of the box's second row
-      if(inline){inline.append(actions);actions.append(...others);} // desktop: the rest in the box too
+      if(enter&&inline){
+        inline.prepend(enter);                 // desktop: Enter/Exit at the far left of the box's second row
+        const prev=document.getElementById("previousCornerBtn"),next=document.getElementById("nextBtn");
+        if(prev&&next)enter.after(prev,next);  // desktop: Previous + Next Corner right beside Enter
+      }
+      if(inline){                              // desktop: the remaining buttons (Mute/Report/Block) at the end of the row
+        inline.append(actions);
+        actions.append(...others.filter(el=>el.id!=="previousCornerBtn"&&el.id!=="nextBtn"));
+      }
     }
   }  place();
   if(mq.addEventListener) mq.addEventListener("change",place); else mq.addListener(place);
